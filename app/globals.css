@@ -308,3 +308,11 @@
 @media(max-width:650px){.wishlistCarousel{margin:14px -2px 16px;gap:10px}.wishlistCard{flex-basis:128px;min-width:128px;padding:9px}.wishlistCard.active{padding:8px}.wishlistCardImage{height:78px}}
 
 .privacyPanel .addRow label.imageUploadButton{box-sizing:border-box;margin-top:12px;padding:9px 11px;min-height:0;height:auto;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;line-height:normal;display:inline-flex;align-items:center;gap:6px;border-radius:8px;background:#f2eef9;color:var(--purple);width:auto;max-width:max-content}
+
+.wishEditorDialog{max-height:88vh;overflow-y:auto}
+.wishEditorDialog label{display:flex;flex-direction:column;gap:6px;margin:12px 0;font-size:12px;font-weight:700;color:var(--ink)}
+.wishEditorDialog label input,.wishEditorDialog label textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit;font-weight:400;background:#fff;color:var(--ink)}
+.wishEditorPreview{width:100%;max-height:180px;object-fit:contain;border-radius:12px;background:#f7f4fb;margin:8px 0}
+.wishCard .wishImage img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.wishProductLink{display:inline-block;color:var(--purple);font-size:11px;font-weight:700;text-decoration:underline;margin:4px 0}
+.wishFoot>div{display:flex;align-items:center;gap:6px}
