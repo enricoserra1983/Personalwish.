@@ -15,6 +15,8 @@ type WishItem = {
 };
 type Wishlist = {
   id: string;
+  is_public: boolean;
+  private_access_mode: "all_friends" | "selected";
   title: string;
   description: string | null;
   share_token: string;
@@ -50,7 +52,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"lists" | "groups" | "profile" | "settings">("lists");
+  const [tab, setTab] = useState<"lists" | "friends" | "groups" | "profile" | "settings">("lists");
+  const [friends,setFriends] = useState<{user_id:string;display_name:string}[]>([]);
+  const [requests,setRequests] = useState<{id:string;requester_id:string;requester_name:string;wishlist_title:string|null}[]>([]);
+  const [friendSearch,setFriendSearch] = useState("");
+  const [friendResults,setFriendResults] = useState<{user_id:string;display_name:string}[]>([]);
+  const [selectedFriends,setSelectedFriends] = useState<string[]>([]);
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [activeId, setActiveId] = useState("");
   const [newListTitle, setNewListTitle] = useState("");
@@ -84,7 +91,7 @@ export default function Home() {
 
     const { data, error: listError } = await supabase
       .from("wishlists")
-      .select("id,title,description,share_token,owner_sees_participants,participants_see_participants,owner_sees_reservations,participants_see_reservations,owner_sees_buyer,participants_see_buyer,wishlist_items(id,title,description,price,image_url,product_url)")
+      .select("id,title,description,share_token,is_public,private_access_mode,owner_sees_participants,participants_see_participants,owner_sees_reservations,participants_see_reservations,owner_sees_buyer,participants_see_buyer,wishlist_items(id,title,description,price,image_url,product_url)")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
     if (listError) throw listError;
@@ -102,7 +109,7 @@ export default function Home() {
     });
   }, [loadData]);
 
-  async function signOut() {
+  async function loadFriends() {\n    const supabase=createClient();\n    const [{data:f},{data:r}]=await Promise.all([supabase.rpc("get_my_friends"),supabase.rpc("get_my_friend_requests")]);\n    setFriends(f||[]); setRequests(r||[]);\n  }\n\n  async function searchFriends() {\n    if(friendSearch.trim().length<2) return;\n    const {data,error}=await createClient().rpc("search_personalwish_users",{p_term:friendSearch.trim()});\n    if(error) setError(error.message); else setFriendResults(data||[]);\n  }\n\n  async function sendFriendRequest(id:string) {\n    const {error}=await createClient().rpc("send_friend_request",{p_recipient_id:id,p_share_token:null});\n    if(error) setError(error.message); else {setError("Richiesta di amicizia inviata.");setFriendResults([]);setFriendSearch("");}\n  }\n\n  async function answerFriendRequest(id:string,accept:boolean) {\n    const {error}=await createClient().rpc("respond_friend_request",{p_request_id:id,p_accept:accept});\n    if(error) setError(error.message); else await loadFriends();\n  }\n\n  async function setListVisibility(isPublic:boolean,mode:"all_friends"|"selected") {\n    if(!activeList) return;\n    const {error}=await createClient().rpc("set_wishlist_access",{p_wishlist_id:activeList.id,p_is_public:isPublic,p_mode:mode});\n    if(error) setError(error.message); else await loadData();\n  }\n\n  async function toggleSelectedFriend(id:string,allowed:boolean) {\n    if(!activeList) return;\n    const {error}=await createClient().rpc("set_wishlist_friend_access",{p_wishlist_id:activeList.id,p_friend_id:id,p_allow:allowed});\n    if(error) setError(error.message); else await loadSelectedFriends();\n  }\n\n  async function loadSelectedFriends() {\n    if(!activeList) return;\n    const {data}=await createClient().from("wishlist_members").select("user_id").eq("wishlist_id",activeList.id);\n    setSelectedFriends((data||[]).map(x=>x.user_id));\n  }\n\n  async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.replace("/login");
@@ -218,13 +225,13 @@ export default function Home() {
         <a className="brand" href="/"><span className="brandIcon"><Gift size={21}/></span><span>Personal<span className="brandAccent">Wish</span></span></a>
         <div className="workspaceLabel">IL TUO SPAZIO</div>
         <button className={`navItem ${tab === "lists" ? "active" : ""}`} onClick={() => setTab("lists")}><Heart size={18}/> Le mie liste <span className="navCount">{wishlists.length}</span></button>
-        <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
+        <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); }}><Users size={18}/> Amici</button>\n        <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
         <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>
         <div className="sideBottom"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{loading ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
       </aside>
 
       <section className="content">
-        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Account personale</span><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label="Apri menu account" aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileName.charAt(0).toUpperCase()}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
+        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Account personale</span><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label="Apri menu account" aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileName.charAt(0).toUpperCase()}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
 
         {error && <div className="authError" role="alert">{error}</div>}
         {loading ? <div className="settingsCard"><LoaderCircle size={20}/> Caricamento delle tue liste...</div> : null}
@@ -242,20 +249,20 @@ export default function Home() {
           </div>}
           {activeList ? <>
             <div className="listHero">
-              <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> Lista privata</span></div><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div>
+              <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> {activeList.is_public ? "Lista pubblica" : "Lista privata"}</span></div><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div>
               <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/><div className="giftBox">🎁</div><div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
             </div>
             <div className="sectionHead"><div><h3>I tuoi desideri</h3><p>{wishes.length} desideri nella lista</p></div><button className="textButton" onClick={() => setShowPrivacy(!showPrivacy)}><Settings2 size={16}/> Privacy lista</button></div>
             <div className="addRow"><input value={newWish} onChange={e => setNewWish(e.target.value)} onKeyDown={e => e.key === "Enter" && addWish()} placeholder="Aggiungi un desiderio..." /><button onClick={addWish} disabled={busy || !newWish.trim()}><Plus size={17}/> Aggiungi</button></div>
             {wishes.length ? <div className="wishGrid">{wishes.map((wish, i) => <article className="wishCard" key={wish.id}><div className={`wishImage image${i % 3}`}><span>🎁</span></div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p><div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></article>)}</div> : <div className="settingsCard">Non hai ancora aggiunto desideri a questa lista.</div>}
             {showPrivacy && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">CONTROLLO ACCESSI</div><h3>Privacy di questa lista</h3><p>Scegli cosa possono vedere il creatore e gli altri partecipanti.</p></div><button className="closeBtn" onClick={() => setShowPrivacy(false)}>×</button></div>
-              <div className="privacyGroup"><h4>Visibilità</h4>{privacyLabels.map(({ key, label }) => <PrivacyToggle key={key} label={label} value={activeList[key]} onClick={() => togglePrivacy(key)}/>)}</div>
+              <div className="privacyGroup"><h4>Accesso alla lista</h4><div className="accessChoice"><button className={activeList.is_public ? "selected" : ""} onClick={() => setListVisibility(true,"selected")}>Pubblica · tutti gli utenti</button><button className={!activeList.is_public && activeList.private_access_mode==="all_friends" ? "selected" : ""} onClick={() => setListVisibility(false,"all_friends")}>Privata · tutti i miei amici</button><button className={!activeList.is_public && activeList.private_access_mode==="selected" ? "selected" : ""} onClick={() => {setListVisibility(false,"selected");loadSelectedFriends();}}>Privata · amici selezionati</button></div>{!activeList.is_public && activeList.private_access_mode==="selected" && <div className="friendChecks"><b>Amici autorizzati</b>{friends.map(friend=><label key={friend.user_id}><input type="checkbox" checked={selectedFriends.includes(friend.user_id)} onChange={e=>toggleSelectedFriend(friend.user_id,e.target.checked)}/>{friend.display_name}</label>)}{friends.length===0 && <small>Non hai ancora amici. Aggiungili dalla sezione Amici.</small>}</div>}</div><div className="privacyGroup"><h4>Visibilità</h4>{privacyLabels.map(({ key, label }) => <PrivacyToggle key={key} label={label} value={activeList[key]} onClick={() => togglePrivacy(key)}/>)}</div>
               <div className="privacyNote"><LockKeyhole size={16}/> Le impostazioni vengono salvate direttamente nel database.</div>
             </section>}
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
-        {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
+        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><h1>I tuoi amici.</h1><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div><div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Cerca per nome..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<2}>Cerca</button></div>{friendResults.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b><button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button></div>)}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}<h3>I tuoi amici</h3>{friends.length ? friends.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b></div>) : <div className="settingsCard">Non hai ancora amici.</div>}</>}\n\n        {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
 
         {tab === "profile" && <><div className="welcome"><div><div className="eyebrow">ACCOUNT PERSONALE</div><h1>Il mio profilo.</h1><p>Le informazioni associate al tuo account PersonalWish.</p></div></div><div className="settingsCard"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{profileName}</b><p>{profileEmail}</p></div></div></>}
         {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">PREFERENZE</div><h1>Impostazioni.</h1><p>Gestisci la privacy e la sicurezza delle tue liste.</p></div></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Ogni lista può avere impostazioni indipendenti per partecipanti e prenotazioni.</p></div></div></>}
