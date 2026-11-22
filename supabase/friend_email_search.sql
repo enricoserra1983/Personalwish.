@@ -1,6 +1,6 @@
 drop function if exists public.search_personalwish_users(text);
 
--- PersonalWish: ricerca amici tramite nome utente o email.
+-- PersonalWish: ricerca amici tramite nome utente esatto o email esatta.
 -- La ricerca email è disponibile solo agli utenti autenticati.
 create or replace function public.search_personalwish_users(p_term text)
 returns table (user_id uuid, display_name text, email text)
@@ -17,8 +17,8 @@ as $$
     and p.id <> auth.uid()
     and length(trim(coalesce(p_term,''))) >= 2
     and (
-      coalesce(p.display_name,'') ilike '%' || trim(p_term) || '%'
-      or coalesce(u.email,'') ilike '%' || trim(p_term) || '%'
+      lower(btrim(coalesce(p.display_name,''))) = lower(btrim(p_term))
+      or lower(coalesce(u.email,'')) = lower(btrim(p_term))
     )
   order by
     case when lower(u.email) = lower(trim(p_term)) then 0 else 1 end,
