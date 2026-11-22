@@ -120,6 +120,22 @@ export default function Home() {
     });
   }, [loadData]);
 
+  // Controlla periodicamente le nuove richieste di amicizia per aggiornare il pallino sull'avatar.
+  useEffect(() => {
+    let active = true;
+    const checkPendingRequests = async () => {
+      const { data, error } = await createClient().rpc("get_my_friend_requests");
+      if (!active || error) return;
+      setRequests(data || []);
+    };
+    checkPendingRequests();
+    const interval = window.setInterval(checkPendingRequests, 20000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
   async function loadFriends() {
     const supabase=createClient();
     const [{data:f},{data:r}]=await Promise.all([supabase.rpc("get_my_friends"),supabase.rpc("get_my_friend_requests")]);
@@ -364,7 +380,7 @@ export default function Home() {
       </aside>
 
       <section className="content">
-        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Account personale</span><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label="Apri menu account" aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileName.charAt(0).toUpperCase()}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
+        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Account personale</span><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileName.charAt(0).toUpperCase()}{requests.length > 0 && tab !== "friends" && <span className="profileNotificationDot" aria-label={requests.length + " richieste di amicizia in attesa"} />}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
 
         {error && <div className="authError" role="alert">{error}</div>}
         {loading ? <div className="settingsCard"><LoaderCircle size={20}/> Caricamento delle tue liste...</div> : null}
