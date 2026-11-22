@@ -6,14 +6,42 @@ function decode(value: string) {
   return value.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 }
 
+function attribute(tag: string, key: string) {
+  return tag.match(new RegExp("\\b" + key + "\\s*=\\s*[\"']([^\"']*)[\"']", "i"))?.[1] || "";
+}
+
 function metaValue(html: string, key: string) {
-  const tags = html.match(/<meta[^>]*>/gi) || [];
+  const tags = html.match(/<meta\b[^>]*>/gi) || [];
   for (const tag of tags) {
-    const name = tag.match(/(?:property|name)=["']([^"']+)["']/i)?.[1];
-    const content = tag.match(/content=["']([^"']*)["']/i)?.[1];
-    if (name?.toLowerCase() === key.toLowerCase() && content) return decode(content);
+    const name = attribute(tag, "property") || attribute(tag, "name");
+    const content = attribute(tag, "content");
+    if (name.toLowerCase() === key.toLowerCase() && content) return decode(content);
   }
   return "";
+}
+
+function readJsonLd(html: string) {
+  const scripts = html.match(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || [];
+  for (const script of scripts) {
+    const raw = script.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, "").trim();
+    try {
+      const root = JSON.parse(decode(raw));
+      const pending = Array.isArray(root) ? [...root] : [root];
+      while (pending.length) {
+        const item = pending.shift();
+        if (!item || typeof item !== "object") continue;
+        if (Array.isArray(item)) { pending.push(...item); continue; }
+        const types = Array.isArray(item["@type"]) ? item["@type"] : [item["@type"]];
+        if (types.some((type: unknown) => String(type).toLowerCase() === "product")) {
+          const rawImage = item.image;
+          const image = typeof rawImage === "string" ? rawImage : Array.isArray(rawImage) ? rawImage.find((v: unknown) => typeof v === "string") : rawImage?.url;
+          return { title: String(item.name || ""), image: typeof image === "string" ? image : "", description: String(item.description || "") };
+        }
+        pending.push(...Object.values(item));
+      }
+    } catch {}
+  }
+  return { title: "", image: "", description: "" };
 }
 
 function amazonMainImage(html: string) {
@@ -58,13 +86,14 @@ export async function POST(request: NextRequest) {
 
     const finalUrl = new URL(response.url);
     const html = (await response.text()).slice(0, 2500000);
+    const jsonLd = readJsonLd(html);
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<[/]title>/i)?.[1] || "";
-    const title = metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
-    let image = metaValue(html, "og:image") || metaValue(html, "twitter:image");
-    if (!image && finalUrl.hostname.toLowerCase().includes("amazon.")) {
-      image = amazonMainImage(html);
-    }
-    const description = metaValue(html, "og:description") || metaValue(html, "description");
+    const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
+    const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
+    const title = metaValue(html, "og:title") || metaValue(html, "twitter:title") || jsonLd.title || amazonTitle || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
+    let image = metaValue(html, "og:image") || metaValue(html, "twitter:image") || jsonLd.image;
+    if (!image && amazon) image = amazonMainImage(html);
+    const description = metaValue(html, "og:description") || metaValue(html, "description") || jsonLd.description;
     const cleanTitle = title.toLowerCase().trim();
     if (!title || ["amazon.it", "amazon.com", "amazon"].includes(cleanTitle)) {
       return NextResponse.json({ error: "Il sito non ha restituito il nome del prodotto. Puoi inserirlo manualmente." }, { status: 422 });
