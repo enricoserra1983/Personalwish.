@@ -289,3 +289,6 @@
 
 .listCoverImage{position:relative;width:150px;height:150px;object-fit:cover;border-radius:50%;border:5px solid #ffffffaa;box-shadow:0 12px 24px #8a6ec333;z-index:1}
 @media(max-width:650px){.listCoverImage{width:112px;height:112px}}
+
+.imageUploadButton{margin-top:12px;background:#f0ebfa;color:#7050bd;border-radius:9px;padding:0 10px;min-height:34px;display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;line-height:1;cursor:pointer}
+.imageUploadButton input{display:none}
