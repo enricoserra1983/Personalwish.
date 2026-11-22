@@ -140,7 +140,10 @@ export default function Home() {
       return;
     }
     const user = auth.user;
-    const name = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
+    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("first_name,last_name,birth_date,birthday_visible,avatar_url").eq("id",user.id).maybeSingle();
+    if(profileLoadError) throw profileLoadError;
+    const metadataName = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
+    const name = [profile?.first_name,profile?.last_name].filter(Boolean).join(" ") || metadataName;
     setProfileName(String(name));
     setProfileEmail(user.email || "");
     setProfileUserId(user.id);
@@ -150,8 +153,6 @@ export default function Home() {
       display_name: String(name),
     }, { onConflict: "id" });
     if (profileError) throw profileError;
-    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("first_name,last_name,birth_date,birthday_visible,avatar_url").eq("id",user.id).maybeSingle();
-    if(profileLoadError) throw profileLoadError;
     setFirstName(profile?.first_name||"");
     setLastName(profile?.last_name||"");
     setBirthDate(profile?.birth_date||"");
