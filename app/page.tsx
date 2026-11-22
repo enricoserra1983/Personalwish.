@@ -56,7 +56,8 @@ export default function Home() {
   const [friends,setFriends] = useState<{user_id:string;display_name:string}[]>([]);
   const [requests,setRequests] = useState<{id:string;requester_id:string;requester_name:string;wishlist_title:string|null}[]>([]);
   const [friendSearch,setFriendSearch] = useState("");
-  const [inviteEmail,setInviteEmail] = useState("");
+  const [showInviteMenu,setShowInviteMenu] = useState(false);
+  const [inviteCopied,setInviteCopied] = useState(false);
   const [friendResults,setFriendResults] = useState<{user_id:string;display_name:string;email:string|null}[]>([]);
   const [selectedFriends,setSelectedFriends] = useState<string[]>([]);
   const [friendGroups,setFriendGroups] = useState<{group_id:string;group_name:string;member_count:number}[]>([]);
@@ -142,14 +143,45 @@ export default function Home() {
     if(error) setError(error.message); else await openFriendGroup(activeGroup);
   }
 
-  function inviteFriendByEmail() {
-    const email = inviteEmail.trim();
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) { setError("Inserisci un indirizzo email valido."); return; }
-    const subject = "Ti invito su PersonalWish";
-    const body = "Ciao! Ti invito a unirti a PersonalWish, l’app per creare e condividere liste dei desideri.\\n\\nRegistrati qui: " + window.location.origin + "/login\\n\\nDopo la registrazione potrai cercarmi usando il tuo indirizzo email e aggiungermi agli amici."; 
-    window.location.href = "mailto:" + encodeURIComponent(email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
-    setInviteEmail("");
+  function getInviteUrl() {
+    return window.location.origin + "/login";
   }
+
+  function inviteMessage() {
+    return "Ti invito su PersonalWish! Crea e condividi le tue liste dei desideri con amici e familiari: " + getInviteUrl();
+  }
+
+  async function copyInviteLink() {
+    try {
+      await navigator.clipboard.writeText(getInviteUrl());
+      setInviteCopied(true);
+    } catch {
+      setError("Non riesco a copiare automaticamente il link. Puoi copiarlo da: " + getInviteUrl());
+    }
+  }
+
+  function shareInviteWhatsApp() {
+    window.open("https://wa.me/?text=" + encodeURIComponent(inviteMessage()), "_blank", "noopener,noreferrer");
+  }
+
+  function shareInviteFacebook() {
+    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(getInviteUrl()), "_blank", "noopener,noreferrer");
+  }
+
+  async function shareInviteNative() {
+    if (navigator.share) {
+      try { await navigator.share({ title: "Invito a PersonalWish", text: inviteMessage(), url: getInviteUrl() }); }
+      catch (err) { if (!(err instanceof Error && err.name === "AbortError")) setError("Condivisione non disponibile."); }
+    } else {
+      await copyInviteLink();
+      setError("Link copiato: incollalo nell'app in cui vuoi invitare il tuo amico.");
+    }
+  }
+
+  function shareInviteEmail() {
+    window.location.href = "mailto:?subject=" + encodeURIComponent("Ti invito su PersonalWish") + "&body=" + encodeURIComponent(inviteMessage());
+  }
+
   async function searchFriends() {
     if(friendSearch.trim().length<2) return;
     const {data,error}=await createClient().rpc("search_personalwish_users",{p_term:friendSearch.trim()});
@@ -349,13 +381,31 @@ export default function Home() {
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
-        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><h1>I tuoi amici.</h1><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div><div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Cerca per nome utente o email..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<2}>Cerca</button></div>{friendResults.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><div style={{flex:1}}><b>{person.display_name}</b>{person.email && <p>{person.email}</p>}</div><button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button></div>)}<h3>Invita un amico via email</h3><p>Invia un invito a chi non è ancora registrato su PersonalWish.</p><div className="addRow"><input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} placeholder="Indirizzo email dell’amico..." /><button onClick={inviteFriendByEmail} disabled={!inviteEmail.trim()}>Invita via email</button></div><h3>Le mie cerchie</h3><p>Crea gruppi personali come Famiglia, Colleghi o Amici stretti.</p><div className="addRow"><input value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="Nome della nuova cerchia..." /><button onClick={createFriendGroup} disabled={!newGroupName.trim()}><Plus size={16}/> Crea gruppo</button></div>{friendGroups.map(group=><div className="settingsCard" key={group.group_id}><div style={{flex:1}}><b>{group.group_name}</b><p>{group.member_count} amici</p></div><button className="outline" onClick={()=>openFriendGroup(group.group_id)}>Gestisci</button></div>)}{activeGroup && <section className="privacyPanel"><div className="privacyHead"><div><h3>Componenti del gruppo</h3><p>Seleziona gli amici da inserire in questa cerchia.</p></div><button className="closeBtn" onClick={()=>setActiveGroup("")}>×</button></div>{friends.map(person=><label className="groupFriendRow" key={person.user_id}><input type="checkbox" checked={groupMembers.some(m=>m.user_id===person.user_id)} onChange={e=>toggleGroupMember(person.user_id,e.target.checked)}/>{person.display_name}</label>)}</section>}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}<h3>I tuoi amici</h3>{friends.length ? friends.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b></div>) : <div className="settingsCard">Non hai ancora amici.</div>}</>}
+        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><h1>I tuoi amici.</h1><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div><div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Cerca per nome utente o email..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<2}>Cerca</button></div>{friendResults.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><div style={{flex:1}}><b>{person.display_name}</b>{person.email && <p>{person.email}</p>}</div><button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button></div>)}<h3>Invita un amico</h3><p>Condividi il link di PersonalWish tramite l’app che preferisci.</p><div className="addRow"><button onClick={()=>{setInviteCopied(false);setShowInviteMenu(true);}}> <Link2 size={17}/> Invita un amico</button></div><h3>Le mie cerchie</h3><p>Crea gruppi personali come Famiglia, Colleghi o Amici stretti.</p><div className="addRow"><input value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="Nome della nuova cerchia..." /><button onClick={createFriendGroup} disabled={!newGroupName.trim()}><Plus size={16}/> Crea gruppo</button></div>{friendGroups.map(group=><div className="settingsCard" key={group.group_id}><div style={{flex:1}}><b>{group.group_name}</b><p>{group.member_count} amici</p></div><button className="outline" onClick={()=>openFriendGroup(group.group_id)}>Gestisci</button></div>)}{activeGroup && <section className="privacyPanel"><div className="privacyHead"><div><h3>Componenti del gruppo</h3><p>Seleziona gli amici da inserire in questa cerchia.</p></div><button className="closeBtn" onClick={()=>setActiveGroup("")}>×</button></div>{friends.map(person=><label className="groupFriendRow" key={person.user_id}><input type="checkbox" checked={groupMembers.some(m=>m.user_id===person.user_id)} onChange={e=>toggleGroupMember(person.user_id,e.target.checked)}/>{person.display_name}</label>)}</section>}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}<h3>I tuoi amici</h3>{friends.length ? friends.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b></div>) : <div className="settingsCard">Non hai ancora amici.</div>}</>}
 
         {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
 
         {tab === "profile" && <><div className="welcome"><div><div className="eyebrow">ACCOUNT PERSONALE</div><h1>Il mio profilo.</h1><p>Le informazioni associate al tuo account PersonalWish.</p></div></div><div className="settingsCard"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{profileName}</b><p>{profileEmail}</p></div></div></>}
         {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">PREFERENZE</div><h1>Impostazioni.</h1><p>Gestisci la privacy e la sicurezza delle tue liste.</p></div></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Ogni lista può avere impostazioni indipendenti per partecipanti e prenotazioni.</p></div></div></>}
 
+        {showInviteMenu && <div className="shareOverlay" role="presentation" onClick={() => setShowInviteMenu(false)}>
+          <section className="shareDialog" role="dialog" aria-modal="true" aria-labelledby="inviteDialogTitle" onClick={e => e.stopPropagation()}>
+            <button className="shareClose" aria-label="Chiudi" onClick={() => setShowInviteMenu(false)}>×</button>
+            <div className="shareDialogIcon"><Users size={21}/></div>
+            <h3 id="inviteDialogTitle">Invita un amico</h3>
+            <p>Invia il link per far conoscere PersonalWish.</p>
+            <div className="shareOptions">
+              <button onClick={shareInviteWhatsApp}><span className="shareAppIcon whatsapp">W</span><b>WhatsApp</b></button>
+              <button onClick={shareInviteFacebook}><span className="shareAppIcon facebook">f</span><b>Facebook</b></button>
+              <button onClick={shareInviteNative}><span className="shareAppIcon messenger">ϟ</span><b>Messenger</b></button>
+              <button onClick={shareInviteNative}><span className="shareAppIcon instagram">◎</span><b>Instagram</b></button>
+              <button onClick={shareInviteEmail}><span className="shareAppIcon email">✉</span><b>Email</b></button>
+              <button onClick={copyInviteLink}><span className="shareAppIcon copy"><Link2 size={19}/></span><b>{inviteCopied ? "Copiato!" : "Copia link"}</b></button>
+            </div>
+            <div className="shareLinkPreview"><span>{typeof window !== "undefined" ? window.location.origin + "/login" : "Link PersonalWish"}</span><button onClick={copyInviteLink}>{inviteCopied ? "Copiato" : "Copia"}</button></div>
+            <small className="shareHint">Per Messenger e Instagram si apre il menu di condivisione del telefono, dove puoi scegliere l’app o la chat.</small>
+          </section>
+        </div>}
         {showShareMenu && activeList && <div className="shareOverlay" role="presentation" onClick={() => setShowShareMenu(false)}>
           <section className="shareDialog" role="dialog" aria-modal="true" aria-labelledby="shareDialogTitle" onClick={e => e.stopPropagation()}>
             <button className="shareClose" aria-label="Chiudi" onClick={() => setShowShareMenu(false)}>×</button>
