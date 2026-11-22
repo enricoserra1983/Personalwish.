@@ -58,6 +58,10 @@ export default function Home() {
   const [friendSearch,setFriendSearch] = useState("");
   const [friendResults,setFriendResults] = useState<{user_id:string;display_name:string}[]>([]);
   const [selectedFriends,setSelectedFriends] = useState<string[]>([]);
+  const [friendGroups,setFriendGroups] = useState<{group_id:string;group_name:string;member_count:number}[]>([]);
+  const [newGroupName,setNewGroupName] = useState("");
+  const [activeGroup,setActiveGroup] = useState<string>("");
+  const [groupMembers,setGroupMembers] = useState<{user_id:string;display_name:string}[]>([]);
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [activeId, setActiveId] = useState("");
   const [newListTitle, setNewListTitle] = useState("");
@@ -113,6 +117,28 @@ export default function Home() {
     const supabase=createClient();
     const [{data:f},{data:r}]=await Promise.all([supabase.rpc("get_my_friends"),supabase.rpc("get_my_friend_requests")]);
     setFriends(f||[]); setRequests(r||[]);
+  }
+
+  async function loadFriendGroups() {
+    const {data,error}=await createClient().rpc("get_my_friend_groups");
+    if(error) setError(error.message); else setFriendGroups(data||[]);
+  }
+
+  async function createFriendGroup() {
+    if(!newGroupName.trim()) return;
+    const {error}=await createClient().rpc("save_friend_group",{p_name:newGroupName.trim(),p_group_id:null});
+    if(error) setError(error.message); else {setNewGroupName("");await loadFriendGroups();}
+  }
+
+  async function openFriendGroup(id:string) {
+    setActiveGroup(id);
+    const {data,error}=await createClient().rpc("get_friend_group_members",{p_group_id:id});
+    if(error) setError(error.message); else setGroupMembers(data||[]);
+  }
+
+  async function toggleGroupMember(id:string,add:boolean) {
+    const {error}=await createClient().rpc("set_friend_group_member",{p_group_id:activeGroup,p_friend_id:id,p_add:add});
+    if(error) setError(error.message); else await openFriendGroup(activeGroup);
   }
 
   async function searchFriends() {
@@ -265,7 +291,7 @@ export default function Home() {
         <a className="brand" href="/"><span className="brandIcon"><Gift size={21}/></span><span>Personal<span className="brandAccent">Wish</span></span></a>
         <div className="workspaceLabel">IL TUO SPAZIO</div>
         <button className={`navItem ${tab === "lists" ? "active" : ""}`} onClick={() => setTab("lists")}><Heart size={18}/> Le mie liste <span className="navCount">{wishlists.length}</span></button>
-        <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); }}><Users size={18}/> Amici</button>
+        <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); }}><Users size={18}/> Amici</button>
         <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
         <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>
         <div className="sideBottom"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{loading ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
@@ -303,7 +329,7 @@ export default function Home() {
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
-        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><h1>I tuoi amici.</h1><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div><div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Cerca per nome..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<2}>Cerca</button></div>{friendResults.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b><button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button></div>)}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}<h3>I tuoi amici</h3>{friends.length ? friends.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b></div>) : <div className="settingsCard">Non hai ancora amici.</div>}</>}
+        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><h1>I tuoi amici.</h1><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div><div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Cerca per nome..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<2}>Cerca</button></div>{friendResults.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b><button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button></div>)}<h3>Le mie cerchie</h3><p>Crea gruppi personali come Famiglia, Colleghi o Amici stretti.</p><div className="addRow"><input value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="Nome della nuova cerchia..." /><button onClick={createFriendGroup} disabled={!newGroupName.trim()}><Plus size={16}/> Crea gruppo</button></div>{friendGroups.map(group=><div className="settingsCard" key={group.group_id}><div style={{flex:1}}><b>{group.group_name}</b><p>{group.member_count} amici</p></div><button className="outline" onClick={()=>openFriendGroup(group.group_id)}>Gestisci</button></div>)}{activeGroup && <section className="privacyPanel"><div className="privacyHead"><div><h3>Componenti del gruppo</h3><p>Seleziona gli amici da inserire in questa cerchia.</p></div><button className="closeBtn" onClick={()=>setActiveGroup("")}>×</button></div>{friends.map(person=><label className="groupFriendRow" key={person.user_id}><input type="checkbox" checked={groupMembers.some(m=>m.user_id===person.user_id)} onChange={e=>toggleGroupMember(person.user_id,e.target.checked)}/>{person.display_name}</label>)}</section>}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}<h3>I tuoi amici</h3>{friends.length ? friends.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b></div>) : <div className="settingsCard">Non hai ancora amici.</div>}</>}
 
         {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
 
