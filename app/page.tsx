@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Gift, Heart, Plus, Users, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2 } from "lucide-react";
@@ -154,7 +154,9 @@ export default function Home() {
     if (!activeList) return;
     const next = { [key]: !activeList[key] } as Record<string, boolean>;
     if (key === "owner_sees_buyer" && next[key]) next.owner_sees_reservations = true;
+    if (key === "owner_sees_reservations" && !next[key]) next.owner_sees_buyer = false;
     if (key === "participants_see_buyer" && next[key]) next.participants_see_reservations = true;
+    if (key === "participants_see_reservations" && !next[key]) next.participants_see_buyer = false;
     const supabase = createClient();
     const { error: updateError } = await supabase.from("wishlists").update(next).eq("id", activeList.id);
     if (updateError) setError(updateError.message);
