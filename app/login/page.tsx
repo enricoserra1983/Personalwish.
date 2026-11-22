@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  function getNextPath() {
+  function getInviteId() {\n    const value = new URLSearchParams(window.location.search).get("invite");\n    return value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : null;\n  }\n\n  async function sendInviteRequest() {\n    const inviterId = getInviteId();\n    if (!inviterId) return;\n    const { error } = await createClient().rpc("send_friend_request", { p_recipient_id: inviterId, p_share_token: null });\n    if (error && !error.message.toLowerCase().includes("siete già amici")) throw error;\n  }\n\n  function getNextPath() {
     const requested = new URLSearchParams(window.location.search).get("next");
     return requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
   }
@@ -50,7 +50,7 @@ export default function LoginPage() {
           password,
           options: {
             data: { display_name: name.trim() },
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}${getInviteId() ? `&invite=${encodeURIComponent(getInviteId()!)}` : ""}`,
           },
         });
         if (authError) throw authError;
