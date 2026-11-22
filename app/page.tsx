@@ -411,6 +411,8 @@ export default function Home() {
     try { url=new URL(wishUrl.trim()).toString(); if(!["http:","https:"].includes(new URL(url).protocol)) throw new Error(); }
     catch { setError("Inserisci un link valido che inizi con https://"); return; }
     setFetchingProduct(true);setError("");
+    setWishUrl(url);
+    setWishMode("link");
     try {
       const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
       const data=await response.json();
@@ -418,9 +420,15 @@ export default function Home() {
       if(data.title) setNewWish(data.title);
       if(data.image) setWishImage(data.image);
       if(data.description) setWishDescription(data.description);
-      setWishUrl(url);
-      setWishMode("link");
-    } catch(err) { setError(err instanceof Error ? err.message : "Impossibile recuperare i dati del prodotto. Puoi inserirli manualmente."); }
+    } catch(err) {
+      const host=new URL(url).hostname.toLowerCase();
+      if(host.includes("amazon.")) {
+        setNewWish(current=>current.trim().toLowerCase()==="amazon.it"||current.trim().toLowerCase()==="amazon.com"?"":current);
+        setError("Amazon non consente sempre il recupero automatico. Il link è stato conservato: inserisci il nome del prodotto e scegli la foto dalla galleria.");
+      } else {
+        setError(err instanceof Error ? err.message : "Impossibile recuperare i dati del prodotto. Puoi inserirli manualmente.");
+      }
+    }
     setFetchingProduct(false);
   }
 
