@@ -424,7 +424,7 @@ export default function Home() {
       const attempts=isAmazon?5:1;
       for(let attempt=0;attempt<attempts;attempt++) {
         try {
-          if(attempt>0) await new Promise(resolve=>setTimeout(resolve,1200*attempt));
+          if(attempt>0) await new Promise(resolve=>setTimeout(resolve,2000*attempt));
           const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
           const data=await response.json();
           if(!response.ok) throw new Error(data.error||"Non riesco a leggere questo prodotto.");
