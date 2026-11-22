@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Gift, Heart, Plus, Users, Link2, ExternalLink, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X } from "lucide-react";
+import { Gift, Heart, Plus, Users, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X } from "lucide-react";
 
 type WishItem = {
   id: string;
