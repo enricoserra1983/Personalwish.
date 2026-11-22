@@ -211,3 +211,27 @@
 .sharedFooter{text-align:center;color:#aaa3b2;font-size:11px;padding:45px 0 15px}
 @media(max-width:700px){.sharedHeader{height:62px;padding:0 17px}.sharedContent{padding:35px 17px}.sharedContent>h1{font-size:27px}.sharedGrid{grid-template-columns:1fr 1fr;gap:10px}.sharedItemImage,.sharedItemPlaceholder{height:125px}.sharedItemBody{padding:11px}.sharedItemBody h2{font-size:13px}.sharedItemBottom{font-size:10px;align-items:flex-start;flex-direction:column}.sharedItemBottom a{font-size:10px}}
 @media(max-width:390px){.sharedGrid{grid-template-columns:1fr}}
+
+
+/* Finestra di condivisione social */
+.shareOverlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(31,24,43,.48);backdrop-filter:blur(4px)}
+.shareDialog{position:relative;width:min(100%,420px);padding:27px 24px 20px;background:#fff;border:1px solid #eee8f5;border-radius:22px;box-shadow:0 24px 70px #21153335;text-align:center}
+.shareClose{position:absolute;right:14px;top:10px;width:34px;height:34px;border:0;border-radius:50%;background:#f6f3fa;color:#655b72;font-size:25px;line-height:1;cursor:pointer}
+.shareDialogIcon{width:46px;height:46px;margin:0 auto 12px;display:grid;place-items:center;border-radius:15px;background:#f0eafa;color:var(--purple)}
+.shareDialog h3{margin:0;color:var(--ink);font:800 20px Manrope,sans-serif}
+.shareDialog>p{margin:7px 0 22px;color:var(--muted);font-size:13px}
+.shareOptions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px 9px}
+.shareOptions>button{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;padding:4px 2px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.shareOptions>button b{font-size:11px;font-weight:700}
+.shareAppIcon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;color:#fff;font-size:23px;font-weight:800;box-shadow:0 4px 12px #20152a15}
+.shareAppIcon.whatsapp{background:#25d366}
+.shareAppIcon.facebook{background:#1877f2;font-family:Arial,sans-serif;font-size:31px}
+.shareAppIcon.instagram{background:linear-gradient(135deg,#7445d8,#df3c83,#f5a13a);font-size:29px}
+.shareAppIcon.email{background:#68758b}
+.shareAppIcon.copy{background:#eee8fa;color:var(--purple)}
+.shareAppIcon.browser{background:#30283d}
+.shareLinkPreview{display:flex;align-items:center;gap:8px;margin-top:23px;padding:7px 8px 7px 12px;border:1px solid #e9e3f0;border-radius:12px;background:#faf9fc;text-align:left}
+.shareLinkPreview span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#777080;font-size:11px}
+.shareLinkPreview button{padding:8px 12px;border:0;border-radius:8px;background:#eee8fa;color:var(--purple);font-size:11px;font-weight:800}
+.shareHint{display:block;margin-top:12px;color:#9992a2;font-size:10px;line-height:1.45}
+@media(max-width:420px){.shareDialog{padding:25px 17px 17px;border-radius:19px}.shareOptions{gap:15px 5px}.shareAppIcon{width:44px;height:44px;border-radius:14px}}
