@@ -413,7 +413,8 @@ export default function Home() {
     setFetchingProduct(true);setError("");
     setWishUrl(url);
     setWishMode("link");
-    const isAmazon=new URL(url).hostname.toLowerCase().includes("amazon.");
+    const productHost=new URL(url).hostname.toLowerCase();
+    const isAmazon=productHost.includes("amazon.")||productHost==="amzn.eu"||productHost.endsWith(".amzn.eu");
     let recoveredTitle="";
     let recoveredImage="";
     let recoveredDescription="";
