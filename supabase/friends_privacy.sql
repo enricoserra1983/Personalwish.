@@ -26,6 +26,9 @@ create unique index if not exists friend_requests_one_pending
 alter table public.friendships enable row level security;
 alter table public.friend_requests enable row level security;
 
+-- Mantiene pubbliche le liste già esistenti, così i vecchi link continuano a funzionare.
+update public.wishlists set is_public = true where is_public = false;
+
 drop policy if exists friendships_select_involved on public.friendships;
 create policy friendships_select_involved on public.friendships
 for select to authenticated
