@@ -93,6 +93,7 @@ export default function Home() {
   const [savingWishImage,setSavingWishImage] = useState(false);
   const wishImageInputRef = useRef<HTMLInputElement>(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const privacyPanelRef = useRef<HTMLElement>(null);
   const [copied, setCopied] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
@@ -100,6 +101,14 @@ export default function Home() {
   const activeList = wishlists.find(list => list.id === activeId) || wishlists[0] || null;
   const wishes = activeList?.wishlist_items || [];
   const reservedCount = 0;
+
+  useEffect(() => {
+    if (!showPrivacy) return;
+    const frame = window.requestAnimationFrame(() => {
+      privacyPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [showPrivacy]);
 
   const loadData = useCallback(async () => {
     const supabase = createClient();
@@ -613,7 +622,7 @@ export default function Home() {
               <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/>{activeList.image_url ? <img className="listCoverImage" src={activeList.image_url} alt={"Immagine della lista "+activeList.title}/> : <div className="giftBox">🎁</div>}<div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
             </div>
             <div className="sectionHead"><div><h3>I tuoi desideri</h3><p>{wishes.length} desideri nella lista</p></div><button className="textButton" type="button" onClick={() => setShowPrivacy(true)}><Settings2 size={16}/> Privacy lista</button></div>
-            {showPrivacy && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">CONTROLLO ACCESSI</div><h3>Privacy di questa lista</h3><p>Scegli cosa possono vedere il creatore e gli altri partecipanti.</p></div><button className="closeBtn" onClick={() => setShowPrivacy(false)}>×</button></div>
+            {showPrivacy && <section ref={privacyPanelRef} className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">CONTROLLO ACCESSI</div><h3>Privacy di questa lista</h3><p>Scegli cosa possono vedere il creatore e gli altri partecipanti.</p></div><button className="closeBtn" onClick={() => setShowPrivacy(false)}>×</button></div>
               <div className="privacyGroup"><h4>Accesso alla lista</h4><div className="accessChoice"><button className={activeList.is_public ? "selected" : ""} onClick={() => setListVisibility(true,"selected")}>Pubblica · tutti gli utenti</button><button className={!activeList.is_public && activeList.private_access_mode==="all_friends" ? "selected" : ""} onClick={() => setListVisibility(false,"all_friends")}>Privata · tutti i miei amici</button><button className={!activeList.is_public && activeList.private_access_mode==="selected" ? "selected" : ""} onClick={() => {setListVisibility(false,"selected");loadSelectedFriends();}}>Privata · amici selezionati</button></div>{!activeList.is_public && activeList.private_access_mode==="selected" && <div className="friendChecks"><b>Amici autorizzati</b>{friendGroups.map(group=><div className="groupAccessRow" key={group.group_id}><span><b>{group.group_name}</b> · {group.member_count} amici</span><span className="groupSelectedMark" aria-label={selectedGroupIds.includes(group.group_id) ? "Gruppo selezionato" : "Gruppo non selezionato"}>{selectedGroupIds.includes(group.group_id) ? "✓" : ""}</span><button type="button" onClick={()=>toggleSelectedGroup(group.group_id,true)}>Seleziona solo questo gruppo</button></div>)}{friends.map(friend=><label key={friend.user_id}><input type="checkbox" checked={selectedFriends.includes(friend.user_id)} onChange={e=>toggleSelectedFriend(friend.user_id,e.target.checked)}/>{friend.display_name}</label>)}{friends.length===0 && <small>Non hai ancora amici. Aggiungili dalla sezione Amici.</small>}</div>}</div><div className="privacyGroup"><h4>Visibilità</h4>{privacyLabels.map(({ key, label }) => <PrivacyToggle key={key} label={label} value={activeList[key]} onClick={() => togglePrivacy(key)}/>)}</div>
               <div className="privacyNote"><LockKeyhole size={16}/> Le impostazioni vengono salvate direttamente nel database.</div>
             </section>}
