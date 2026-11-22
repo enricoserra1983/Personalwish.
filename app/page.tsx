@@ -421,10 +421,10 @@ export default function Home() {
     try {
       // Amazon can respond intermittently or omit the image on the first request.
       // Retry automatically instead of asking the user to press Recupera repeatedly.
-      const attempts=isAmazon?3:1;
+      const attempts=isAmazon?5:1;
       for(let attempt=0;attempt<attempts;attempt++) {
         try {
-          if(attempt>0) await new Promise(resolve=>setTimeout(resolve,700*attempt));
+          if(attempt>0) await new Promise(resolve=>setTimeout(resolve,1200*attempt));
           const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
           const data=await response.json();
           if(!response.ok) throw new Error(data.error||"Non riesco a leggere questo prodotto.");
@@ -444,7 +444,7 @@ export default function Home() {
           setNewWish(current=>current.trim().toLowerCase()==="amazon.it"||current.trim().toLowerCase()==="amazon.com"?"":current);
           setError(recoveredTitle
             ?"Nome recuperato. Amazon non ha restituito la foto: puoi sceglierla dalla galleria."
-            :"Amazon non ha restituito i dati dopo 3 tentativi. Il link è conservato: inserisci il nome e scegli la foto dalla galleria.");
+            :"Amazon non ha restituito i dati dopo 5 tentativi automatici. Il link è conservato: inserisci il nome e scegli la foto dalla galleria.");
         } else if(!recoveredTitle && lastError) setError(lastError);
       }
     } catch(err) {
