@@ -48,7 +48,7 @@ const privacyLabels: { key: PrivacyKey; label: string }[] = [
 export default function Home() {
   const router = useRouter();
   const [profileName, setProfileName] = useState("Utente");
-  const [profileEmail, setProfileEmail] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");\n  const [profileUserId, setProfileUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -87,7 +87,7 @@ export default function Home() {
     const user = auth.user;
     const name = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
     setProfileName(String(name));
-    setProfileEmail(user.email || "");
+    setProfileEmail(user.email || "");\n    setProfileUserId(user.id);
 
     const { error: profileError } = await supabase.from("profiles").upsert({
       id: user.id,
@@ -144,7 +144,7 @@ export default function Home() {
   }
 
   function getInviteUrl() {
-    return window.location.origin + "/login";
+    return window.location.origin + "/login?invite=" + encodeURIComponent(profileUserId);
   }
 
   function inviteMessage() {
