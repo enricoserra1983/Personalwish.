@@ -2,6 +2,10 @@
 -- Eseguire una sola volta nel SQL Editor di Supabase.
 
 -- 1) Rinomina il profilo associato all'email indicata dall'utente.
+update auth.users
+set raw_user_meta_data = jsonb_set(coalesce(raw_user_meta_data, '{}'::jsonb), '{display_name}', '"Enrico83"'::jsonb, true)
+where lower(email) = lower('bladerunner83@tiscali.it');
+
 update public.profiles p
 set display_name = 'Enrico83'
 from auth.users u
