@@ -145,3 +145,20 @@
 .accountDropdown button{width:100%;display:flex;align-items:center;gap:10px;padding:11px;border-radius:8px;background:transparent;color:#554d63;text-align:left;font-size:12px}
 .accountDropdown button:hover{background:#f7f4fb}
 .accountDropdown button.accountLogout{color:#b42318;border-top:1px solid var(--line);border-radius:0 0 8px 8px;margin-top:4px}
+
+
+/* Correzione menu account su schermi piccoli */
+.content{min-width:0;overflow-x:clip}
+.topbar{min-width:0;position:relative;overflow:visible}
+.topActions{flex-shrink:0;min-width:0}
+.accountMenuWrap{flex-shrink:0}
+.accountDropdown{width:min(230px,calc(100vw - 32px));max-width:calc(100vw - 32px);right:0;box-sizing:border-box}
+.accountDropdownUser b,.accountDropdownUser small{display:block;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+.accountDropdown button{white-space:normal;min-width:0}
+@media(max-width:650px){
+  .topbar{gap:8px}
+  .mobileBrand{min-width:0;white-space:nowrap;font-size:15px}
+  .topActions{gap:7px}
+  .demoPill{padding:7px 9px;white-space:nowrap}
+  .accountDropdown{position:absolute;right:0;top:calc(100% + 9px)}
+}
