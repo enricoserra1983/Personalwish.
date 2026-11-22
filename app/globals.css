@@ -446,3 +446,9 @@
 .chatPrimary{width:100%;margin-top:15px}
 .chatError{max-width:1180px;margin:0 auto 12px;padding:11px;border-radius:9px;background:#fff0f0;color:#a52b37;font-size:12px}
 @media(max-width:700px){.chatPage{padding:12px}.chatTop{gap:10px;flex-wrap:wrap}.chatTop h1{font-size:20px}.chatTop>button{padding:10px;font-size:11px}.chatLayout{height:calc(100dvh - 105px);min-height:420px;grid-template-columns:118px minmax(0,1fr)}.chatSidebar{padding:12px 6px}.chatSidebar h2{font-size:12px;margin:0 4px 10px}.chatEntry{flex-direction:column;align-items:flex-start;gap:5px;padding:9px 6px}.chatEntryIcon{width:32px;height:32px;flex-basis:32px}.chatEntryText b{font-size:10px}.chatEntryText small{font-size:9px;max-width:96px}.chatEntry i{position:absolute;margin-left:25px}.chatMessages{padding:12px}.chatConversationHead{padding:13px}.chatNew{padding:17px 12px}.chatBubble{max-width:90%}.chatBack{font-size:11px}}
+
+
+/* Accesso rapido alla chat dalla home, anche su smartphone */
+.chatQuickLink{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border:1px solid #e5def1;border-radius:10px;background:#fff;color:var(--purple);text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.chatQuickLink:hover{background:#f5f1fc}
+@media(max-width:650px){.chatQuickLink{width:34px;height:34px;padding:0;border-radius:50%}.chatQuickLink span{display:none}.chatQuickLink svg{width:18px;height:18px}}
