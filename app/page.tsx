@@ -413,21 +413,42 @@ export default function Home() {
     setFetchingProduct(true);setError("");
     setWishUrl(url);
     setWishMode("link");
+    const isAmazon=new URL(url).hostname.toLowerCase().includes("amazon.");
+    let recoveredTitle="";
+    let recoveredImage="";
+    let recoveredDescription="";
+    let lastError="";
     try {
-      const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
-      const data=await response.json();
-      if(!response.ok) throw new Error(data.error||"Non riesco a leggere questo prodotto.");
-      if(data.title) setNewWish(data.title);
-      if(data.image) setWishImage(data.image);
-      if(data.description) setWishDescription(data.description);
-    } catch(err) {
-      const host=new URL(url).hostname.toLowerCase();
-      if(host.includes("amazon.")) {
-        setNewWish(current=>current.trim().toLowerCase()==="amazon.it"||current.trim().toLowerCase()==="amazon.com"?"":current);
-        setError("Amazon non consente sempre il recupero automatico. Il link è stato conservato: inserisci il nome del prodotto e scegli la foto dalla galleria.");
-      } else {
-        setError(err instanceof Error ? err.message : "Impossibile recuperare i dati del prodotto. Puoi inserirli manualmente.");
+      // Amazon can respond intermittently or omit the image on the first request.
+      // Retry automatically instead of asking the user to press Recupera repeatedly.
+      const attempts=isAmazon?3:1;
+      for(let attempt=0;attempt<attempts;attempt++) {
+        try {
+          if(attempt>0) await new Promise(resolve=>setTimeout(resolve,700*attempt));
+          const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+          const data=await response.json();
+          if(!response.ok) throw new Error(data.error||"Non riesco a leggere questo prodotto.");
+          if(data.title) recoveredTitle=data.title;
+          if(data.image) recoveredImage=data.image;
+          if(data.description) recoveredDescription=data.description;
+          if(recoveredTitle && (!isAmazon || recoveredImage)) break;
+        } catch(err) {
+          lastError=err instanceof Error?err.message:"Recupero non riuscito.";
+        }
       }
+      if(recoveredTitle) setNewWish(recoveredTitle);
+      if(recoveredImage) setWishImage(recoveredImage);
+      if(recoveredDescription) setWishDescription(recoveredDescription);
+      if(!recoveredTitle || (isAmazon && !recoveredImage)) {
+        if(isAmazon) {
+          setNewWish(current=>current.trim().toLowerCase()==="amazon.it"||current.trim().toLowerCase()==="amazon.com"?"":current);
+          setError(recoveredTitle
+            ?"Nome recuperato. Amazon non ha restituito la foto: puoi sceglierla dalla galleria."
+            :"Amazon non ha restituito i dati dopo 3 tentativi. Il link è conservato: inserisci il nome e scegli la foto dalla galleria.");
+        } else if(!recoveredTitle && lastError) setError(lastError);
+      }
+    } catch(err) {
+      setError(err instanceof Error ? err.message : "Impossibile recuperare i dati del prodotto. Puoi inserirli manualmente.");
     }
     setFetchingProduct(false);
   }
