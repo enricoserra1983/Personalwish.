@@ -20,6 +20,7 @@ type Wishlist = {
   title: string;
   description: string | null;
   share_token: string;
+  image_url: string | null;
   owner_sees_participants: boolean;
   participants_see_participants: boolean;
   owner_sees_reservations: boolean;
@@ -76,6 +77,8 @@ export default function Home() {
   const [newListTitle, setNewListTitle] = useState("");
   const [editingListTitle, setEditingListTitle] = useState(false);
   const [editedListTitle, setEditedListTitle] = useState("");
+  const [showEditMenu, setShowEditMenu] = useState(false);
+  const [uploadingListImage, setUploadingListImage] = useState(false);
   const [newWish, setNewWish] = useState("");
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -107,7 +110,7 @@ export default function Home() {
 
     const { data, error: listError } = await supabase
       .from("wishlists")
-      .select("id,title,description,share_token,is_public,private_access_mode,owner_sees_participants,participants_see_participants,owner_sees_reservations,participants_see_reservations,owner_sees_buyer,participants_see_buyer,wishlist_items(id,title,description,price,image_url,product_url)")
+      .select("id,title,description,share_token,image_url,is_public,private_access_mode,owner_sees_participants,participants_see_participants,owner_sees_reservations,participants_see_reservations,owner_sees_buyer,participants_see_buyer,wishlist_items(id,title,description,price,image_url,product_url)")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
     if (listError) throw listError;
@@ -354,6 +357,22 @@ export default function Home() {
     setBusy(false);
   }
 
+  async function updateWishlistImage(file:File|null) {
+    if(!activeList || !file) return;
+    if(!file.type.startsWith("image/")){setError("Seleziona un file immagine.");return;}
+    if(file.size>5*1024*1024){setError("L'immagine deve essere inferiore a 5 MB.");return;}
+    setUploadingListImage(true);setError("");
+    const supabase=createClient();
+    const path=`${profileUserId}/${activeList.id}/cover-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
+    const {error:uploadError}=await supabase.storage.from("wishlist-images").upload(path,file,{upsert:true,contentType:file.type});
+    if(uploadError){setError("Caricamento immagine non riuscito: "+uploadError.message);setUploadingListImage(false);return;}
+    const {data}=supabase.storage.from("wishlist-images").getPublicUrl(path);
+    const {error:updateError}=await supabase.from("wishlists").update({image_url:data.publicUrl}).eq("id",activeList.id);
+    if(updateError) setError("Immagine caricata ma non salvata nella lista: "+updateError.message);
+    else {setShowEditMenu(false);await loadData();}
+    setUploadingListImage(false);
+  }
+
   async function deleteWishlist() {
     if(!activeList) return;
     if(!window.confirm(`Vuoi eliminare definitivamente la lista "${activeList.title}" e tutti i suoi desideri? L'operazione non può essere annullata.`)) return;
@@ -482,8 +501,8 @@ export default function Home() {
           </div>}
           {activeList ? <>
             <div className="listHero">
-              <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> {activeList.is_public ? "Lista pubblica" : "Lista privata"}</span></div><div className="addRow"><button className="outline" type="button" onClick={()=>{setEditedListTitle(activeList.title);setEditingListTitle(v=>!v);}}>Modifica nome</button><button className="outline" type="button" onClick={deleteWishlist} disabled={busy}><Trash2 size={15}/> Elimina lista</button><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div>{editingListTitle && <div className="addRow"><input value={editedListTitle} onChange={e=>setEditedListTitle(e.target.value)} placeholder="Nuovo nome della lista..." maxLength={80}/><button type="button" onClick={updateWishlistTitle} disabled={busy || !editedListTitle.trim()}>Salva</button><button type="button" className="outline" onClick={()=>setEditingListTitle(false)}>Annulla</button></div>}</div>
-              <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/><div className="giftBox">🎁</div><div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
+              <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> {activeList.is_public ? "Lista pubblica" : "Lista privata"}</span></div><div className="addRow"><button className="outline" type="button" onClick={()=>setShowEditMenu(v=>!v)}>Modifica <ChevronDown size={15}/></button><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div>{showEditMenu && <div className="privacyPanel"><div className="addRow"><b>Modifica lista</b></div><div className="addRow"><button type="button" className="outline" onClick={()=>{setEditedListTitle(activeList.title);setEditingListTitle(v=>!v);}}>Nome lista</button></div>{editingListTitle && <div className="addRow"><input value={editedListTitle} onChange={e=>setEditedListTitle(e.target.value)} placeholder="Nuovo nome della lista..." maxLength={80}/><button type="button" onClick={updateWishlistTitle} disabled={busy || !editedListTitle.trim()}>Salva</button><button type="button" className="outline" onClick={()=>setEditingListTitle(false)}>Annulla</button></div>}<div className="addRow"><label className="outline" style={{cursor:"pointer"}}>{uploadingListImage ? "Caricamento..." : "Immagine lista"}<input type="file" accept="image/*" disabled={uploadingListImage} onChange={e=>updateWishlistImage(e.target.files?.[0]||null)} style={{display:"none"}}/></label></div><div className="addRow"><button type="button" className="outline" onClick={deleteWishlist} disabled={busy}><Trash2 size={15}/> Elimina lista</button></div></div>}</div>
+              <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/>{activeList.image_url ? <img className="listCoverImage" src={activeList.image_url} alt={"Immagine della lista "+activeList.title}/> : <div className="giftBox">🎁</div>}<div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
             </div>
             <div className="sectionHead"><div><h3>I tuoi desideri</h3><p>{wishes.length} desideri nella lista</p></div><button className="textButton" onClick={() => {setShowPrivacy(!showPrivacy);loadFriends();loadFriendGroups();if(activeList)loadSelectedFriends();}}><Settings2 size={16}/> Privacy lista</button></div>
             <div className="addRow"><input value={newWish} onChange={e => setNewWish(e.target.value)} onKeyDown={e => e.key === "Enter" && addWish()} placeholder="Aggiungi un desiderio..." /><button onClick={addWish} disabled={busy || !newWish.trim()}><Plus size={17}/> Aggiungi</button></div>
