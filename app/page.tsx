@@ -51,6 +51,14 @@ export default function Home() {
   const [profileName, setProfileName] = useState("Utente");
   const [profileEmail, setProfileEmail] = useState("");
   const [profileUserId, setProfileUserId] = useState("");
+  const [firstName,setFirstName]=useState("");
+  const [lastName,setLastName]=useState("");
+  const [birthDate,setBirthDate]=useState("");
+  const [birthdayVisible,setBirthdayVisible]=useState(false);
+  const [profileAvatarUrl,setProfileAvatarUrl]=useState("");
+  const [savingProfile,setSavingProfile]=useState(false);
+  const [uploadingAvatar,setUploadingAvatar]=useState(false);
+  const avatarInputRef=useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -142,6 +150,13 @@ export default function Home() {
       display_name: String(name),
     }, { onConflict: "id" });
     if (profileError) throw profileError;
+    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("first_name,last_name,birth_date,birthday_visible,avatar_url").eq("id",user.id).maybeSingle();
+    if(profileLoadError) throw profileLoadError;
+    setFirstName(profile?.first_name||"");
+    setLastName(profile?.last_name||"");
+    setBirthDate(profile?.birth_date||"");
+    setBirthdayVisible(profile?.birthday_visible||false);
+    setProfileAvatarUrl(profile?.avatar_url||"");
 
     const { data, error: listError } = await supabase
       .from("wishlists")
@@ -366,6 +381,38 @@ export default function Home() {
       }
     }
     setSelectedGroupIds(selectedGroups);
+  }
+
+  async function saveProfile() {
+    setSavingProfile(true);setError("");
+    const fullName=[firstName.trim(),lastName.trim()].filter(Boolean).join(" ")||profileName;
+    const {error}=await createClient().from("profiles").update({
+      first_name:firstName.trim()||null,
+      last_name:lastName.trim()||null,
+      display_name:fullName,
+      birth_date:birthDate||null,
+      birthday_visible:birthdayVisible,
+    }).eq("id",profileUserId);
+    if(error) setError("Non è stato possibile salvare il profilo: "+error.message);
+    else {setProfileName(fullName);setError("Profilo aggiornato.");}
+    setSavingProfile(false);
+  }
+
+  async function uploadProfileAvatar(file:File|null) {
+    if(!file)return;
+    if(!file.type.startsWith("image/")){setError("Seleziona un'immagine valida.");return;}
+    if(file.size>5*1024*1024){setError("La foto deve essere inferiore a 5 MB.");return;}
+    setUploadingAvatar(true);setError("");
+    const supabase=createClient();
+    const ext=(file.name.split(".").pop()||"jpg").replace(/[^a-zA-Z0-9]/g,"").toLowerCase()||"jpg";
+    const path=`${profileUserId}/profile/avatar-${Date.now()}.${ext}`;
+    const {error:uploadError}=await supabase.storage.from("wishlist-images").upload(path,file,{upsert:true,contentType:file.type});
+    if(uploadError){setError("Caricamento foto non riuscito: "+uploadError.message);setUploadingAvatar(false);return;}
+    const url=supabase.storage.from("wishlist-images").getPublicUrl(path).data.publicUrl;
+    const {error:updateError}=await supabase.from("profiles").update({avatar_url:url}).eq("id",profileUserId);
+    if(updateError)setError("Foto caricata ma non salvata: "+updateError.message);
+    else setProfileAvatarUrl(url+"?v="+Date.now());
+    setUploadingAvatar(false);
   }
 
   async function signOut() {
@@ -608,11 +655,11 @@ export default function Home() {
         <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
         <a className="navItem" href="/chat"><MessageCircle size={18}/> Chat</a>
         <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>
-        <div className="sideBottom"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{loading ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
+        <div className="sideBottom"><div className="avatar">{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</div><div><b>{loading ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
       </aside>
 
       <section className="content">
-        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : "Impostazioni"}</div><div className="topActions"><a className="chatQuickLink" href="/chat" aria-label="Apri le chat"><MessageCircle size={17}/><span>Chat</span></a><span className="demoPill"><span/> Account personale</span><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileName.charAt(0).toUpperCase()}{requests.length > 0 && tab !== "friends" && <span className="profileNotificationDot" aria-label={requests.length + " richieste di amicizia in attesa"} />}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button className="accountFriendsButton" onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici{requests.length > 0 && <span className="accountFriendsBadge">{requests.length > 9 ? "9+" : requests.length}</span>}</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
+        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : "Impostazioni"}</div><div className="topActions"><a className="chatQuickLink" href="/chat" aria-label="Apri le chat"><MessageCircle size={17}/><span>Chat</span></a><span className="demoPill"><span/> Account personale</span><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}{requests.length > 0 && tab !== "friends" && <span className="profileNotificationDot" aria-label={requests.length + " richieste di amicizia in attesa"} />}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button className="accountFriendsButton" onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici{requests.length > 0 && <span className="accountFriendsBadge">{requests.length > 9 ? "9+" : requests.length}</span>}</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
 
         {error && <div className="authError" role="alert">{error}</div>}
         {loading ? <div className="settingsCard"><LoaderCircle size={20}/> Caricamento delle tue liste...</div> : null}
@@ -678,7 +725,13 @@ export default function Home() {
 
         {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
 
-        {tab === "profile" && <><div className="welcome"><div><div className="eyebrow">ACCOUNT PERSONALE</div><h1>Il mio profilo.</h1><p>Le informazioni associate al tuo account PersonalWish.</p></div></div><div className="settingsCard"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{profileName}</b><p>{profileEmail}</p></div></div></>}
+        {tab === "profile" && <><div className="welcome"><div><div className="eyebrow">ACCOUNT PERSONALE</div><h1>Il mio profilo.</h1><p>Personalizza le informazioni che condividi su PersonalWish.</p></div></div>
+          <section className="profileEditor">
+            <div className="profilePhotoArea"><div className="avatar profileAvatarLarge">{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</div><div><b>La tua foto profilo</b><p>Questa immagine ti rappresenterà nelle chat e tra gli amici.</p><button type="button" className="outline" onClick={()=>avatarInputRef.current?.click()} disabled={uploadingAvatar}>{uploadingAvatar?"Caricamento...":"Scegli una foto"}</button><input ref={avatarInputRef} type="file" accept="image/*" hidden onChange={e=>{uploadProfileAvatar(e.target.files?.[0]||null);e.currentTarget.value="";}}/></div></div>
+            <div className="profileFormGrid"><label>Nome<input value={firstName} onChange={e=>setFirstName(e.target.value)} maxLength={60} placeholder="Il tuo nome"/></label><label>Cognome<input value={lastName} onChange={e=>setLastName(e.target.value)} maxLength={60} placeholder="Il tuo cognome"/></label><label>Data di nascita<input type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label><div className="profileEmailField"><span>Email</span><b>{profileEmail}</b></div></div>
+            <div className="birthdayPrivacy"><div><b>Mostra il mio compleanno agli amici</b><p>Se disattivato, la data resta privata e gli amici non riceveranno promemoria.</p></div><PrivacyToggle label={birthdayVisible?"Visibile agli amici":"Privato"} value={birthdayVisible} onClick={()=>setBirthdayVisible(v=>!v)}/></div>
+            <div className="addRow"><button type="button" onClick={saveProfile} disabled={savingProfile}>{savingProfile?"Salvataggio...":"Salva modifiche"}</button></div>
+          </section></>}
         {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">PREFERENZE</div><h1>Impostazioni.</h1><p>Gestisci la privacy e la sicurezza delle tue liste.</p></div></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Ogni lista può avere impostazioni indipendenti per partecipanti e prenotazioni.</p></div></div></>}
 
         {showInviteMenu && <div className="shareOverlay" role="presentation" onClick={() => setShowInviteMenu(false)}>
