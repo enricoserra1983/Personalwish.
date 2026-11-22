@@ -132,3 +132,16 @@
   .authCard { padding: 25px 20px; }
   .authCard h1 { font-size: 24px; }
 }
+
+
+/* Menu account aperto dall'avatar */
+.topActions{position:relative}
+.accountMenuWrap{position:relative}
+.accountAvatar{border:0;cursor:pointer;font:inherit}
+.accountDropdown{position:absolute;z-index:50;right:0;top:calc(100% + 10px);width:225px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 38px #30204420}
+.accountDropdownUser{padding:10px 11px 12px;border-bottom:1px solid var(--line);margin-bottom:5px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.accountDropdownUser b{font-size:12px;color:#332d40}
+.accountDropdownUser small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+.accountDropdown button{width:100%;display:flex;align-items:center;gap:10px;padding:11px;border-radius:8px;background:transparent;color:#554d63;text-align:left;font-size:12px}
+.accountDropdown button:hover{background:#f7f4fb}
+.accountDropdown button.accountLogout{color:#b42318;border-top:1px solid var(--line);border-radius:0 0 8px 8px;margin-top:4px}
