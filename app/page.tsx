@@ -201,7 +201,7 @@ export default function Home() {
             <button onClick={createWishlist} disabled={busy || !newListTitle.trim()}><Plus size={17}/> Nuova lista</button>
           </div>
           {wishlists.length > 0 && <div className="addRow">
-            <select aria-label="Seleziona lista" value={activeList?.id || ""} onChange={e => setActiveId(e.target.value)}>
+            <select className="wishlistSelect" aria-label="Seleziona lista" value={activeList?.id || ""} onChange={e => setActiveId(e.target.value)}>
               {wishlists.map(list => <option key={list.id} value={list.id}>{list.title}</option>)}
             </select>
           </div>}
