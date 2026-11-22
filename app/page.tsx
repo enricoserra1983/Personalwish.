@@ -109,7 +109,47 @@ export default function Home() {
     });
   }, [loadData]);
 
-  async function loadFriends() {\n    const supabase=createClient();\n    const [{data:f},{data:r}]=await Promise.all([supabase.rpc("get_my_friends"),supabase.rpc("get_my_friend_requests")]);\n    setFriends(f||[]); setRequests(r||[]);\n  }\n\n  async function searchFriends() {\n    if(friendSearch.trim().length<2) return;\n    const {data,error}=await createClient().rpc("search_personalwish_users",{p_term:friendSearch.trim()});\n    if(error) setError(error.message); else setFriendResults(data||[]);\n  }\n\n  async function sendFriendRequest(id:string) {\n    const {error}=await createClient().rpc("send_friend_request",{p_recipient_id:id,p_share_token:null});\n    if(error) setError(error.message); else {setError("Richiesta di amicizia inviata.");setFriendResults([]);setFriendSearch("");}\n  }\n\n  async function answerFriendRequest(id:string,accept:boolean) {\n    const {error}=await createClient().rpc("respond_friend_request",{p_request_id:id,p_accept:accept});\n    if(error) setError(error.message); else await loadFriends();\n  }\n\n  async function setListVisibility(isPublic:boolean,mode:"all_friends"|"selected") {\n    if(!activeList) return;\n    const {error}=await createClient().rpc("set_wishlist_access",{p_wishlist_id:activeList.id,p_is_public:isPublic,p_mode:mode});\n    if(error) setError(error.message); else await loadData();\n  }\n\n  async function toggleSelectedFriend(id:string,allowed:boolean) {\n    if(!activeList) return;\n    const {error}=await createClient().rpc("set_wishlist_friend_access",{p_wishlist_id:activeList.id,p_friend_id:id,p_allow:allowed});\n    if(error) setError(error.message); else await loadSelectedFriends();\n  }\n\n  async function loadSelectedFriends() {\n    if(!activeList) return;\n    const {data}=await createClient().from("wishlist_members").select("user_id").eq("wishlist_id",activeList.id);\n    setSelectedFriends((data||[]).map(x=>x.user_id));\n  }\n\n  async function signOut() {
+  async function loadFriends() {
+    const supabase=createClient();
+    const [{data:f},{data:r}]=await Promise.all([supabase.rpc("get_my_friends"),supabase.rpc("get_my_friend_requests")]);
+    setFriends(f||[]); setRequests(r||[]);
+  }
+
+  async function searchFriends() {
+    if(friendSearch.trim().length<2) return;
+    const {data,error}=await createClient().rpc("search_personalwish_users",{p_term:friendSearch.trim()});
+    if(error) setError(error.message); else setFriendResults(data||[]);
+  }
+
+  async function sendFriendRequest(id:string) {
+    const {error}=await createClient().rpc("send_friend_request",{p_recipient_id:id,p_share_token:null});
+    if(error) setError(error.message); else {setError("Richiesta di amicizia inviata.");setFriendResults([]);setFriendSearch("");}
+  }
+
+  async function answerFriendRequest(id:string,accept:boolean) {
+    const {error}=await createClient().rpc("respond_friend_request",{p_request_id:id,p_accept:accept});
+    if(error) setError(error.message); else await loadFriends();
+  }
+
+  async function setListVisibility(isPublic:boolean,mode:"all_friends"|"selected") {
+    if(!activeList) return;
+    const {error}=await createClient().rpc("set_wishlist_access",{p_wishlist_id:activeList.id,p_is_public:isPublic,p_mode:mode});
+    if(error) setError(error.message); else await loadData();
+  }
+
+  async function toggleSelectedFriend(id:string,allowed:boolean) {
+    if(!activeList) return;
+    const {error}=await createClient().rpc("set_wishlist_friend_access",{p_wishlist_id:activeList.id,p_friend_id:id,p_allow:allowed});
+    if(error) setError(error.message); else await loadSelectedFriends();
+  }
+
+  async function loadSelectedFriends() {
+    if(!activeList) return;
+    const {data}=await createClient().from("wishlist_members").select("user_id").eq("wishlist_id",activeList.id);
+    setSelectedFriends((data||[]).map(x=>x.user_id));
+  }
+
+  async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.replace("/login");
@@ -225,7 +265,8 @@ export default function Home() {
         <a className="brand" href="/"><span className="brandIcon"><Gift size={21}/></span><span>Personal<span className="brandAccent">Wish</span></span></a>
         <div className="workspaceLabel">IL TUO SPAZIO</div>
         <button className={`navItem ${tab === "lists" ? "active" : ""}`} onClick={() => setTab("lists")}><Heart size={18}/> Le mie liste <span className="navCount">{wishlists.length}</span></button>
-        <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); }}><Users size={18}/> Amici</button>\n        <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
+        <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); }}><Users size={18}/> Amici</button>
+        <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
         <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>
         <div className="sideBottom"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{loading ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
       </aside>
@@ -262,7 +303,9 @@ export default function Home() {
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
-        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><h1>I tuoi amici.</h1><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div><div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Cerca per nome..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<2}>Cerca</button></div>{friendResults.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b><button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button></div>)}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}<h3>I tuoi amici</h3>{friends.length ? friends.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b></div>) : <div className="settingsCard">Non hai ancora amici.</div>}</>}\n\n        {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
+        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><h1>I tuoi amici.</h1><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div><div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Cerca per nome..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<2}>Cerca</button></div>{friendResults.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b><button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button></div>)}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}<h3>I tuoi amici</h3>{friends.length ? friends.map(person=><div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><b>{person.display_name}</b></div>) : <div className="settingsCard">Non hai ancora amici.</div>}</>}
+
+        {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
 
         {tab === "profile" && <><div className="welcome"><div><div className="eyebrow">ACCOUNT PERSONALE</div><h1>Il mio profilo.</h1><p>Le informazioni associate al tuo account PersonalWish.</p></div></div><div className="settingsCard"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{profileName}</b><p>{profileEmail}</p></div></div></>}
         {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">PREFERENZE</div><h1>Impostazioni.</h1><p>Gestisci la privacy e la sicurezza delle tue liste.</p></div></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Ogni lista può avere impostazioni indipendenti per partecipanti e prenotazioni.</p></div></div></>}
