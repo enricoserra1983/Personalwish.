@@ -56,7 +56,8 @@ export default function Home() {
   const [newListTitle, setNewListTitle] = useState("");
   const [newWish, setNewWish] = useState("");
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [copied, setCopied] = useState(false);\n  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const activeList = wishlists.find(list => list.id === activeId) || wishlists[0] || null;
   const wishes = activeList?.wishlist_items || [];
