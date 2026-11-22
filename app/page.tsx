@@ -74,6 +74,8 @@ export default function Home() {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [activeId, setActiveId] = useState("");
   const [newListTitle, setNewListTitle] = useState("");
+  const [editingListTitle, setEditingListTitle] = useState(false);
+  const [editedListTitle, setEditedListTitle] = useState("");
   const [newWish, setNewWish] = useState("");
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -341,6 +343,32 @@ export default function Home() {
     setBusy(false);
   }
 
+  async function updateWishlistTitle() {
+    if(!activeList) return;
+    const title=editedListTitle.trim();
+    if(!title){setError("Inserisci un nome per la lista.");return;}
+    setBusy(true);setError("");
+    const {error}=await createClient().from("wishlists").update({title}).eq("id",activeList.id);
+    if(error) setError(error.message);
+    else {setEditingListTitle(false);await loadData();}
+    setBusy(false);
+  }
+
+  async function deleteWishlist() {
+    if(!activeList) return;
+    if(!window.confirm(`Vuoi eliminare definitivamente la lista "${activeList.title}" e tutti i suoi desideri? L'operazione non può essere annullata.`)) return;
+    setBusy(true);setError("");
+    const {error}=await createClient().from("wishlists").delete().eq("id",activeList.id);
+    if(error) setError("Non è stato possibile eliminare la lista: "+error.message);
+    else {
+      setShowPrivacy(false);
+      setShowShareMenu(false);
+      setEditingListTitle(false);
+      await loadData();
+    }
+    setBusy(false);
+  }
+
   async function addWish() {
     if (!newWish.trim() || !activeList) return;
     setBusy(true); setError("");
@@ -454,7 +482,7 @@ export default function Home() {
           </div>}
           {activeList ? <>
             <div className="listHero">
-              <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> {activeList.is_public ? "Lista pubblica" : "Lista privata"}</span></div><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div>
+              <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> {activeList.is_public ? "Lista pubblica" : "Lista privata"}</span></div><div className="addRow"><button className="outline" type="button" onClick={()=>{setEditedListTitle(activeList.title);setEditingListTitle(v=>!v);}}>Modifica nome</button><button className="outline" type="button" onClick={deleteWishlist} disabled={busy}><Trash2 size={15}/> Elimina lista</button><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div>{editingListTitle && <div className="addRow"><input value={editedListTitle} onChange={e=>setEditedListTitle(e.target.value)} placeholder="Nuovo nome della lista..." maxLength={80}/><button type="button" onClick={updateWishlistTitle} disabled={busy || !editedListTitle.trim()}>Salva</button><button type="button" className="outline" onClick={()=>setEditingListTitle(false)}>Annulla</button></div>}</div>
               <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/><div className="giftBox">🎁</div><div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
             </div>
             <div className="sectionHead"><div><h3>I tuoi desideri</h3><p>{wishes.length} desideri nella lista</p></div><button className="textButton" onClick={() => {setShowPrivacy(!showPrivacy);loadFriends();loadFriendGroups();if(activeList)loadSelectedFriends();}}><Settings2 size={16}/> Privacy lista</button></div>
