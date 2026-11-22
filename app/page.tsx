@@ -57,6 +57,7 @@ export default function Home() {
   const [newWish, setNewWish] = useState("");
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const activeList = wishlists.find(list => list.id === activeId) || wishlists[0] || null;
@@ -165,16 +166,50 @@ export default function Home() {
     else await loadData();
   }
 
-  async function shareList() {
-    if (!activeList) return;
-    const url = `${window.location.origin}/lista/${activeList.share_token}`;
+  function getShareUrl() {
+    if (!activeList) return "";
+    return `${window.location.origin}/lista/${activeList.share_token}`;
+  }
+
+  async function copyShareLink() {
+    const url = getShareUrl();
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      window.setTimeout(() => setCopied(false), 2200);
     } catch {
-      setError("Non riesco a copiare il link. Puoi copiarlo dalla barra degli indirizzi: " + url);
+      setError("Non riesco a copiare automaticamente il link: " + url);
     }
+  }
+
+  async function shareToInstagram() {
+    const url = getShareUrl();
+    const text = `Guarda la mia lista "${activeList?.title}" su PersonalWish`;
+    if (navigator.share) {
+      try { await navigator.share({ title: activeList?.title || "PersonalWish", text, url }); }
+      catch (err) { if (!(err instanceof Error && err.name === "AbortError")) setError("Condivisione non disponibile."); }
+    } else {
+      await copyShareLink();
+      setError("Link copiato: apri Instagram e incollalo nella chat o nella tua storia.");
+    }
+  }
+
+  function shareToWhatsApp() {
+    const url = getShareUrl();
+    const text = `Guarda la mia lista "${activeList?.title}" su PersonalWish: ${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  }
+
+  function shareToFacebook() {
+    const url = getShareUrl();
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer");
+  }
+
+  function shareByEmail() {
+    const url = getShareUrl();
+    const subject = `La mia lista ${activeList?.title} su PersonalWish`;
+    const body = `Ciao! Guarda la mia lista dei desideri: ${url}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   return (
@@ -207,7 +242,7 @@ export default function Home() {
           </div>}
           {activeList ? <>
             <div className="listHero">
-              <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> Lista privata</span></div><button className="shareButton" onClick={shareList}><Link2 size={16}/> {copied ? "Link copiato!" : "Condividi lista"}</button></div>
+              <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> Lista privata</span></div><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div>
               <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/><div className="giftBox">🎁</div><div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
             </div>
             <div className="sectionHead"><div><h3>I tuoi desideri</h3><p>{wishes.length} desideri nella lista</p></div><button className="textButton" onClick={() => setShowPrivacy(!showPrivacy)}><Settings2 size={16}/> Privacy lista</button></div>
@@ -224,6 +259,26 @@ export default function Home() {
 
         {tab === "profile" && <><div className="welcome"><div><div className="eyebrow">ACCOUNT PERSONALE</div><h1>Il mio profilo.</h1><p>Le informazioni associate al tuo account PersonalWish.</p></div></div><div className="settingsCard"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{profileName}</b><p>{profileEmail}</p></div></div></>}
         {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">PREFERENZE</div><h1>Impostazioni.</h1><p>Gestisci la privacy e la sicurezza delle tue liste.</p></div></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Ogni lista può avere impostazioni indipendenti per partecipanti e prenotazioni.</p></div></div></>}
+
+        {showShareMenu && activeList && <div className="shareOverlay" role="presentation" onClick={() => setShowShareMenu(false)}>
+          <section className="shareDialog" role="dialog" aria-modal="true" aria-labelledby="shareDialogTitle" onClick={e => e.stopPropagation()}>
+            <button className="shareClose" aria-label="Chiudi" onClick={() => setShowShareMenu(false)}>×</button>
+            <div className="shareDialogIcon"><Link2 size={21}/></div>
+            <h3 id="shareDialogTitle">Condividi la tua lista</h3>
+            <p>Invia “{activeList.title}” a chi vuoi.</p>
+            <div className="shareOptions">
+              <button onClick={shareToWhatsApp}><span className="shareAppIcon whatsapp">W</span><b>WhatsApp</b></button>
+              <button onClick={shareToFacebook}><span className="shareAppIcon facebook">f</span><b>Facebook</b></button>
+              <button onClick={shareToInstagram}><span className="shareAppIcon instagram">◎</span><b>Instagram</b></button>
+              <button onClick={shareByEmail}><span className="shareAppIcon email">✉</span><b>Email</b></button>
+              <button onClick={copyShareLink}><span className="shareAppIcon copy"><Link2 size={19}/></span><b>{copied ? "Copiato!" : "Copia link"}</b></button>
+              <button onClick={() => window.open(getShareUrl(), "_blank", "noopener,noreferrer")}><span className="shareAppIcon browser">↗</span><b>Apri link</b></button>
+            </div>
+            <div className="shareLinkPreview"><span>{getShareUrl()}</span><button onClick={copyShareLink}>{copied ? "Copiato" : "Copia"}</button></div>
+            <small className="shareHint">Instagram potrebbe richiedere di incollare il link nella chat o nella storia dopo aver aperto la condivisione.</small>
+          </section>
+        </div>}
+
         <footer>PersonalWish <span>·</span> I tuoi desideri, condivisi a modo tuo.</footer>
       </section>
     </main>
