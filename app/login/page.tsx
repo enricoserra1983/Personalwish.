@@ -18,6 +18,11 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  function getNextPath() {
+    const requested = new URLSearchParams(window.location.search).get("next");
+    return requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
+  }
+
   function changeMode(next: Mode) {
     setMode(next);
     setError("");
@@ -30,6 +35,7 @@ export default function LoginPage() {
     setMessage("");
     setError("");
     const supabase = createClient();
+    const nextPath = getNextPath();
 
     try {
       if (mode === "forgot") {
@@ -44,20 +50,20 @@ export default function LoginPage() {
           password,
           options: {
             data: { display_name: name.trim() },
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
           },
         });
         if (authError) throw authError;
         if (data.session) {
-          router.replace("/");
+          router.replace(nextPath);
           router.refresh();
         } else {
-          setMessage("Registrazione completata. Controlla la tua email per confermare l'account.");
+          setMessage("Registrazione completata. Controlla la tua email per confermare l'account. Dopo la conferma tornerai alla lista condivisa.");
         }
       } else {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
-        router.replace("/");
+        router.replace(nextPath);
         router.refresh();
       }
     } catch (err) {
