@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Gift, Heart, Plus, Users, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X } from "lucide-react";
+import { Gift, Heart, Plus, Users, MessageCircle, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X } from "lucide-react";
 
 type WishItem = {
   id: string;
@@ -606,6 +606,7 @@ export default function Home() {
         <button className={`navItem ${tab === "lists" ? "active" : ""}`} onClick={() => setTab("lists")}><Heart size={18}/> Le mie liste <span className="navCount">{wishlists.length}</span></button>
         <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); }}><Users size={18}/> Amici</button>
         <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
+        <a className="navItem" href="/chat"><MessageCircle size={18}/> Chat</a>
         <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>
         <div className="sideBottom"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{loading ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
       </aside>
