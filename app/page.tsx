@@ -48,7 +48,8 @@ const privacyLabels: { key: PrivacyKey; label: string }[] = [
 export default function Home() {
   const router = useRouter();
   const [profileName, setProfileName] = useState("Utente");
-  const [profileEmail, setProfileEmail] = useState("");\n  const [profileUserId, setProfileUserId] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileUserId, setProfileUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
