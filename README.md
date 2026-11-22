@@ -32,3 +32,4 @@ L'interfaccia attuale è una **demo frontend**: le modifiche sono temporanee e n
 
 ## Regole di sicurezza da rispettare
 Le impostazioni privacy non devono essere applicate soltanto nascondendo elementi nell'interfaccia. I dati non autorizzati non devono proprio essere restituiti dal database/API. La consultazione tramite link deve essere read-only e non deve rivelare identità o prenotazioni non consentite.
+
