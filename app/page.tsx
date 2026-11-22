@@ -276,11 +276,11 @@ export default function Home() {
     if(currentError){setError(currentError.message);return;}
     const currentIds=(current||[]).map((person:{user_id:string})=>person.user_id);
     const targetIds=allow?groupIds:[];
-    for(const id of currentIds.filter(id=>!targetIds.includes(id))){
+    for(const id of currentIds.filter((id:string)=>!targetIds.includes(id))){
       const result=await supabase.rpc("set_wishlist_friend_access",{p_wishlist_id:activeList.id,p_friend_id:id,p_allow:false});
       if(result.error){setError(result.error.message);return;}
     }
-    for(const id of targetIds.filter(id=>!currentIds.includes(id))){
+    for(const id of targetIds.filter((id:string)=>!currentIds.includes(id))){
       const result=await supabase.rpc("set_wishlist_friend_access",{p_wishlist_id:activeList.id,p_friend_id:id,p_allow:true});
       if(result.error){setError(result.error.message);return;}
     }
