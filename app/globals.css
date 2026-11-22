@@ -235,3 +235,9 @@
 .shareLinkPreview button{padding:8px 12px;border:0;border-radius:8px;background:#eee8fa;color:var(--purple);font-size:11px;font-weight:800}
 .shareHint{display:block;margin-top:12px;color:#9992a2;font-size:10px;line-height:1.45}
 @media(max-width:420px){.shareDialog{padding:25px 17px 17px;border-radius:19px}.shareOptions{gap:15px 5px}.shareAppIcon{width:44px;height:44px;border-radius:14px}}
+
+.reservationAction{margin-top:14px}
+.reserveButton{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:39px;padding:9px 12px;border:0;border-radius:10px;background:var(--purple);color:#fff;text-decoration:none;font-size:12px;font-weight:800;cursor:pointer}
+.reserveButton:disabled{opacity:.65;cursor:wait}
+.reservedByMe{display:inline-flex;align-items:center;gap:6px;color:#218653;font-size:12px;font-weight:800}
+.reservationNotice{margin:0 0 18px;padding:12px 14px;border-radius:10px;background:#f0eafa;color:var(--purple);font-size:13px;line-height:1.5}
