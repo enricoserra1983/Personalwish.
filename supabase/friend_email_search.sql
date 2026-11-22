@@ -1,3 +1,5 @@
+drop function if exists public.search_personalwish_users(text);
+
 -- PersonalWish: ricerca amici tramite nome utente o email.
 -- La ricerca email è disponibile solo agli utenti autenticati.
 create or replace function public.search_personalwish_users(p_term text)
