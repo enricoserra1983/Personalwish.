@@ -306,3 +306,5 @@
 .wishlistAddCard{align-items:center;justify-content:center;text-align:center;border-style:dashed;background:#fbf9fe;color:var(--purple)}
 .wishlistAddIcon{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#f0ebfa;margin:18px 0 8px}
 @media(max-width:650px){.wishlistCarousel{margin:14px -2px 16px;gap:10px}.wishlistCard{flex-basis:128px;min-width:128px;padding:9px}.wishlistCard.active{padding:8px}.wishlistCardImage{height:78px}}
+
+.privacyPanel .addRow label.imageUploadButton{box-sizing:border-box;margin-top:12px;padding:9px 11px;min-height:0;height:auto;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;line-height:normal;display:inline-flex;align-items:center;gap:6px;border-radius:8px;background:#f2eef9;color:var(--purple);width:auto;max-width:max-content}
