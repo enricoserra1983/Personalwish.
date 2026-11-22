@@ -67,6 +67,7 @@ export default function LoginPage() {
         });
         if (authError) throw authError;
         if (data.session) {
+          await sendInviteRequest();
           router.replace(nextPath);
           router.refresh();
         } else {
@@ -75,6 +76,7 @@ export default function LoginPage() {
       } else {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
+        await sendInviteRequest();
         router.replace(nextPath);
         router.refresh();
       }
