@@ -23,6 +23,8 @@ create unique index if not exists friend_requests_one_pending
   on public.friend_requests (requester_id, recipient_id, coalesce(wishlist_id, '00000000-0000-0000-0000-000000000000'::uuid))
   where status = 'pending';
 
+alter table public.wishlists add column if not exists private_access_mode text not null default 'selected' check (private_access_mode in ('all_friends','selected'));
+
 alter table public.friendships enable row level security;
 alter table public.friend_requests enable row level security;
 
@@ -181,11 +183,24 @@ begin
   select * into v_w from public.wishlists where share_token=p_share_token;
   if not found then return null; end if;
 
-  if not v_w.is_public
-     and auth.uid() is distinct from v_w.owner_id
-     and not exists(select 1 from public.wishlist_members m
-                    where m.wishlist_id=v_w.id and m.user_id=auth.uid()) then
+  if not v_w.is_public and auth.uid() is distinct from v_w.owner_id
+     and not exists(select 1 from public.wishlist_members m where m.wishlist_id=v_w.id and m.user_id=auth.uid())
+     and not (v_w.private_access_mode='all_friends' and exists(
+       select 1 from public.friendships f
+       where (f.user_low=auth.uid() and f.user_high=v_w.owner_id)
+          or (f.user_high=auth.uid() and f.user_low=v_w.owner_id)
+     )) then
     return jsonb_build_object('access_required',true,'owner_id',v_w.owner_id);
+  end if;
+
+  if not v_w.is_public and auth.uid() is not null and auth.uid() <> v_w.owner_id
+     and v_w.private_access_mode='all_friends' then
+    if exists(select 1 from public.friendships f
+       where (f.user_low=auth.uid() and f.user_high=v_w.owner_id)
+          or (f.user_high=auth.uid() and f.user_low=v_w.owner_id)) then
+      insert into public.wishlist_members(wishlist_id,user_id,role)
+      values(v_w.id,auth.uid(),'participant') on conflict(wishlist_id,user_id) do nothing;
+    end if;
   end if;
 
   select coalesce(jsonb_agg(jsonb_build_object(
