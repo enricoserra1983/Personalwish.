@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Gift, Heart, Plus, Users, Link2, Settings2, Eye, EyeOff, ShoppingBag, LockKeyhole, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Gift, Heart, Plus, Users, Link2, Settings2, Eye, EyeOff, ShoppingBag, LockKeyhole, Sparkles, LogOut } from "lucide-react";
 
 type Wish = { id: number; title: string; note: string; price: string; reserved: boolean; emoji: string };
 type Privacy = {
@@ -29,6 +31,10 @@ const defaults: Privacy = {
 };
 
 export default function Home() {
+  const router = useRouter();
+  const [profileName, setProfileName] = useState("Utente");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [tab, setTab] = useState<"lists" | "groups" | "settings">("lists");
   const [wishes, setWishes] = useState(initialWishes);
   const [privacy, setPrivacy] = useState(defaults);
@@ -36,6 +42,28 @@ export default function Home() {
   const [newWish, setNewWish] = useState("");
   const [copied, setCopied] = useState(false);
   const reservedCount = useMemo(() => wishes.filter(w => w.reserved).length, [wishes]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (error || !data.user) {
+        router.replace("/login");
+        return;
+      }
+      const user = data.user;
+      const name = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
+      setProfileName(String(name));
+      setProfileEmail(user.email || "");
+      setLoadingProfile(false);
+    });
+  }, [router]);
+
+  async function signOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
 
   function addWish() {
     if (!newWish.trim()) return;
@@ -63,11 +91,11 @@ export default function Home() {
         <button className={`navItem ${tab === "lists" ? "active" : ""}`} onClick={() => setTab("lists")}><Heart size={18}/> Le mie liste <span className="navCount">2</span></button>
         <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
         <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>
-        <div className="sideBottom"><div className="avatar">M</div><div><b>Mario Rossi</b><small>Account demo</small></div><span className="onlineDot"/></div>
+        <div className="sideBottom"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{loadingProfile ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="iconAction" onClick={signOut} aria-label="Esci" title="Esci"><LogOut size={16}/></button></div>
       </aside>
 
       <section className="content">
-        <header className="topbar"><div className="mobileBrand"><Gift size={20}/> PersonalWish</div><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "groups" ? "I miei gruppi" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Anteprima</span><div className="avatar small">M</div></div></header>
+        <header className="topbar"><div className="mobileBrand"><Gift size={20}/> PersonalWish</div><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "groups" ? "I miei gruppi" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Anteprima</span><div className="avatar small">{profileName.charAt(0).toUpperCase()}</div></div></header>
 
         {tab === "lists" && <>
           <div className="welcome"><div><div className="eyebrow">LA TUA WISHLIST</div><h1>I desideri prendono forma.</h1><p>Crea la tua lista e condividila con le persone a cui tieni.</p></div><button className="primary"><Plus size={17}/> Nuova lista</button></div>
@@ -88,7 +116,7 @@ export default function Home() {
 
         {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>Raccogli amici e familiari per condividere le liste.</p></div><button className="primary"><Plus size={17}/> Crea gruppo</button></div><div className="groupGrid"><div className="groupCard"><div className="groupEmoji">👨‍👩‍👧‍👦</div><h3>Famiglia</h3><p>6 membri · Gruppo privato</p><button className="outline"><Link2 size={15}/> Invita persone</button></div><div className="groupCard"><div className="groupEmoji">🎄</div><h3>Natale 2026</h3><p>8 membri · Gruppo privato</p><button className="outline"><Link2 size={15}/> Invita persone</button></div><div className="groupCard addGroup"><Plus size={25}/><b>Crea un nuovo gruppo</b><small>Invita chi vuoi, con un link o un codice.</small></div></div></>}
 
-        {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">IL TUO PROFILO</div><h1>Impostazioni.</h1><p>Gestisci il tuo account e le preferenze.</p></div></div><div className="settingsCard"><div className="avatar">M</div><div><b>Mario Rossi</b><p>mario@example.com</p></div><span className="demoPill">Profilo demo</span></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Le liste possono avere impostazioni indipendenti.</p></div></div></>}
+        {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">IL TUO PROFILO</div><h1>Impostazioni.</h1><p>Gestisci il tuo account e le preferenze.</p></div></div><div className="settingsCard"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{profileName}</b><p>{profileEmail}</p></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Le liste possono avere impostazioni indipendenti.</p></div></div></>}
         <footer>PersonalWish <span>·</span> I tuoi desideri, condivisi a modo tuo.</footer>
       </section>
     </main>
