@@ -106,7 +106,7 @@ export default function LoginPage() {
           {!isForgot && (
             <label>
               Password
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Almeno 6 caratteri" required minLength={6} autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === "signup" ? "Almeno 8 caratteri" : "La tua password"} required minLength={mode === "signup" ? 8 : 6} autoComplete={mode === "signup" ? "new-password" : "current-password"} />
             </label>
           )}
 
