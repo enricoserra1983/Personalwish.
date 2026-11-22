@@ -1,4 +1,3 @@
-
 "use client";
 
 import { FormEvent, useState } from "react";
@@ -7,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { Gift, LoaderCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
+type Mode = "login" | "signup" | "forgot";
+
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "signup">("signup");
+  const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,16 +18,27 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  function changeMode(next: Mode) {
+    setMode(next);
+    setError("");
+    setMessage("");
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setMessage("");
     setError("");
-
     const supabase = createClient();
 
     try {
-      if (mode === "signup") {
+      if (mode === "forgot") {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+        });
+        if (resetError) throw resetError;
+        setMessage("Se l'indirizzo è associato a un account, riceverai un'email con il link per reimpostare la password. Controlla anche la cartella spam.");
+      } else if (mode === "signup") {
         const { data, error: authError } = await supabase.auth.signUp({
           email,
           password,
@@ -35,9 +47,7 @@ export default function LoginPage() {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
-
         if (authError) throw authError;
-
         if (data.session) {
           router.replace("/");
           router.refresh();
@@ -45,11 +55,8 @@ export default function LoginPage() {
           setMessage("Registrazione completata. Controlla la tua email per confermare l'account.");
         }
       } else {
-        const { error: authError } =
-          await supabase.auth.signInWithPassword({ email, password });
-
+        const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
-
         router.replace("/");
         router.refresh();
       }
@@ -60,92 +67,66 @@ export default function LoginPage() {
     }
   }
 
+  const isForgot = mode === "forgot";
+
   return (
     <main className="authShell">
       <section className="authCard">
         <Link href="/" className="authBrand">
           <span><Gift size={22} /></span> PersonalWish
         </Link>
-
         <div className="eyebrow">I TUOI DESIDERI, CONDIVISI A MODO TUO</div>
-        <h1>{mode === "signup" ? "Crea il tuo account" : "Bentornato"}</h1>
-
+        <h1>{isForgot ? "Recupera la password" : mode === "signup" ? "Crea il tuo account" : "Bentornato"}</h1>
         <p className="authIntro">
-          {mode === "signup"
-            ? "Registrati per creare liste e condividerle con chi vuoi."
-            : "Accedi per gestire le tue liste e prenotare i regali."}
+          {isForgot
+            ? "Inserisci l'email del tuo account: ti invieremo un link per scegliere una nuova password."
+            : mode === "signup"
+              ? "Registrati per creare liste e condividerle con chi vuoi."
+              : "Accedi per gestire le tue liste e prenotare i regali."}
         </p>
 
-        <div className="authTabs">
-          <button
-            type="button"
-            className={mode === "signup" ? "selected" : ""}
-            onClick={() => { setMode("signup"); setError(""); setMessage(""); }}
-          >
-            Registrati
-          </button>
-          <button
-            type="button"
-            className={mode === "login" ? "selected" : ""}
-            onClick={() => { setMode("login"); setError(""); setMessage(""); }}
-          >
-            Accedi
-          </button>
-        </div>
+        {!isForgot && (
+          <div className="authTabs">
+            <button type="button" className={mode === "signup" ? "selected" : ""} onClick={() => changeMode("signup")}>Registrati</button>
+            <button type="button" className={mode === "login" ? "selected" : ""} onClick={() => changeMode("login")}>Accedi</button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="authForm">
           {mode === "signup" && (
             <label>
               Come vuoi essere chiamato
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Il tuo nome"
-                required
-                autoComplete="name"
-              />
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Il tuo nome" required autoComplete="name" />
+            </label>
+          )}
+          <label>
+            Email
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="nome@esempio.it" required autoComplete="email" />
+          </label>
+          {!isForgot && (
+            <label>
+              Password
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Almeno 6 caratteri" required minLength={6} autoComplete={mode === "signup" ? "new-password" : "current-password"} />
             </label>
           )}
 
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="nome@esempio.it"
-              required
-              autoComplete="email"
-            />
-          </label>
-
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Almeno 6 caratteri"
-              required
-              minLength={6}
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-            />
-          </label>
-
+          {mode === "login" && (
+            <button type="button" className="textButton" onClick={() => changeMode("forgot")}>Password dimenticata?</button>
+          )}
           {error && <p className="authError" role="alert">{error}</p>}
           {message && <p className="authMessage" role="status">{message}</p>}
-
           <button className="authSubmit" type="submit" disabled={busy}>
             {busy
               ? <><LoaderCircle size={17} /> Attendi...</>
-              : mode === "signup" ? "Crea account" : "Accedi"}
+              : isForgot ? "Invia il link di recupero" : mode === "signup" ? "Crea account" : "Accedi"}
           </button>
         </form>
 
-        <p className="authFoot">
-          Puoi consultare una lista condivisa anche senza account.
-          Per creare liste e prenotare un regalo è necessario accedere.
-        </p>
+        {isForgot ? (
+          <button type="button" className="textButton" onClick={() => changeMode("login")}>Torna all'accesso</button>
+        ) : (
+          <p className="authFoot">Puoi consultare una lista condivisa anche senza account. Per creare liste e prenotare un regalo è necessario accedere.</p>
+        )}
       </section>
     </main>
   );
