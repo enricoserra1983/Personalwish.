@@ -241,3 +241,10 @@
 .reserveButton:disabled{opacity:.65;cursor:wait}
 .reservedByMe{display:inline-flex;align-items:center;gap:6px;color:#218653;font-size:12px;font-weight:800}
 .reservationNotice{margin:0 0 18px;padding:12px 14px;border-radius:10px;background:#f0eafa;color:var(--purple);font-size:13px;line-height:1.5}
+
+.accessChoice{display:grid;gap:8px;margin:10px 0}
+.accessChoice button{padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:#fff;text-align:left;color:var(--ink);font-size:12px;font-weight:700}
+.accessChoice button.selected{border-color:var(--purple);background:var(--lav);color:var(--purple)}
+.friendChecks{display:grid;gap:9px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fcfbfe}
+.friendChecks label{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink)}
+.friendChecks input{accent-color:var(--purple)}
