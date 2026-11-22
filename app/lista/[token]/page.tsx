@@ -163,10 +163,10 @@ export default function SharedWishlistPage() {
             ) : (
               <div className="sharedCompactList">
                 {list.items.map(item => (
-                  <button type="button" className="sharedCompactRow" key={item.id} onClick={() => setDetailItem(item)}>
+                  <button type="button" className={`sharedCompactRow ${reservedItems.includes(item.id) ? "isReserved" : ""}`} key={item.id} onClick={() => setDetailItem(item)}>
                     {item.image_url ? <img src={item.image_url} alt="" /> : <span className="sharedCompactPlaceholder"><Gift size={19}/></span>}
                     <span className="sharedCompactInfo"><b>{item.title}</b><small>{item.price == null ? "Prezzo non indicato" : new Intl.NumberFormat("it-IT", { style: "currency", currency: item.currency || "EUR" }).format(item.price)}</small></span>
-                    <span className="sharedCompactOpen">Dettagli <ExternalLink size={13}/></span>
+                    {reservedItems.includes(item.id) ? <span className="compactReservedLabel"><CheckCircle2 size={13}/> Prenotato</span> : <span className="sharedCompactOpen">Dettagli <ExternalLink size={13}/></span>}
                   </button>
                 ))}
               </div>
