@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Gift, Heart, Plus, Users, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2 } from "lucide-react";
+import { Gift, Heart, Plus, Users, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown } from "lucide-react";
 
 type WishItem = {
   id: string;
@@ -50,13 +50,13 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"lists" | "groups" | "settings">("lists");
+  const [tab, setTab] = useState<"lists" | "groups" | "profile" | "settings">("lists");
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [activeId, setActiveId] = useState("");
   const [newListTitle, setNewListTitle] = useState("");
   const [newWish, setNewWish] = useState("");
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false);\n  const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const activeList = wishlists.find(list => list.id === activeId) || wishlists[0] || null;
   const wishes = activeList?.wishlist_items || [];
@@ -188,7 +188,7 @@ export default function Home() {
       </aside>
 
       <section className="content">
-        <header className="topbar"><div className="mobileBrand"><Gift size={20}/> PersonalWish</div><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "groups" ? "I miei gruppi" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Account personale</span><div className="avatar small">{profileName.charAt(0).toUpperCase()}</div></div></header>
+        <header className="topbar"><div className="mobileBrand"><Gift size={20}/> PersonalWish</div><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Account personale</span><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label="Apri menu account" aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileName.charAt(0).toUpperCase()}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
 
         {error && <div className="authError" role="alert">{error}</div>}
         {loading ? <div className="settingsCard"><LoaderCircle size={20}/> Caricamento delle tue liste...</div> : null}
@@ -221,7 +221,8 @@ export default function Home() {
 
         {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
 
-        {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">IL TUO PROFILO</div><h1>Impostazioni.</h1><p>Gestisci il tuo account e le preferenze.</p></div></div><div className="settingsCard"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{profileName}</b><p>{profileEmail}</p></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Le liste possono avere impostazioni indipendenti.</p></div></div></>}
+        {tab === "profile" && <><div className="welcome"><div><div className="eyebrow">ACCOUNT PERSONALE</div><h1>Il mio profilo.</h1><p>Le informazioni associate al tuo account PersonalWish.</p></div></div><div className="settingsCard"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{profileName}</b><p>{profileEmail}</p></div></div></>}
+        {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">PREFERENZE</div><h1>Impostazioni.</h1><p>Gestisci la privacy e la sicurezza delle tue liste.</p></div></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Ogni lista può avere impostazioni indipendenti per partecipanti e prenotazioni.</p></div></div></>}
         <footer>PersonalWish <span>·</span> I tuoi desideri, condivisi a modo tuo.</footer>
       </section>
     </main>
