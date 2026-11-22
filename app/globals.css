@@ -251,3 +251,6 @@
 
 .groupFriendRow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink)}
 .groupFriendRow input{accent-color:var(--purple)}
+
+.groupAccessRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
+.groupAccessRow button{background:var(--lav);color:var(--purple);padding:8px 10px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap}
