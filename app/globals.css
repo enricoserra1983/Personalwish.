@@ -286,3 +286,6 @@
   border-radius:999px;background:#e53935;color:#fff;
   font-size:10px;font-weight:800;line-height:1
 }
+
+.listCoverImage{position:relative;width:150px;height:150px;object-fit:cover;border-radius:50%;border:5px solid #ffffffaa;box-shadow:0 12px 24px #8a6ec333;z-index:1}
+@media(max-width:650px){.listCoverImage{width:112px;height:112px}}
