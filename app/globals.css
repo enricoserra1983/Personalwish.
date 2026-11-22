@@ -345,3 +345,37 @@
 .wishEditorActions button{min-height:42px;padding:9px 15px;border-radius:10px;font-size:12px;font-weight:700}
 .wishEditorActions .outline{background:#fff;border:1px solid var(--line);color:var(--muted)}
 @media(max-width:420px){.wishEditorDialog{padding:19px 15px 15px}.wishLinkRow button{padding:0 10px}.wishEditorHeading h3{font-size:18px}}
+
+
+/* Visualizzazione personale della lista condivisa */
+.sharedItemsToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 14px}
+.sharedItemsToolbar .sharedCount{margin:0}
+.sharedViewSwitch{display:flex;gap:5px;padding:4px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.sharedViewSwitch button{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:8px;background:transparent;color:var(--muted);font-size:11px;font-weight:700}
+.sharedViewSwitch button.selected{background:var(--lav);color:var(--purple)}
+.sharedCompactList{display:flex;flex-direction:column;gap:8px}
+.sharedCompactRow{display:flex;align-items:center;gap:12px;width:100%;min-width:0;padding:10px 13px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);text-align:left}
+.sharedCompactRow>img,.sharedCompactPlaceholder{width:48px;height:48px;flex:0 0 48px;object-fit:cover;border-radius:9px;background:#f1ebfa}
+.sharedCompactPlaceholder{display:grid;place-items:center;color:var(--purple)}
+.sharedCompactInfo{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.sharedCompactInfo b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.sharedCompactInfo small{font-size:11px;color:var(--muted)}
+.sharedCompactOpen{display:inline-flex;align-items:center;gap:5px;color:var(--purple);font-size:10px;font-weight:700;white-space:nowrap}
+.sharedDetailOverlay{position:fixed;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;padding:16px;background:#21182f88;backdrop-filter:blur(3px)}
+.sharedDetailDialog{position:relative;width:min(100%,440px);max-height:90vh;overflow:auto;border-radius:18px;background:#fff;box-shadow:0 20px 65px #21153340}
+.sharedDetailClose{position:absolute;top:11px;right:11px;z-index:2;width:35px;height:35px;display:grid;place-items:center;border-radius:50%;background:#ffffffed;color:var(--ink)}
+.sharedDetailImage{display:block;width:100%;height:230px;object-fit:contain;background:#f7f4fb}
+.sharedDetailDialog .sharedItemBody{padding:20px}
+.sharedDetailDialog .sharedItemBody h2{font-size:19px}
+.sharedDetailDialog .sharedItemBody p{font-size:13px}
+.sharedDetailPrice{margin-top:15px;font-size:16px;font-weight:800}
+.sharedDetailProductLink{display:inline-flex;align-items:center;gap:6px;margin-top:12px;color:var(--purple);font-size:12px;font-weight:800;text-decoration:none}
+@media(max-width:700px){
+ .sharedItemsToolbar{align-items:center;margin:22px 0 12px}
+ .sharedCompactRow{gap:9px;padding:9px}
+ .sharedCompactRow>img,.sharedCompactPlaceholder{width:42px;height:42px;flex-basis:42px}
+ .sharedCompactInfo b{font-size:12px}
+ .sharedCompactOpen{font-size:9px}
+ .sharedDetailImage{height:200px}
+}
+@media(max-width:390px){.sharedViewSwitch button{padding:8px;font-size:10px}.sharedCompactOpen{font-size:0}.sharedCompactOpen svg{width:16px;height:16px}}
