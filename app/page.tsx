@@ -269,7 +269,7 @@ export default function Home() {
             <div className="shareOptions">
               <button onClick={shareToWhatsApp}><span className="shareAppIcon whatsapp">W</span><b>WhatsApp</b></button>
               <button onClick={shareToFacebook}><span className="shareAppIcon facebook">f</span><b>Facebook</b></button>
-              <button onClick={() => { const url = getShareUrl(); const text = `Guarda la mia lista "${activeList.title}" su PersonalWish: ${url}`; window.open(`https://www.facebook.com/dialog/send?link=${encodeURIComponent(url)}&app_id=&redirect_uri=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer"); }}><span className="shareAppIcon messenger"><span>ϟ</span></span><b>Messenger</b></button>
+              <button onClick={async () => { const url = getShareUrl(); const text = `Guarda la mia lista "${activeList.title}" su PersonalWish: ${url}`; if (navigator.share) { try { await navigator.share({ title: activeList.title, text, url }); } catch (err) { if (!(err instanceof Error && err.name === "AbortError")) setError("Condivisione non disponibile."); } } else { await copyShareLink(); setError("Link copiato: apri Messenger e incollalo nella conversazione."); } }}><span className="shareAppIcon messenger"><span>ϟ</span></span><b>Messenger</b></button>
               <button onClick={shareToInstagram}><span className="shareAppIcon instagram">◎</span><b>Instagram</b></button>
               <button onClick={shareByEmail}><span className="shareAppIcon email">✉</span><b>Email</b></button>
               <button onClick={copyShareLink}><span className="shareAppIcon copy"><Link2 size={19}/></span><b>{copied ? "Copiato!" : "Copia link"}</b></button>
