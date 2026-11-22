@@ -379,3 +379,14 @@
  .sharedDetailImage{height:200px}
 }
 @media(max-width:390px){.sharedViewSwitch button{padding:8px;font-size:10px}.sharedCompactOpen{font-size:0}.sharedCompactOpen svg{width:16px;height:16px}}
+
+
+/* Selettore visualizzazione anche nell'area personale */
+.ownerViewToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;color:var(--muted);font-size:11px;font-weight:700}
+.ownerCompactList{display:flex;flex-direction:column;gap:8px}
+.ownerCompactRow{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:#fff;min-width:0}
+.ownerCompactMain{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1;min-width:0;padding:5px 3px;background:transparent;color:var(--ink);text-align:left}
+.ownerCompactName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700}
+.ownerCompactMain>b{flex-shrink:0;font-size:11px}
+.ownerCompactRow>.outline{margin:0;padding:7px 9px;white-space:nowrap}
+@media(max-width:420px){.ownerCompactRow{gap:5px;padding:8px}.ownerCompactRow>.outline{padding:7px}.ownerCompactName{font-size:11px}.ownerCompactMain>b{font-size:10px}}
