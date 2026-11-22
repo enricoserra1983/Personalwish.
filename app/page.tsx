@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Gift, Heart, Plus, Users, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown } from "lucide-react";
+import { Gift, Heart, Plus, Users, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X } from "lucide-react";
 
 type WishItem = {
   id: string;
@@ -97,6 +97,20 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
+  const [detailWish, setDetailWish] = useState<WishItem | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedMode = window.localStorage.getItem("personalwish-shared-view");
+      if (savedMode === "grid" || savedMode === "list") setDisplayMode(savedMode);
+    } catch {}
+  }, []);
+
+  function changeDisplayMode(mode: "grid" | "list") {
+    setDisplayMode(mode);
+    try { window.localStorage.setItem("personalwish-shared-view", mode); } catch {}
+  }
 
   const activeList = wishlists.find(list => list.id === activeId) || wishlists[0] || null;
   const wishes = activeList?.wishlist_items || [];
@@ -627,7 +641,34 @@ export default function Home() {
               <div className="privacyNote"><LockKeyhole size={16}/> Le impostazioni vengono salvate direttamente nel database.</div>
             </section>}
             <div className="addRow"><button type="button" onClick={()=>openWishEditor()}><Plus size={17}/> Aggiungi un desiderio</button></div>
-            {wishes.length ? <div className="wishGrid">{wishes.map((wish, i) => <article className="wishCard" key={wish.id}><div className={`wishImage image${i % 3}`}>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div> : <div className="settingsCard">Non hai ancora aggiunto desideri a questa lista.</div>}
+            {wishes.length ? <>
+              <div className="ownerViewToolbar">
+                <span>Visualizzazione</span>
+                <div className="sharedViewSwitch" role="group" aria-label="Visualizzazione desideri">
+                  <button type="button" className={displayMode === "grid" ? "selected" : ""} onClick={() => changeDisplayMode("grid")} aria-pressed={displayMode === "grid"}><LayoutGrid size={16}/> Schede</button>
+                  <button type="button" className={displayMode === "list" ? "selected" : ""} onClick={() => changeDisplayMode("list")} aria-pressed={displayMode === "list"}><List size={16}/> Lista</button>
+                </div>
+              </div>
+              {displayMode === "grid" ? (
+                <div className="wishGrid">{wishes.map((wish, i) => <article className="wishCard" key={wish.id}><div className={`wishImage image${i % 3}`}>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
+              ) : (
+                <div className="ownerCompactList">{wishes.map(wish => <div className="ownerCompactRow" key={wish.id}>
+                  <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
+                    <span className="ownerCompactName">{wish.title}</span>
+                    <b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b>
+                  </button>
+                  <button type="button" className="outline" onClick={() => openWishEditor(wish)}>Modifica</button>
+                  <button type="button" className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button>
+                </div>)}</div>
+              )}
+              {detailWish && <div className="sharedDetailOverlay" onClick={() => setDetailWish(null)}><section className="sharedDetailDialog" role="dialog" aria-modal="true" aria-label={detailWish.title} onClick={e => e.stopPropagation()}>
+                <button type="button" className="sharedDetailClose" onClick={() => setDetailWish(null)} aria-label="Chiudi"><X size={20}/></button>
+                {detailWish.image_url ? <img src={detailWish.image_url} alt={detailWish.title} className="sharedDetailImage"/> : <div className="sharedItemPlaceholder sharedDetailImage"><Gift size={38}/></div>}
+                <div className="sharedItemBody"><h2>{detailWish.title}</h2><p>{detailWish.description || "Nessuna descrizione"}</p><div className="sharedDetailPrice">{detailWish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(detailWish.price)}</div>
+                  {detailWish.product_url && <a className="sharedDetailProductLink" href={detailWish.product_url} target="_blank" rel="noopener noreferrer">Apri prodotto <ExternalLink size={15}/></a>}
+                  <div className="wishEditorActions"><button type="button" onClick={() => { const wish = detailWish; setDetailWish(null); openWishEditor(wish); }}>Modifica desiderio</button><button type="button" className="outline" onClick={() => setDetailWish(null)}>Chiudi</button></div>
+                </div></section></div>}
+            </> : <div className="settingsCard">Non hai ancora aggiunto desideri a questa lista.</div>}
             {showWishEditor && <div className="shareOverlay wishOverlay" role="presentation" onClick={resetWishEditor}><section className="shareDialog wishEditorDialog" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><button className="shareClose" aria-label="Chiudi" onClick={resetWishEditor}>×</button><div className="wishEditorHeading"><div className="shareDialogIcon"><Gift size={22}/></div><h3>{editingWishId?"Modifica desiderio":"Aggiungi un desiderio"}</h3><p>Scegli come vuoi aggiungere il tuo desiderio</p></div><div className="wishModeSwitch"><button type="button" className={wishMode==="manual"?"selected":""} onClick={()=>setWishMode("manual")}>Scrivi il nome</button><button type="button" className={wishMode==="link"?"selected":""} onClick={()=>setWishMode("link")}>Inserisci un link</button></div>{wishMode==="link" ? <div className="wishLinkBox"><div className="wishFieldLabel">Link del prodotto</div><div className="wishLinkRow"><input value={wishUrl} onChange={e=>setWishUrl(e.target.value)} placeholder="Incolla qui il link del prodotto"/><button type="button" onClick={fetchProductDetails} disabled={fetchingProduct||!wishUrl.trim()}>{fetchingProduct?"Attendi...":"Recupera"}</button></div><p className="wishHint">Proveremo a recuperare nome, immagine e descrizione</p></div> : <div className="wishField"><div className="wishFieldLabel">Link facoltativo</div><input value={wishUrl} onChange={e=>setWishUrl(e.target.value)} placeholder="https://..."/></div>}<div className="wishField"><div className="wishFieldLabel">Nome del desiderio <span>*</span></div><input value={newWish} onChange={e=>setNewWish(e.target.value)} placeholder="Es. Cuffie wireless"/></div><div className="wishField"><div className="wishFieldLabel">Descrizione</div><textarea value={wishDescription} onChange={e=>setWishDescription(e.target.value)} placeholder="Aggiungi qualche dettaglio..." rows={3}/></div><div className="wishField"><div className="wishFieldLabel">Prezzo <span className="wishOptional">facoltativo</span></div><input value={wishPrice} onChange={e=>setWishPrice(e.target.value)} inputMode="decimal" placeholder="Es. 49,90 €"/></div><div className="wishField"><div className="wishFieldLabel">Immagine <span className="wishOptional">facoltativa</span></div><button type="button" className="wishImagePick" onClick={()=>wishImageInputRef.current?.click()} disabled={savingWishImage}><span>＋</span>{savingWishImage?"Caricamento...":wishImage?"Cambia immagine":"Scegli dalla galleria"}</button><input ref={wishImageInputRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>uploadWishImage(e.target.files?.[0]||null)}/>{wishImage && <img src={wishImage} alt="Anteprima desiderio" className="wishEditorPreview"/>}</div><div className="wishEditorActions"><button type="button" onClick={addWish} disabled={busy||!newWish.trim()}>{busy?"Salvataggio...":editingWishId?"Salva modifiche":"Salva desiderio"}</button><button type="button" className="outline" onClick={resetWishEditor}>Annulla</button></div></section></div>}
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
