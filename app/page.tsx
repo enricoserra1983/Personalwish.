@@ -94,7 +94,7 @@ export default function Home() {
 
   useEffect(() => {
     loadData().catch(err => {
-      setError(err instanceof Error ? err.message : "Non riesco a caricare i dati.");
+      const detail = err && typeof err === "object" && "message" in err ? String((err as { message: unknown }).message) : err instanceof Error ? err.message : String(err);\n      setError("Errore nel caricamento: " + detail);
       setLoading(false);
     });
   }, [loadData]);
