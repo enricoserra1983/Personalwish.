@@ -91,11 +91,11 @@ export default function Home() {
         <button className={`navItem ${tab === "lists" ? "active" : ""}`} onClick={() => setTab("lists")}><Heart size={18}/> Le mie liste <span className="navCount">2</span></button>
         <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
         <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>
-        <div className="sideBottom"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{loadingProfile ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="iconAction" onClick={signOut} aria-label="Esci" title="Esci"><LogOut size={16}/></button></div>
+        <div className="sideBottom"><div className="avatar">{profileName.charAt(0).toUpperCase()}</div><div><b>{loadingProfile ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
       </aside>
 
       <section className="content">
-        <header className="topbar"><div className="mobileBrand"><Gift size={20}/> PersonalWish</div><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "groups" ? "I miei gruppi" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Anteprima</span><div className="avatar small">{profileName.charAt(0).toUpperCase()}</div></div></header>
+        <header className="topbar"><div className="mobileBrand"><Gift size={20}/> PersonalWish</div><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "groups" ? "I miei gruppi" : "Impostazioni"}</div><div className="topActions"><span className="demoPill"><span/> Account personale</span><div className="avatar small">{profileName.charAt(0).toUpperCase()}</div></div></header>
 
         {tab === "lists" && <>
           <div className="welcome"><div><div className="eyebrow">LA TUA WISHLIST</div><h1>I desideri prendono forma.</h1><p>Crea la tua lista e condividila con le persone a cui tieni.</p></div><button className="primary"><Plus size={17}/> Nuova lista</button></div>
