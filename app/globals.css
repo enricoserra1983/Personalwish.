@@ -295,3 +295,14 @@
 
 .listSettingsButton{position:absolute;top:16px;right:16px;z-index:5;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#ffffffd9;color:#7050bd;border:1px solid #e4dcf4;box-shadow:0 3px 10px #33234d12;cursor:pointer}
 .listSettingsButton:active{transform:scale(.96)}
+
+.wishlistCarousel{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding:4px 2px 14px;margin:18px 0 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.wishlistCard{flex:0 0 142px;min-width:142px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:10px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:14px;color:var(--ink);scroll-snap-align:start;transition:border-color .18s,box-shadow .18s}
+.wishlistCard.active{border:2px solid var(--purple);padding:9px;box-shadow:0 4px 14px #7956c81c;background:#fcfaff}
+.wishlistCardImage{width:100%;height:86px;object-fit:cover;border-radius:9px;background:#f1ebfa;display:grid;place-items:center}
+.wishlistCardPlaceholder{font-size:36px;background:linear-gradient(135deg,#f0eafa,#e2d8f3)}
+.wishlistCardTitle{font-size:12px;font-weight:700;line-height:1.3;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wishlistCardCount{font-size:10px;color:var(--muted)}
+.wishlistAddCard{align-items:center;justify-content:center;text-align:center;border-style:dashed;background:#fbf9fe;color:var(--purple)}
+.wishlistAddIcon{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#f0ebfa;margin:18px 0 8px}
+@media(max-width:650px){.wishlistCarousel{margin:14px -2px 16px;gap:10px}.wishlistCard{flex-basis:128px;min-width:128px;padding:9px}.wishlistCard.active{padding:8px}.wishlistCardImage{height:78px}}
