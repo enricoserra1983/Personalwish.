@@ -25,11 +25,6 @@ create table if not exists public.chat_messages (
   created_at timestamptz not null default now()
 );
 
-create unique index if not exists chat_one_direct_per_pair
-on public.chat_participants (
-  least(user_id, (select cp.user_id from public.chat_participants cp where cp.conversation_id = conversation_id and cp.user_id <> user_id limit 1)),
-  greatest(user_id, (select cp.user_id from public.chat_participants cp where cp.conversation_id = conversation_id and cp.user_id <> user_id limit 1))
-) where false;
 -- L'unicità delle chat private viene gestita dalla funzione RPC e non da un indice funzionale.
 
 create index if not exists chat_messages_conversation_created
