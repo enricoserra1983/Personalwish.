@@ -88,7 +88,8 @@ export default function Home() {
     const user = auth.user;
     const name = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
     setProfileName(String(name));
-    setProfileEmail(user.email || "");\n    setProfileUserId(user.id);
+    setProfileEmail(user.email || "");
+    setProfileUserId(user.id);
 
     const { error: profileError } = await supabase.from("profiles").upsert({
       id: user.id,
