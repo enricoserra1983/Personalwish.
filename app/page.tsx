@@ -75,6 +75,7 @@ export default function Home() {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [activeId, setActiveId] = useState("");
   const [newListTitle, setNewListTitle] = useState("");
+  const [showNewListForm, setShowNewListForm] = useState(false);
   const [editingListTitle, setEditingListTitle] = useState(false);
   const [editedListTitle, setEditedListTitle] = useState("");
   const [showEditMenu, setShowEditMenu] = useState(false);
@@ -490,15 +491,17 @@ export default function Home() {
 
         {tab === "lists" && !loading && <>
           <div className="welcome"><div><div className="eyebrow">LA TUA WISHLIST</div><h1>I desideri prendono forma.</h1><p>Crea le tue liste e condividile con le persone a cui tieni.</p></div></div>
-          <div className="addRow">
-            <input value={newListTitle} onChange={e => setNewListTitle(e.target.value)} placeholder="Nome della nuova lista..." />
-            <button onClick={createWishlist} disabled={busy || !newListTitle.trim()}><Plus size={17}/> Nuova lista</button>
+          <div className="wishlistCarousel" aria-label="Le tue liste">
+            {wishlists.map(list=><button type="button" key={list.id} className={`wishlistCard ${activeList?.id===list.id ? "active" : ""}`} onClick={()=>setActiveId(list.id)}>
+              {list.image_url ? <img src={list.image_url} alt="" className="wishlistCardImage"/> : <div className="wishlistCardImage wishlistCardPlaceholder">🎁</div>}
+              <span className="wishlistCardTitle">{list.title}</span>
+              <span className="wishlistCardCount">{list.wishlist_items?.length || 0} desideri</span>
+            </button>)}
+            <button type="button" className="wishlistCard wishlistAddCard" onClick={()=>setShowNewListForm(v=>!v)}>
+              <span className="wishlistAddIcon"><Plus size={24}/></span><span className="wishlistCardTitle">Nuova lista</span><span className="wishlistCardCount">Crea una lista</span>
+            </button>
           </div>
-          {wishlists.length > 0 && <div className="addRow">
-            <select className="wishlistSelect" aria-label="Seleziona lista" value={activeList?.id || ""} onChange={e => setActiveId(e.target.value)}>
-              {wishlists.map(list => <option key={list.id} value={list.id}>{list.title}</option>)}
-            </select>
-          </div>}
+          {showNewListForm && <div className="addRow"><input value={newListTitle} onChange={e=>setNewListTitle(e.target.value)} placeholder="Nome della nuova lista..."/><button onClick={createWishlist} disabled={busy || !newListTitle.trim()}><Plus size={17}/> Crea</button></div>}
           {activeList ? <>
             <div className="listHero">
               <button type="button" className="listSettingsButton" aria-label="Impostazioni lista" title="Impostazioni lista" onClick={()=>setShowEditMenu(v=>!v)}><Settings2 size={20}/></button>
