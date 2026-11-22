@@ -57,6 +57,13 @@ export default function LoginPage() {
         if (resetError) throw resetError;
         setMessage("Se l'indirizzo è associato a un account, riceverai un'email con il link per reimpostare la password. Controlla anche la cartella spam.");
       } else if (mode === "signup") {
+        const username = name.trim();
+        if (!/^[A-Za-z0-9_]{3,30}$/.test(username)) {
+          throw new Error("Il nome utente deve contenere da 3 a 30 caratteri: solo lettere, numeri e underscore.");
+        }
+        const { data: usernameAvailable, error: usernameError } = await supabase.rpc("is_username_available", { p_username: username });
+        if (usernameError) throw usernameError;
+        if (!usernameAvailable) throw new Error("Questo nome utente è già utilizzato. Scegline un altro.");
         const { data, error: authError } = await supabase.auth.signUp({
           email,
           password,
@@ -115,8 +122,8 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="authForm">
           {mode === "signup" && (
             <label>
-              Come vuoi essere chiamato
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Il tuo nome" required autoComplete="name" />
+              Nome utente
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Es. Enrico83" required autoComplete="name" />
             </label>
           )}
           <label>
