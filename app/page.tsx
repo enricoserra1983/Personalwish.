@@ -94,7 +94,8 @@ export default function Home() {
 
   useEffect(() => {
     loadData().catch(err => {
-      const detail = err && typeof err === "object" && "message" in err ? String((err as { message: unknown }).message) : err instanceof Error ? err.message : String(err);\n      setError("Errore nel caricamento: " + detail);
+      const detail = err && typeof err === "object" && "message" in err ? String((err as { message: unknown }).message) : err instanceof Error ? err.message : String(err);
+      setError("Errore nel caricamento: " + detail);
       setLoading(false);
     });
   }, [loadData]);
