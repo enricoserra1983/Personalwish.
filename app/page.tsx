@@ -64,6 +64,7 @@ export default function Home() {
   const [inviteCopied,setInviteCopied] = useState(false);
   const [friendResults,setFriendResults] = useState<{user_id:string;display_name:string;email:string|null}[]>([]);
   const [selectedFriends,setSelectedFriends] = useState<string[]>([]);
+  const [selectedGroupIds,setSelectedGroupIds] = useState<string[]>([]);
   const [friendGroups,setFriendGroups] = useState<{group_id:string;group_name:string;member_count:number}[]>([]);
   const [newGroupName,setNewGroupName] = useState("");
   const [activeGroup,setActiveGroup] = useState<string>("");
@@ -296,8 +297,20 @@ export default function Home() {
 
   async function loadSelectedFriends() {
     if(!activeList) return;
-    const {data}=await createClient().from("wishlist_members").select("user_id").eq("wishlist_id",activeList.id);
-    setSelectedFriends((data||[]).map(x=>x.user_id));
+    const supabase=createClient();
+    const {data,error}=await supabase.from("wishlist_members").select("user_id").eq("wishlist_id",activeList.id);
+    if(error){setError(error.message);return;}
+    const ids=(data||[]).map(x=>x.user_id);
+    setSelectedFriends(ids);
+    const selectedGroups:string[]=[];
+    for(const group of friendGroups) {
+      const {data:members}=await supabase.rpc("get_friend_group_members",{p_group_id:group.group_id});
+      const memberIds=(members||[]).map((person:{user_id:string})=>person.user_id);
+      if(memberIds.length>0 && memberIds.every((id:string)=>ids.includes(id)) && ids.every((id:string)=>memberIds.includes(id))) {
+        selectedGroups.push(group.group_id);
+      }
+    }
+    setSelectedGroupIds(selectedGroups);
   }
 
   async function signOut() {
@@ -448,7 +461,7 @@ export default function Home() {
             <div className="addRow"><input value={newWish} onChange={e => setNewWish(e.target.value)} onKeyDown={e => e.key === "Enter" && addWish()} placeholder="Aggiungi un desiderio..." /><button onClick={addWish} disabled={busy || !newWish.trim()}><Plus size={17}/> Aggiungi</button></div>
             {wishes.length ? <div className="wishGrid">{wishes.map((wish, i) => <article className="wishCard" key={wish.id}><div className={`wishImage image${i % 3}`}><span>🎁</span></div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p><div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></article>)}</div> : <div className="settingsCard">Non hai ancora aggiunto desideri a questa lista.</div>}
             {showPrivacy && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">CONTROLLO ACCESSI</div><h3>Privacy di questa lista</h3><p>Scegli cosa possono vedere il creatore e gli altri partecipanti.</p></div><button className="closeBtn" onClick={() => setShowPrivacy(false)}>×</button></div>
-              <div className="privacyGroup"><h4>Accesso alla lista</h4><div className="accessChoice"><button className={activeList.is_public ? "selected" : ""} onClick={() => setListVisibility(true,"selected")}>Pubblica · tutti gli utenti</button><button className={!activeList.is_public && activeList.private_access_mode==="all_friends" ? "selected" : ""} onClick={() => setListVisibility(false,"all_friends")}>Privata · tutti i miei amici</button><button className={!activeList.is_public && activeList.private_access_mode==="selected" ? "selected" : ""} onClick={() => {setListVisibility(false,"selected");loadSelectedFriends();}}>Privata · amici selezionati</button></div>{!activeList.is_public && activeList.private_access_mode==="selected" && <div className="friendChecks"><b>Amici autorizzati</b>{friendGroups.map(group=><div className="groupAccessRow" key={group.group_id}><span><b>{group.group_name}</b> · {group.member_count} amici</span><button type="button" onClick={()=>toggleSelectedGroup(group.group_id,true)}>Seleziona solo questo gruppo</button></div>)}{friends.map(friend=><label key={friend.user_id}><input type="checkbox" checked={selectedFriends.includes(friend.user_id)} onChange={e=>toggleSelectedFriend(friend.user_id,e.target.checked)}/>{friend.display_name}</label>)}{friends.length===0 && <small>Non hai ancora amici. Aggiungili dalla sezione Amici.</small>}</div>}</div><div className="privacyGroup"><h4>Visibilità</h4>{privacyLabels.map(({ key, label }) => <PrivacyToggle key={key} label={label} value={activeList[key]} onClick={() => togglePrivacy(key)}/>)}</div>
+              <div className="privacyGroup"><h4>Accesso alla lista</h4><div className="accessChoice"><button className={activeList.is_public ? "selected" : ""} onClick={() => setListVisibility(true,"selected")}>Pubblica · tutti gli utenti</button><button className={!activeList.is_public && activeList.private_access_mode==="all_friends" ? "selected" : ""} onClick={() => setListVisibility(false,"all_friends")}>Privata · tutti i miei amici</button><button className={!activeList.is_public && activeList.private_access_mode==="selected" ? "selected" : ""} onClick={() => {setListVisibility(false,"selected");loadSelectedFriends();}}>Privata · amici selezionati</button></div>{!activeList.is_public && activeList.private_access_mode==="selected" && <div className="friendChecks"><b>Amici autorizzati</b>{friendGroups.map(group=><div className="groupAccessRow" key={group.group_id}><span><b>{group.group_name}</b> · {group.member_count} amici</span><span className="groupSelectedMark" aria-label={selectedGroupIds.includes(group.group_id) ? "Gruppo selezionato" : "Gruppo non selezionato"}>{selectedGroupIds.includes(group.group_id) ? "✓" : ""}</span><button type="button" onClick={()=>toggleSelectedGroup(group.group_id,true)}>Seleziona solo questo gruppo</button></div>)}{friends.map(friend=><label key={friend.user_id}><input type="checkbox" checked={selectedFriends.includes(friend.user_id)} onChange={e=>toggleSelectedFriend(friend.user_id,e.target.checked)}/>{friend.display_name}</label>)}{friends.length===0 && <small>Non hai ancora amici. Aggiungili dalla sezione Amici.</small>}</div>}</div><div className="privacyGroup"><h4>Visibilità</h4>{privacyLabels.map(({ key, label }) => <PrivacyToggle key={key} label={label} value={activeList[key]} onClick={() => togglePrivacy(key)}/>)}</div>
               <div className="privacyNote"><LockKeyhole size={16}/> Le impostazioni vengono salvate direttamente nel database.</div>
             </section>}
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
