@@ -14,6 +14,7 @@ type SharedItem = {
   product_url: string | null;
   price: number | null;
   currency: string;
+  reserved?: boolean;
 };
 type SharedWishlist = {
   id: string;
@@ -29,6 +30,7 @@ export default function SharedWishlistPage() {
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [reservedByMe, setReservedByMe] = useState<string[]>([]);
+  const [reservedItems, setReservedItems] = useState<string[]>([]);
   const [reservingId, setReservingId] = useState<string | null>(null);
   const [reservationMessage, setReservationMessage] = useState("");
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
@@ -62,6 +64,7 @@ export default function SharedWishlistPage() {
       } else {
         const wishlist = data as SharedWishlist;
         setList(wishlist);
+        setReservedItems(wishlist.items.filter(item => item.reserved).map(item => item.id));
         if (currentUserId && wishlist.items.length) {
           const { data: mine } = await supabase
             .from("reservations")
@@ -92,6 +95,7 @@ export default function SharedWishlistPage() {
         : "Non è stato possibile completare la prenotazione. Riprova.");
     } else if (data === true) {
       setReservedByMe(current => [...current, itemId]);
+      setReservedItems(current => current.includes(itemId) ? current : [...current, itemId]);
       setReservationMessage("Regalo prenotato! La prenotazione è stata registrata.");
     } else {
       setReservationMessage("Questo regalo è già stato prenotato da un'altra persona.");
@@ -140,6 +144,8 @@ export default function SharedWishlistPage() {
                       <div className="reservationAction">
                         {reservedByMe.includes(item.id) ? (
                           <span className="reservedByMe"><CheckCircle2 size={16}/> Prenotato da te</span>
+                        ) : reservedItems.includes(item.id) ? (
+                          <span className="reservedByMe"><CheckCircle2 size={16}/> Già prenotato</span>
                         ) : userId ? (
                           <button type="button" onClick={() => reserveItem(item.id)} disabled={reservingId !== null} className="reserveButton">
                             {reservingId === item.id ? <><LoaderCircle size={15} className="sharedSpinner"/> Prenotazione...</> : <><Gift size={15}/> Prenota regalo</>}
@@ -179,6 +185,8 @@ export default function SharedWishlistPage() {
                   <div className="reservationAction">
                     {reservedByMe.includes(detailItem.id) ? (
                       <span className="reservedByMe"><CheckCircle2 size={16}/> Prenotato da te</span>
+                    ) : reservedItems.includes(detailItem.id) ? (
+                      <span className="reservedByMe"><CheckCircle2 size={16}/> Già prenotato</span>
                     ) : userId ? (
                       <button type="button" onClick={() => reserveItem(detailItem.id)} disabled={reservingId !== null} className="reserveButton">
                         {reservingId === detailItem.id ? <><LoaderCircle size={15} className="sharedSpinner"/> Prenotazione...</> : <><Gift size={15}/> Prenota regalo</>}
