@@ -267,3 +267,12 @@
 .friendWishlistCard small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .friendWishlistCard strong{font-size:10px;color:var(--purple);white-space:nowrap}
 @media(max-width:520px){.friendWishlistGrid{grid-template-columns:1fr}}
+
+
+/* Pallino notifiche richieste di amicizia sull'avatar del profilo */
+.accountAvatar{position:relative}
+.profileNotificationDot{
+  position:absolute;top:1px;right:1px;width:11px;height:11px;
+  border:2px solid #fff;border-radius:50%;background:#e53935;
+  box-shadow:0 1px 4px #0003;pointer-events:none
+}
