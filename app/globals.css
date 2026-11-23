@@ -495,3 +495,15 @@
 .chatTitleDropdown{position:absolute;z-index:20;top:100%;left:0;min-width:190px;padding:7px;background:#fff;border:1px solid #e8e1f0;border-radius:12px;box-shadow:0 10px 30px rgba(35,25,55,.14)}
 .chatTitleDropdown button{width:100%;padding:11px 12px;border:0;border-radius:8px;background:transparent;color:#a33d50;text-align:left;font-weight:650}
 .chatTitleDropdown button:hover{background:#fff0f1}
+
+.transferPanel{max-width:760px}
+.transferListChoice{display:flex;flex-direction:column;gap:5px;padding:16px 18px;margin-bottom:18px;border-radius:14px;background:#f8f6fb}
+.transferListChoice b{font-size:13px;color:#777184}
+.transferListChoice strong{font-size:17px;color:#302a40}
+.transferListChoice small{font-size:13px;color:#777184}
+.transferActions{display:grid;grid-template-columns:1fr;gap:12px}
+.transferActions>div{padding:18px;border:1px solid #eee8f6;border-radius:14px;background:#fff}
+.transferActions b{font-size:16px;color:#302a40}
+.transferActions p{margin:6px 0 14px;color:#777184;font-size:14px;line-height:1.5}
+.transferActions button{min-height:42px;padding:0 16px;border:0;border-radius:11px;background:#eee7f8;color:#634b91;font-weight:650}
+.transferActions button:disabled{opacity:.45;cursor:not-allowed}
