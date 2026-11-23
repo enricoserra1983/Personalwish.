@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         "Accept": "text/html,application/xhtml+xml"
       },
       redirect: "follow",
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(15000)
     });
     if (!response.ok) {
       return NextResponse.json({ error: "Il negozio non consente di leggere i dati del prodotto." }, { status: 422 });
