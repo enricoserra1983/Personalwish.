@@ -593,3 +593,16 @@
 .notificationAccept{background:#eee8fb;color:#6747b2}
 .notificationDecline{background:#f6f2f2;color:#8d7373}
 @media(max-width:650px){.notificationActions{margin-left:0}}
+
+/* Centro notifiche: elenco compatto, scorrevole e azioni */
+.notificationsList{max-height:780px;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+.notificationCard{display:flex;flex-direction:column;align-items:stretch;cursor:default}
+.notificationTopRow{display:flex;align-items:flex-start;gap:8px;width:100%}
+.notificationOpen{display:flex;align-items:center;gap:13px;flex:1;min-width:0;padding:0;background:transparent;text-align:left;color:inherit;cursor:pointer}
+.notificationDelete{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:8px;background:#f6f3f8;color:#8a8294}
+.notificationDelete:hover{background:#fceeee;color:#b45b65}
+.notificationActions{display:flex;gap:8px;margin:12px 0 0 52px}
+.notificationActions button{border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700}
+.notificationAccept{background:#eee8fb;color:#6747b2}
+.notificationDecline{background:#f6f2f2;color:#8d7373}
+@media(max-width:650px){.notificationActions{margin-left:0}.notificationsList{max-height:780px}}
