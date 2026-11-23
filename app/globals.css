@@ -444,7 +444,7 @@
 /* Accesso rapido al centro notifiche dalla home, anche su smartphone */
 .notificationQuickLink{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border:1px solid #e5def1;border-radius:10px;background:#fff;color:var(--purple);text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
 .notificationQuickLink:hover{background:#f5f1fc}
-@media(max-width:650px){.notificationQuickLink{width:34px;height:34px;padding:0;border-radius:50%}.notificationQuickLink span{display:none}.notificationQuickLink svg{width:18px;height:18px}}
+@media(max-width:650px){.notificationQuickLink{width:34px;height:34px;padding:0;border-radius:50%}.notificationQuickLink svg{width:18px;height:18px}}
 
 
 /* PersonalWish refresh: profilo e strumenti liste */
