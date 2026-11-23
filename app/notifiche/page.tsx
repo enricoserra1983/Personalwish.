@@ -58,8 +58,10 @@ export default function NotificationsPage() {
     if (!item.friend_request_id) { setError("Questa richiesta non è più disponibile."); return; }
     const { error } = await createClient().rpc("respond_friend_request", { p_request_id: item.friend_request_id, p_accept: accept });
     if (error) { setError(error.message); return; }
-    await createClient().rpc("mark_my_notifications_read", { p_notification_id: item.id });
-    setItems(current => current.filter(entry => entry.id !== item.id));
+    // Il trigger SQL aggiorna la notifica originale e rimuove l'azione pendente.
+    // Ricarichiamo per mostrare lo stato aggiornato e, in caso di accettazione,
+    // la conferma dell'amicizia generata per il mittente.
+    await load();
   }
 
   async function openNotification(item: Notification) {
