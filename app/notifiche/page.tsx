@@ -15,6 +15,7 @@ type Notification = {
   actor_name: string;
   created_at: string;
   read_at: string | null;
+  friend_request_id: string | null;
 };
 
 function iconFor(type: string) {
@@ -47,6 +48,14 @@ export default function NotificationsPage() {
     setItems(current => current.map(item => (!id || item.id === id) ? { ...item, read_at: new Date().toISOString() } : item));
   }
 
+  async function answerFriendNotification(item: Notification, accept: boolean) {
+    if (!item.friend_request_id) { setError("Questa richiesta non è più disponibile."); return; }
+    const { error } = await createClient().rpc("respond_friend_request", { p_request_id: item.friend_request_id, p_accept: accept });
+    if (error) { setError(error.message); return; }
+    await createClient().rpc("mark_my_notifications_read", { p_notification_id: item.id });
+    setItems(current => current.filter(entry => entry.id !== item.id));
+  }
+
   async function openNotification(item: Notification) {
     if (!item.read_at) await markRead(item.id);
     if (item.wishlist_id) {
@@ -70,11 +79,17 @@ export default function NotificationsPage() {
       </div>
       {error && <p className="notificationsError">{error}</p>}
       {loading ? <div className="notificationsEmpty"><LoaderCircle className="spin" size={22}/> Caricamento notifiche...</div> :
-        items.length ? <div className="notificationsList">{items.map(item => <button key={item.id} className={`notificationCard ${item.read_at ? "" : "unread"}`} onClick={() => openNotification(item)}>
-          <span className="notificationIcon">{iconFor(item.type)}</span>
-          <span className="notificationText"><b>{item.title}</b><span>{item.body}</span><small>{new Date(item.created_at).toLocaleString("it-IT",{dateStyle:"medium",timeStyle:"short"})}</small></span>
-          {!item.read_at && <span className="notificationUnreadDot" aria-label="Non letta"/>}
-        </button>)}</div> : <div className="notificationsEmpty"><Bell size={28}/><b>Ancora nessuna notifica</b><span>Quando ci saranno novità sulle tue liste o amicizie, le troverai qui.</span></div>}
+        items.length ? <div className="notificationsList">{items.map(item => <div key={item.id} className={"notificationCard " + (item.read_at ? "" : "unread")}>
+          <button type="button" className="notificationOpen" onClick={() => openNotification(item)}>
+            <span className="notificationIcon">{iconFor(item.type)}</span>
+            <span className="notificationText"><b>{item.title}</b><span>{item.body}</span><small>{new Date(item.created_at).toLocaleString("it-IT",{dateStyle:"medium",timeStyle:"short"})}</small></span>
+            {!item.read_at && <span className="notificationUnreadDot" aria-label="Non letta"/>}
+          </button>
+          {item.type === "friend_request" && item.friend_request_id && <div className="notificationActions">
+            <button type="button" className="notificationAccept" onClick={() => answerFriendNotification(item,true)}>Accetta</button>
+            <button type="button" className="notificationDecline" onClick={() => answerFriendNotification(item,false)}>Rifiuta</button>
+          </div>}
+        </div>)}</div> : <div className="notificationsEmpty"><Bell size={28}/><b>Ancora nessuna notifica</b><span>Quando ci saranno novità sulle tue liste o amicizie, le troverai qui.</span></div>}
     </section>
   </main>;
 }
