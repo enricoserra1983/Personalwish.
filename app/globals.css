@@ -568,5 +568,13 @@
 .notificationsError{padding:12px;border-radius:10px;background:#fff0f0;color:#a22}
 @media(max-width:600px){.notificationsHeader{padding:0 16px}.notificationsContent{margin:24px auto}.notificationsTitleRow{align-items:flex-start;flex-direction:column}.notificationsTitleRow h1{font-size:29px}.notificationsReadAll{width:100%;justify-content:center}.notificationCard{padding:13px;gap:10px}}
 
-.friendRemoveButton{background:#fff0f0;color:#b34b55}
-.friendProfileButton .outline{margin-top:0;white-space:nowrap}
+.friendRemoveButton{background:#fff4f3;color:#a96870;border:1px solid #f3e1df}
+.friendProfileButton{padding:13px 15px;gap:10px}
+.friendProfileButton .outline{margin-top:0;white-space:nowrap;padding:7px 9px;font-size:10px;font-weight:600;border-radius:8px}
+.friendProfileButton .friendOpenHint{display:none}
+.friendProfileButton b{font-size:13px}
+@media(max-width:650px){
+  .friendProfileButton{gap:8px;padding:12px 11px}
+  .friendProfileButton .outline{padding:7px 8px;font-size:9px;gap:4px}
+  .friendProfileButton .avatar{width:32px;height:32px;flex-shrink:0}
+}
