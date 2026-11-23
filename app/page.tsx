@@ -101,6 +101,7 @@ export default function Home() {
   const [editingWishId,setEditingWishId] = useState<string|null>(null);
   const [fetchingProduct,setFetchingProduct] = useState(false);
   const [draggingWishId,setDraggingWishId] = useState<string|null>(null);
+  const dragTargetRef = useRef<string|null>(null);
   const [savingWishImage,setSavingWishImage] = useState(false);
   const wishImageInputRef = useRef<HTMLInputElement>(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -122,6 +123,20 @@ export default function Home() {
     setDisplayMode(mode);
     try { window.localStorage.setItem("personalwish-shared-view", mode); } catch {}
   }
+
+  useEffect(() => {
+    if(!draggingWishId)return;
+    const onMove=(event:PointerEvent)=>{
+      const target=document.elementFromPoint(event.clientX,event.clientY)?.closest<HTMLElement>("[data-wish-id]");
+      if(target?.dataset.wishId)dragTargetRef.current=target.dataset.wishId;
+      const edge=90;
+      if(event.clientY<edge)window.scrollBy(0,-Math.max(8,(edge-event.clientY)*0.22));
+      else if(event.clientY>window.innerHeight-edge)window.scrollBy(0,Math.max(8,(event.clientY-(window.innerHeight-edge))*0.22));
+    };
+    const onUp=()=>{const target=dragTargetRef.current;if(target)void moveWish(draggingWishId,target);setDraggingWishId(null);dragTargetRef.current=null;};
+    window.addEventListener("pointermove",onMove,{passive:true});window.addEventListener("pointerup",onUp);window.addEventListener("pointercancel",onUp);
+    return()=>{window.removeEventListener("pointermove",onMove);window.removeEventListener("pointerup",onUp);window.removeEventListener("pointercancel",onUp);};
+  },[draggingWishId]);
 
   const activeList = wishlists.find(list => list.id === activeId) || wishlists[0] || null;
   const wishes = activeList?.wishlist_items || [];
@@ -567,36 +582,25 @@ export default function Home() {
   }
 
   async function fetchProductDetails() {
-    if(!wishUrl.trim()) return;
+    if(!wishUrl.trim())return;
     let url:string;
-    try { url=new URL(wishUrl.trim()).toString(); if(!["http:","https:"].includes(new URL(url).protocol)) throw new Error(); }
-    catch { setError("Inserisci un link valido che inizi con https://"); return; }
-    setFetchingProduct(true);setError("");
-    setWishUrl(url);setWishMode("link");
-    const productHost=new URL(url).hostname.toLowerCase();
-    const isAmazon=productHost.includes("amazon.")||productHost==="amzn.eu"||productHost.endsWith(".amzn.eu");
-    let recoveredTitle="";let recoveredImage="";let recoveredDescription="";let lastError="";
-    try {
-      const attempts=isAmazon?2:1;
-      for(let attempt=0;attempt<attempts;attempt++) {
-        try {
-          if(attempt>0) await new Promise(resolve=>setTimeout(resolve,1200));
-          const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url}),signal:AbortSignal.timeout(11000)});
-          const data=await response.json();
-          if(!response.ok) throw new Error(data.error||"Non riesco a leggere questo prodotto.");
-          if(data.title) recoveredTitle=data.title;
-          if(data.image) recoveredImage=data.image;
-          if(data.description) recoveredDescription=data.description;
-          if(recoveredTitle) break;
-        } catch(err) { lastError=err instanceof Error?err.message:"Recupero non riuscito."; }
-      }
-      if(recoveredTitle) setNewWish(recoveredTitle);
-      if(recoveredImage) setWishImage(recoveredImage);
-      if(recoveredDescription) setWishDescription(recoveredDescription);
-      if(!recoveredTitle) setError(isAmazon?"Amazon non ha fornito i dati automaticamente. Il link è conservato: inserisci il nome del prodotto e, se vuoi, scegli la foto dalla galleria.":lastError||"Non riesco a recuperare i dati del prodotto.");
-      else if(isAmazon&&!recoveredImage) setError("Nome recuperato. Amazon non ha fornito la foto: puoi aggiungerla dalla galleria.");
-    } catch(err) { setError(err instanceof Error?err.message:"Impossibile recuperare i dati del prodotto. Puoi inserirli manualmente."); }
-    setFetchingProduct(false);
+    try{url=new URL(wishUrl.trim()).toString();if(!["http:","https:"].includes(new URL(url).protocol))throw new Error();}
+    catch{setError("Inserisci un link valido che inizi con https://");return;}
+    setFetchingProduct(true);setError("");setWishUrl(url);setWishMode("link");
+    const host=new URL(url).hostname.toLowerCase();
+    const isAmazon=host.includes("amazon.")||host==="amzn.eu"||host.endsWith(".amzn.eu");
+    try{
+      const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url}),signal:AbortSignal.timeout(8500)});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||"Il negozio non ha restituito i dati del prodotto.");
+      if(data.title)setNewWish(data.title);
+      if(data.image)setWishImage(data.image);
+      if(data.description)setWishDescription(data.description);
+      if(!data.title)throw new Error("Nome non disponibile.");
+      if(isAmazon&&!data.image)setError("Nome recuperato. Amazon non ha fornito la foto: puoi aggiungerla dalla galleria.");
+    }catch{
+      setError(isAmazon?"Amazon limita il recupero automatico. Il link è già conservato: inserisci il nome e salva il desiderio senza riprovare più volte.":"Non riesco a leggere i dati del prodotto. Il link è conservato: puoi completare i campi manualmente.");
+    }finally{setFetchingProduct(false);}
   }
 
   async function uploadWishImage(file:File|null) {
@@ -640,9 +644,7 @@ export default function Home() {
 
   async function moveWish(draggedId:string,targetId:string) {
     if(!activeList||draggedId===targetId)return;
-    const ordered=[...wishes];
-    const from=ordered.findIndex(item=>item.id===draggedId);
-    const to=ordered.findIndex(item=>item.id===targetId);
+    const ordered=[...wishes];const from=ordered.findIndex(item=>item.id===draggedId),to=ordered.findIndex(item=>item.id===targetId);
     if(from<0||to<0)return;
     const [moved]=ordered.splice(from,1);ordered.splice(to,0,moved);
     setWishlists(current=>current.map(list=>list.id===activeList.id?{...list,wishlist_items:ordered}:list));
@@ -772,9 +774,9 @@ export default function Home() {
                 </div>
               </div>
               {displayMode === "grid" ? (
-                <div className="wishGrid">{wishes.map((wish, i) => <article className={`wishCard ${draggingWishId===wish.id?"wishDragging":""}`} key={wish.id} draggable onDragStart={e=>{setDraggingWishId(wish.id);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",wish.id);}} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const id=e.dataTransfer.getData("text/plain")||draggingWishId;if(id)moveWish(id,wish.id);setDraggingWishId(null);}} onDragEnd={()=>setDraggingWishId(null)}><div className={`wishImage image${i % 3}`}><span className="wishDragHandle" title="Trascina per riordinare"><GripVertical size={19}/></span>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
+                <div className="wishGrid">{wishes.map((wish, i) => <article data-wish-id={wish.id} className={`wishCard ${draggingWishId===wish.id?"wishDragging":""}`} key={wish.id}><div className={`wishImage image${i % 3}`}><button type="button" className="wishDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
               ) : (
-                <div className="ownerCompactList">{wishes.map(wish => <div className="ownerCompactRow" key={wish.id}>
+                <div className="ownerCompactList">{wishes.map(wish => <div data-wish-id={wish.id} className={`ownerCompactRow ${draggingWishId===wish.id?"wishDragging":""}`} key={wish.id}><button type="button" className="wishDragHandle listDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>
                   <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
                     <span className="ownerCompactName">{wish.title}</span>
                     <b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b>
