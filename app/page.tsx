@@ -440,16 +440,21 @@ export default function Home() {
   }
 
 
-  function exportWishlistText() {
+  async function exportWishlistText() {
     if(!activeList)return;
-    const lines=wishes.flatMap((w,i)=>[
-      `${i+1}. ${w.title}`,
-      ...(w.product_url?[w.product_url]:[]),
-      ""
-    ]);
-    const blob=new Blob([lines.join("\n")],{type:"text/plain;charset=utf-8"});
-    const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-")+".txt";a.click();URL.revokeObjectURL(url);
+    const lines=wishes.flatMap((w,i)=>[`${i+1}. ${w.title}`,...(w.product_url?[w.product_url]:[]),""]);
+    const file=new File([lines.join("\n")],(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-")+".txt",{type:"text/plain;charset=utf-8"});
+    try {
+      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))) {
+        await navigator.share({files:[file],title:activeList.title||"Lista PersonalWish"});
+        return;
+      }
+    } catch(err) {
+      if(err instanceof Error&&err.name==="AbortError")return;
+    }
+    const url=URL.createObjectURL(file);const a=document.createElement("a");a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
+
   async function exportWishlistPdf() {
     if(!activeList)return;
     const clean=(value:string)=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\x20-\x7E]/g,"?");
@@ -498,16 +503,35 @@ export default function Home() {
 
   async function importWishlistText(file:File|null) {
     if(!file||!activeList)return;
-    if(!file.name.toLowerCase().endsWith(".txt")){setError("Seleziona un file .txt.");return;}
-    const raw=await file.text();
-    const titles=[...new Set(raw.split(/\\r?\\n/).map(line=>line.replace(/^\\s*(?:[-*•]|\\d+[.)])\\s*/,"").trim()).filter(Boolean).filter(line=>line.toLowerCase()!==activeList.title.toLowerCase()))];
-    if(!titles.length){setError("Nel file non ho trovato elementi da importare.");return;}
-    if(!window.confirm(`Importare ${titles.length} desideri? Ogni riga diventerà un elemento della lista.`))return;
+    const extension=file.name.toLowerCase().split(".").pop();
+    if(!["txt","doc","docx"].includes(extension||"")){setError("Scegli un file TXT, DOC o DOCX.");return;}
     setBusy(true);setError("");
-    const {error}=await createClient().from("wishlist_items").insert(titles.map(title=>({wishlist_id:activeList.id,title})));
-    if(error)setError("Importazione non riuscita: "+error.message);
-    else{setError(`Importati ${titles.length} desideri.`);await loadData();}
-    setBusy(false);
+    try {
+      let raw="";
+      if(extension==="txt") raw=await file.text();
+      else {
+        const form=new FormData();form.append("file",file);
+        const response=await fetch("/api/import-document",{method:"POST",body:form});
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||"Non riesco a leggere il documento.");
+        raw=data.text||"";
+      }
+      const rows=raw.replace(/\r/g,"").split("\n").map(line=>line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/,"").trim()).filter(Boolean);
+      const products:{title:string;product_url:string|null}[]=[];
+      for(const row of rows){
+        if(/^https?:\/\//i.test(row)&&products.length&&!products[products.length-1].product_url){products[products.length-1].product_url=row;continue;}
+        if(row.toLowerCase()===activeList.title.toLowerCase())continue;
+        products.push({title:row,product_url:null});
+      }
+      const unique=products.filter((item,index)=>products.findIndex(other=>other.title.toLowerCase()===item.title.toLowerCase())===index);
+      if(!unique.length)throw new Error("Nel documento non ho trovato prodotti da importare.");
+      if(!window.confirm(`Importare ${unique.length} desideri nella lista "${activeList.title}"?`)){setBusy(false);return;}
+      const {error}=await createClient().from("wishlist_items").insert(unique.map(item=>({wishlist_id:activeList.id,title:item.title,product_url:item.product_url})));
+      if(error)throw new Error("Importazione non riuscita: "+error.message);
+      setError(`Importati ${unique.length} desideri.`);await loadData();
+    } catch(err) {
+      setError(err instanceof Error?err.message:"Errore durante l'importazione del documento.");
+    } finally {setBusy(false);}
   }
 
   async function signOut() {
@@ -813,7 +837,7 @@ export default function Home() {
             <div className="birthdayPrivacy"><div><b>Mostra il mio compleanno agli amici</b><p>Se disattivato, la data resta privata e gli amici non riceveranno promemoria.</p></div><PrivacyToggle label={birthdayVisible?"Visibile agli amici":"Privato"} value={birthdayVisible} onClick={()=>setBirthdayVisible(v=>!v)}/></div>
             <div className="addRow"><button type="button" onClick={saveProfile} disabled={savingProfile}>{savingProfile?"Salvataggio...":"Salva modifiche"}</button></div>
           </section></>}
-        {tab === "transfer" && <><div className="welcome"><div><div className="eyebrow">GESTIONE DELLE LISTE</div><h1>Importa / Esporta.</h1><p>Salva una copia dei tuoi desideri o aggiungi rapidamente nuovi elementi da un file di testo.</p></div></div><section className="profileEditor transferPanel"><div className="transferListChoice"><label htmlFor="transferWishlistSelect">Scegli la lista</label><select id="transferWishlistSelect" value={activeList?.id || ""} onChange={e=>setActiveId(e.target.value)} disabled={!wishlists.length}><option value="" disabled>Seleziona una lista</option>{wishlists.map(list=><option key={list.id} value={list.id}>{list.title}</option>)}</select><small>{activeList ? wishes.length+" desideri nella lista selezionata" : "Crea prima una lista nella sezione Le mie liste."}</small></div><div className="transferActions"><div><b>Esporta in formato testo</b><p>Scarica un elenco essenziale: solo il nome di ogni prodotto e, se presente, il relativo link.</p><button type="button" onClick={exportWishlistText} disabled={!activeList}>Esporta TXT</button></div><div><b>Esporta in PDF</b><p>Prepara una versione stampabile della lista, da salvare come PDF.</p><button type="button" onClick={exportWishlistPdf} disabled={!activeList}>Esporta PDF</button></div><div><b>Importa da un file TXT</b><p>Carica un elenco con un desiderio per riga. Potrai confermare prima di aggiungerli alla lista selezionata.</p><button type="button" onClick={()=>importTextRef.current?.click()} disabled={!activeList}>Scegli file TXT</button><input ref={importTextRef} type="file" accept=".txt,text/plain" hidden onChange={e=>{importWishlistText(e.target.files?.[0]||null);e.currentTarget.value="";}}/></div></div></section></>}
+        {tab === "transfer" && <><div className="welcome"><div><div className="eyebrow">GESTIONE DELLE LISTE</div><h1>Importa / Esporta.</h1><p>Salva una copia dei tuoi desideri o aggiungi rapidamente nuovi elementi da un file di testo.</p></div></div><section className="profileEditor transferPanel"><div className="transferListChoice"><label htmlFor="transferWishlistSelect">Scegli la lista</label><select id="transferWishlistSelect" value={activeList?.id || ""} onChange={e=>setActiveId(e.target.value)} disabled={!wishlists.length}><option value="" disabled>Seleziona una lista</option>{wishlists.map(list=><option key={list.id} value={list.id}>{list.title}</option>)}</select><small>{activeList ? wishes.length+" desideri nella lista selezionata" : "Crea prima una lista nella sezione Le mie liste."}</small></div><div className="transferActions"><div><b>Esporta in formato testo</b><p>Scarica un elenco essenziale: solo il nome di ogni prodotto e, se presente, il relativo link.</p><button type="button" onClick={exportWishlistText} disabled={!activeList}>Esporta TXT</button></div><div><b>Esporta in PDF</b><p>Prepara una versione stampabile della lista, da salvare come PDF.</p><button type="button" onClick={exportWishlistPdf} disabled={!activeList}>Esporta PDF</button></div><div><b>Importa da un documento</b><p>Carica un file TXT, DOC o DOCX: ogni prodotto verrà aggiunto alla lista selezionata, insieme al suo eventuale link.</p><button type="button" onClick={()=>importTextRef.current?.click()} disabled={!activeList}>Scegli documento</button><input ref={importTextRef} type="file" accept=".txt,.doc,.docx,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={e=>{importWishlistText(e.target.files?.[0]||null);e.currentTarget.value="";}}/></div></div></section></>}
         {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">PREFERENZE</div><h1>Impostazioni.</h1><p>Gestisci la privacy e la sicurezza delle tue liste.</p></div></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Ogni lista può avere impostazioni indipendenti per partecipanti e prenotazioni.</p></div></div></>}
 
         {showInviteMenu && <div className="shareOverlay" role="presentation" onClick={() => setShowInviteMenu(false)}>
