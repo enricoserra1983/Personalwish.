@@ -48,6 +48,12 @@ export default function NotificationsPage() {
     setItems(current => current.map(item => (!id || item.id === id) ? { ...item, read_at: new Date().toISOString() } : item));
   }
 
+  async function deleteNotification(item: Notification) {
+    const { error } = await createClient().rpc("delete_my_notification", { p_notification_id: item.id });
+    if (error) { setError(error.message); return; }
+    setItems(current => current.filter(entry => entry.id !== item.id));
+  }
+
   async function answerFriendNotification(item: Notification, accept: boolean) {
     if (!item.friend_request_id) { setError("Questa richiesta non è più disponibile."); return; }
     const { error } = await createClient().rpc("respond_friend_request", { p_request_id: item.friend_request_id, p_accept: accept });
@@ -80,11 +86,11 @@ export default function NotificationsPage() {
       {error && <p className="notificationsError">{error}</p>}
       {loading ? <div className="notificationsEmpty"><LoaderCircle className="spin" size={22}/> Caricamento notifiche...</div> :
         items.length ? <div className="notificationsList">{items.map(item => <div key={item.id} className={"notificationCard " + (item.read_at ? "" : "unread")}>
-          <button type="button" className="notificationOpen" onClick={() => openNotification(item)}>
+          <div className="notificationTopRow"><button type="button" className="notificationOpen" onClick={() => openNotification(item)}>
             <span className="notificationIcon">{iconFor(item.type)}</span>
             <span className="notificationText"><b>{item.title}</b><span>{item.body}</span><small>{new Date(item.created_at).toLocaleString("it-IT",{dateStyle:"medium",timeStyle:"short"})}</small></span>
             {!item.read_at && <span className="notificationUnreadDot" aria-label="Non letta"/>}
-          </button>
+          </button><button type="button" className="notificationDelete" aria-label="Elimina notifica" onClick={() => deleteNotification(item)}><X size={17}/></button></div>
           {item.type === "friend_request" && item.friend_request_id && <div className="notificationActions">
             <button type="button" className="notificationAccept" onClick={() => answerFriendNotification(item,true)}>Accetta</button>
             <button type="button" className="notificationDecline" onClick={() => answerFriendNotification(item,false)}>Rifiuta</button>
