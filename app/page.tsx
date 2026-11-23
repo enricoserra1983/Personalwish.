@@ -420,18 +420,23 @@ export default function Home() {
 
   function exportWishlistText() {
     if(!activeList)return;
-    const lines=wishes.map(w=>`${w.title}${w.product_url?" — "+w.product_url:""}`);
-    const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/plain;charset=utf-8"});
-    const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\\s+/g,"-")+".txt";a.click();URL.revokeObjectURL(url);
+    const lines=wishes.flatMap((w,i)=>[
+      `${i+1}. ${w.title}`,
+      ...(w.product_url?[w.product_url]:[]),
+      ""
+    ]);
+    const blob=new Blob([lines.join("\n")],{type:"text/plain;charset=utf-8"});
+    const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-")+".txt";a.click();URL.revokeObjectURL(url);
   }
   function exportWishlistPdf() {
     if(!activeList)return;
-    const esc=(v:string)=>v.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]||c));
-    const rows=wishes.map((w,i)=>`<article><b>${i+1}. ${esc(w.title)}</b>${w.description?`<p>${esc(w.description)}</p>`:""}<small>${w.price!=null?esc(new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(w.price)):""} ${w.product_url?` · ${esc(w.product_url)}`:""}</small></article>`).join("");
+    const esc=(v:string)=>v.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]||c));
+    const rows=wishes.map((w,i)=>`<article><b>${i+1}. ${esc(w.title)}</b>${w.product_url?`<a href="${esc(w.product_url)}" target="_blank" rel="noopener noreferrer">${esc(w.product_url)}</a>`:""}</article>`).join("");
     const win=window.open("","_blank");if(!win){setError("Consenti i popup per creare il PDF.");return;}
-    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(activeList.title)}</title><style>body{font:14px Arial;color:#29243b;padding:32px;max-width:760px;margin:auto}h1{font-size:26px}article{padding:13px 0;border-bottom:1px solid #ddd}p{color:#666;margin:6px 0}small{color:#777;overflow-wrap:anywhere}</style></head><body><h1>${esc(activeList.title)}</h1><p>Lista dei desideri · PersonalWish</p>${rows}<script>window.onload=()=>window.print()<\\/script></body></html>`);
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(activeList.title)}</title><style>body{font:14px Arial;color:#29243b;padding:32px;max-width:760px;margin:auto}h1{font-size:26px;margin-bottom:24px}article{padding:14px 0;border-bottom:1px solid #ddd;break-inside:avoid}b{display:block;font-size:15px;margin-bottom:6px}a{display:block;color:#5b45a0;text-decoration:underline;overflow-wrap:anywhere;font-size:13px}@media print{a{color:#333}}</style></head><body><h1>${esc(activeList.title)}</h1>${rows}<script>window.onload=()=>window.print()<\\/script></body></html>`);
     win.document.close();
   }
+
   async function importWishlistText(file:File|null) {
     if(!file||!activeList)return;
     if(!file.name.toLowerCase().endsWith(".txt")){setError("Seleziona un file .txt.");return;}
