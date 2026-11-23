@@ -100,6 +100,7 @@ export default function Home() {
   const [wishPrice,setWishPrice] = useState("");
   const [editingWishId,setEditingWishId] = useState<string|null>(null);
   const [fetchingProduct,setFetchingProduct] = useState(false);
+  const [draggingWishId,setDraggingWishId] = useState<string|null>(null);
   const [savingWishImage,setSavingWishImage] = useState(false);
   const wishImageInputRef = useRef<HTMLInputElement>(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
