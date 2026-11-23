@@ -541,3 +541,29 @@
 .chatQuickLink,.chatNavLink{position:relative}
 .chatUnreadDot{position:absolute;top:3px;right:3px;width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:#e53935;box-shadow:0 0 0 1px rgba(229,57,53,.12)}
 .chatNavLink .chatUnreadDot{top:9px;right:12px}
+
+
+/* Centro notifiche */
+.notificationsPage{min-height:100vh;background:#faf8fd;color:#292536}
+.notificationsHeader{height:68px;padding:0 max(22px,calc((100% - 1120px)/2));display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid #eee9f4}
+.notificationsBrand{display:flex;align-items:center;gap:10px;color:#7654b5;font-weight:800;text-decoration:none;font-size:19px}
+.notificationsBack{color:#7654b5;text-decoration:none;font-weight:700;font-size:13px}
+.notificationsContent{width:min(900px,calc(100% - 32px));margin:38px auto;padding-bottom:60px}
+.notificationsTitleRow{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:24px}
+.notificationsTitleRow h1{font-size:34px;margin:8px 0;color:#292536}
+.notificationsTitleRow p{margin:0;color:#85818e;line-height:1.5}
+.notificationsReadAll{display:flex;align-items:center;gap:8px;padding:11px 14px;border:1px solid #e5ddef;border-radius:12px;background:#fff;color:#7654b5;font-weight:700;cursor:pointer}
+.notificationsList{display:flex;flex-direction:column;gap:10px}
+.notificationCard{width:100%;display:flex;align-items:flex-start;gap:14px;text-align:left;padding:17px;border:1px solid #e9e5ee;border-radius:16px;background:#fff;color:#292536;cursor:pointer}
+.notificationCard.unread{background:#f5f0fc;border-color:#d9c9f1}
+.notificationIcon{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:13px;background:#eee7f8;color:#7654b5}
+.notificationText{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}
+.notificationText b{font-size:14px}
+.notificationText>span{font-size:13px;line-height:1.45;color:#66616f}
+.notificationText small{font-size:11px;color:#928d99;margin-top:3px}
+.notificationUnreadDot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#e53935;margin:5px 2px}
+.notificationsEmpty{min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:28px;border:1px dashed #ded7e8;border-radius:18px;background:#fff;color:#817b8a;text-align:center}
+.notificationsEmpty b{color:#393443}
+.notificationsEmpty span{max-width:360px;font-size:13px;line-height:1.5}
+.notificationsError{padding:12px;border-radius:10px;background:#fff0f0;color:#a22}
+@media(max-width:600px){.notificationsHeader{padding:0 16px}.notificationsContent{margin:24px auto}.notificationsTitleRow{align-items:flex-start;flex-direction:column}.notificationsTitleRow h1{font-size:29px}.notificationsReadAll{width:100%;justify-content:center}.notificationCard{padding:13px;gap:10px}}
