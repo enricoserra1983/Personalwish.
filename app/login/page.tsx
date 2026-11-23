@@ -58,8 +58,8 @@ export default function LoginPage() {
         setMessage("Se l'indirizzo è associato a un account, riceverai un'email con il link per reimpostare la password. Controlla anche la cartella spam.");
       } else if (mode === "signup") {
         const username = name.trim();
-        if (!/^[A-Za-z0-9_]{3,30}$/.test(username)) {
-          throw new Error("Il nome utente deve contenere da 3 a 30 caratteri: solo lettere, numeri e underscore.");
+        if (!/^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$/.test(username) || username.length < 3 || username.length > 30) {
+          throw new Error("Inserisci un nome da 3 a 30 caratteri, usando lettere e spazi.");
         }
         const { data: usernameAvailable, error: usernameError } = await supabase.rpc("is_username_available", { p_username: username });
         if (usernameError) throw usernameError;
@@ -123,7 +123,7 @@ export default function LoginPage() {
           {mode === "signup" && (
             <label>
               Nome utente
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Es. Enrico83" required autoComplete="name" />
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Es. Mario Rossi" required autoComplete="name" />
             </label>
           )}
           <label>
