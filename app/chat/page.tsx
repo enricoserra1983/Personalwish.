@@ -15,6 +15,7 @@ export default function ChatPage(){
  const [wishlists,setWishlists]=useState<{id:string;title:string}[]>([]);
  const [active,setActive]=useState<Chat|null>(null);
  const [messages,setMessages]=useState<Message[]>([]);
+ const [senderLabels,setSenderLabels]=useState<Record<string,string>>({});
  const [userId,setUserId]=useState("");
  const [draft,setDraft]=useState("");
  const [loading,setLoading]=useState(true);
@@ -58,6 +59,8 @@ export default function ChatPage(){
    if(!alive)return;
    if(error){setError(error.message);return}
    setMessages(data||[]);
+   const {data:labels,error:labelsError}=await supabase.rpc("get_chat_participant_labels",{p_conversation_id:active.conversation_id});
+   if(!labelsError){const mapped:Record<string,string>={};(labels||[]).forEach((item:{user_id:string;display_label:string})=>{mapped[item.user_id]=item.display_label;});setSenderLabels(mapped);}
    await supabase.rpc("mark_chat_read",{p_conversation_id:active.conversation_id});
    await loadChats();
   })();
@@ -113,7 +116,7 @@ export default function ChatPage(){
      {newType==="group"?<><label>Nome del gruppo<input value={groupTitle} onChange={e=>setGroupTitle(e.target.value)} placeholder="Es. Regali di Natale"/></label><div className="chatFriendChoices">{friends.map(f=><label key={f.user_id}><input type="checkbox" checked={memberIds.includes(f.user_id)} onChange={e=>setMemberIds(v=>e.target.checked?[...v,f.user_id]:v.filter(x=>x!==f.user_id))}/>{f.display_name}</label>)}</div></>:null}
      {newType==="list"?<label>Lista<select value={wishlistId} onChange={e=>setWishlistId(e.target.value)}><option value="">Seleziona una lista</option>{wishlists.map(w=><option key={w.id} value={w.id}>{w.title}</option>)}</select><small>La chat sarà accessibile solo agli amici autorizzati alla lista.</small></label>:null}
      <button className="chatPrimary" onClick={createChat}>Crea conversazione</button>
-    </div>:active?<><div className="chatConversationHead"><div className="chatTitleMenuWrap"><button type="button" className="chatTitleMenuTrigger" onClick={()=>setShowChatMenu(v=>!v)} aria-expanded={showChatMenu}><b>{active.chat_title||"Conversazione"}</b><small>{active.chat_type==="direct"?"Chat privata":active.chat_type==="group"?"Chat di gruppo":"Chat della lista"} · <span>Opzioni⌄</span></small></button>{showChatMenu&&<div className="chatTitleDropdown"><button type="button" onClick={deleteActiveChat} disabled={deletingChat}>{deletingChat?"Eliminazione...":"Elimina intera chat"}</button></div>}</div></div><div className="chatMessages">{messages.length===0?<p className="chatMuted">Inizia la conversazione con un messaggio.</p>:messages.map(m=><div key={m.id} className={m.sender_id===userId?"chatBubble mine":"chatBubble"}><p>{m.body}</p><small>{new Date(m.created_at).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div>)}</div><form className="chatComposer" onSubmit={e=>{e.preventDefault();sendMessage()}}><input value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Scrivi un messaggio..." maxLength={4000}/><button disabled={!draft.trim()||sending}><Send size={18}/></button></form></>:<div className="chatWelcome"><MessageCircle size={40}/><h2>Le tue conversazioni</h2><p>Seleziona una chat oppure creane una nuova.</p></div>}
+    </div>:active?<><div className="chatConversationHead"><div className="chatTitleMenuWrap"><button type="button" className="chatTitleMenuTrigger" onClick={()=>setShowChatMenu(v=>!v)} aria-expanded={showChatMenu}><b>{active.chat_title||"Conversazione"}</b><small>{active.chat_type==="direct"?"Chat privata":active.chat_type==="group"?"Chat di gruppo":"Chat della lista"} · <span>Opzioni⌄</span></small></button>{showChatMenu&&<div className="chatTitleDropdown"><button type="button" onClick={deleteActiveChat} disabled={deletingChat}>{deletingChat?"Eliminazione...":"Elimina intera chat"}</button></div>}</div></div><div className="chatMessages">{messages.length===0?<p className="chatMuted">Inizia la conversazione con un messaggio.</p>:messages.map(m=><div key={m.id} className={m.sender_id===userId?"chatBubble mine":"chatBubble"}>{active.chat_type!=="direct"&&<small className="chatSenderLabel">{m.sender_id===userId?"Tu":senderLabels[m.sender_id]||"Utente"}</small>}<p>{m.body}</p><small>{new Date(m.created_at).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div>)}</div><form className="chatComposer" onSubmit={e=>{e.preventDefault();sendMessage()}}><input value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Scrivi un messaggio..." maxLength={4000}/><button disabled={!draft.trim()||sending}><Send size={18}/></button></form></>:<div className="chatWelcome"><MessageCircle size={40}/><h2>Le tue conversazioni</h2><p>Seleziona una chat oppure creane una nuova.</p></div>}
    </section>
   </div>
  </main>
