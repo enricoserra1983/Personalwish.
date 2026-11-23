@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
 
     const finalUrl = new URL(response.url);
     const html = (await response.text()).slice(0, 2500000);
+    const includeImage = body.includeImage !== false;
     const jsonLd = readJsonLd(html);
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<[/]title>/i)?.[1] || "";
     const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
@@ -99,8 +100,8 @@ export async function POST(request: NextRequest) {
         title=decode(slug.replace(/[-_]+/g," ").replace(/\\b[A-Z0-9]{10}\\b/g,"").trim());
       }
     }
-    let image = metaValue(html, "og:image") || metaValue(html, "twitter:image") || jsonLd.image;
-    if (!image && amazon) image = amazonMainImage(html);
+    let image = includeImage ? (metaValue(html, "og:image") || metaValue(html, "twitter:image") || jsonLd.image) : "";
+    if (includeImage && !image && amazon) image = amazonMainImage(html);
     const description = metaValue(html, "og:description") || metaValue(html, "description") || jsonLd.description;
     const cleanTitle = title.toLowerCase().trim();
     if (!title || ["amazon.it", "amazon.com", "amazon"].includes(cleanTitle)) {
