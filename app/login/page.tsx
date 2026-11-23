@@ -123,7 +123,7 @@ export default function LoginPage() {
           {mode === "signup" && (
             <label>
               Nome utente
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Es. Mario Rossi" required autoComplete="name" />
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Mario Rossi" required autoComplete="off" name="personalwish-display-name" />
             </label>
           )}
           <label>
