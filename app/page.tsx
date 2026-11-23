@@ -421,7 +421,7 @@ export default function Home() {
   function exportWishlistText() {
     if(!activeList)return;
     const lines=wishes.map(w=>`${w.title}${w.product_url?" — "+w.product_url:""}`);
-    const blob=new Blob(["\\uFEFF"+lines.join("\\n")],{type:"text/plain;charset=utf-8"});
+    const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/plain;charset=utf-8"});
     const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\\s+/g,"-")+".txt";a.click();URL.revokeObjectURL(url);
   }
   function exportWishlistPdf() {
