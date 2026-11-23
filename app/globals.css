@@ -487,3 +487,11 @@
  .wishlistTools{display:grid;grid-template-columns:1fr 1fr}
  .wishlistTools button{min-height:44px}
 }
+
+.chatTitleMenuWrap{position:relative}
+.chatTitleMenuTrigger{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border:0;background:transparent;color:inherit;padding:4px 8px;border-radius:10px;text-align:left}
+.chatTitleMenuTrigger:hover{background:#f5f1fa}
+.chatTitleMenuTrigger small span{color:#70569d}
+.chatTitleDropdown{position:absolute;z-index:20;top:100%;left:0;min-width:190px;padding:7px;background:#fff;border:1px solid #e8e1f0;border-radius:12px;box-shadow:0 10px 30px rgba(35,25,55,.14)}
+.chatTitleDropdown button{width:100%;padding:11px 12px;border:0;border-radius:8px;background:transparent;color:#a33d50;text-align:left;font-weight:650}
+.chatTitleDropdown button:hover{background:#fff0f1}
