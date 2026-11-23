@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCheck, Gift, Users, UserPlus, CheckCircle2, LoaderCircle } from "lucide-react";
+import { Bell, CheckCheck, Gift, Users, UserPlus, LoaderCircle, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Notification = {
