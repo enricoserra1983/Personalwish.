@@ -441,10 +441,10 @@
 @media(max-width:700px){.chatPage{padding:12px}.chatTop{gap:10px;flex-wrap:wrap}.chatTop h1{font-size:20px}.chatTop>button{padding:10px;font-size:11px}.chatLayout{height:calc(100dvh - 105px);min-height:420px;grid-template-columns:118px minmax(0,1fr)}.chatSidebar{padding:12px 6px}.chatSidebar h2{font-size:12px;margin:0 4px 10px}.chatEntry{flex-direction:column;align-items:flex-start;gap:5px;padding:9px 6px}.chatEntryIcon{width:32px;height:32px;flex-basis:32px}.chatEntryText b{font-size:10px}.chatEntryText small{font-size:9px;max-width:96px}.chatEntry i{position:absolute;margin-left:25px}.chatMessages{padding:12px}.chatConversationHead{padding:13px}.chatNew{padding:17px 12px}.chatBubble{max-width:90%}.chatBack{font-size:11px}}
 
 
-/* Accesso rapido alla chat dalla home, anche su smartphone */
-.chatQuickLink{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border:1px solid #e5def1;border-radius:10px;background:#fff;color:var(--purple);text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
-.chatQuickLink:hover{background:#f5f1fc}
-@media(max-width:650px){.chatQuickLink{width:34px;height:34px;padding:0;border-radius:50%}.chatQuickLink span{display:none}.chatQuickLink svg{width:18px;height:18px}}
+/* Accesso rapido al centro notifiche dalla home, anche su smartphone */
+.notificationQuickLink{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border:1px solid #e5def1;border-radius:10px;background:#fff;color:var(--purple);text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.notificationQuickLink:hover{background:#f5f1fc}
+@media(max-width:650px){.notificationQuickLink{width:34px;height:34px;padding:0;border-radius:50%}.notificationQuickLink span{display:none}.notificationQuickLink svg{width:18px;height:18px}}
 
 
 /* PersonalWish refresh: profilo e strumenti liste */
@@ -531,9 +531,8 @@
 .sharedParticipants>div{display:flex;flex-wrap:wrap;gap:7px}
 .sharedParticipants span{display:inline-flex;padding:6px 10px;border-radius:999px;background:var(--lav);color:var(--purple);font-size:12px;font-weight:700}
 
-.chatQuickLink,.chatNavLink{position:relative}
-.chatUnreadDot{position:absolute;top:3px;right:3px;width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:#e53935;box-shadow:0 0 0 1px rgba(229,57,53,.12)}
-.chatNavLink .chatUnreadDot{top:9px;right:12px}
+ .notificationQuickLink{position:relative}
+.notificationBellDot{position:absolute;top:2px;right:2px;width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:#e53935;box-shadow:0 0 0 1px rgba(229,57,53,.12);pointer-events:none}
 
 
 /* Centro notifiche */
@@ -588,7 +587,7 @@
 @media(max-width:650px){.notificationActions{margin-left:0}}
 
 /* Centro notifiche: elenco compatto, scorrevole e azioni */
-.notificationsList{max-height:780px;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+.notificationsList{max-height:690px;overflow-y:auto;overscroll-behavior:contain;padding-right:4px;scrollbar-gutter:stable}
 .notificationCard{display:flex;flex-direction:column;align-items:stretch;cursor:default}
 .notificationTopRow{display:flex;align-items:flex-start;gap:8px;width:100%}
 .notificationOpen{display:flex;align-items:center;gap:13px;flex:1;min-width:0;padding:0;background:transparent;text-align:left;color:inherit;cursor:pointer}
@@ -598,4 +597,4 @@
 .notificationActions button{border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700}
 .notificationAccept{background:#eee8fb;color:#6747b2}
 .notificationDecline{background:#f6f2f2;color:#8d7373}
-@media(max-width:650px){.notificationActions{margin-left:0}.notificationsList{max-height:780px}}
+@media(max-width:650px){.notificationActions{margin-left:0}.notificationsList{max-height:690px}}
