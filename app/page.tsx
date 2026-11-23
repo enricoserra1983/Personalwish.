@@ -428,13 +428,50 @@ export default function Home() {
     const blob=new Blob([lines.join("\n")],{type:"text/plain;charset=utf-8"});
     const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-")+".txt";a.click();URL.revokeObjectURL(url);
   }
-  function exportWishlistPdf() {
+  async function exportWishlistPdf() {
     if(!activeList)return;
-    const esc=(v:string)=>v.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]||c));
-    const rows=wishes.map((w,i)=>`<article><b>${i+1}. ${esc(w.title)}</b>${w.product_url?`<a href="${esc(w.product_url)}" target="_blank" rel="noopener noreferrer">${esc(w.product_url)}</a>`:""}</article>`).join("");
-    const win=window.open("","_blank");if(!win){setError("Consenti i popup per creare il PDF.");return;}
-    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(activeList.title)}</title><style>body{font:14px Arial;color:#29243b;padding:32px;max-width:760px;margin:auto}h1{font-size:26px;margin-bottom:24px}article{padding:14px 0;border-bottom:1px solid #ddd;break-inside:avoid}b{display:block;font-size:15px;margin-bottom:6px}a{display:block;color:#5b45a0;text-decoration:underline;overflow-wrap:anywhere;font-size:13px}@media print{a{color:#333}}</style></head><body><h1>${esc(activeList.title)}</h1>${rows}<script>window.onload=()=>window.print()<\\/script></body></html>`);
-    win.document.close();
+    const clean=(value:string)=>value.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^\\x20-\\x7E]/g,"?");
+    const wrap=(value:string,max=78)=>{const words=clean(value).split(/\\s+/);const out:string[]=[];let line="";for(const word of words){if((line+" "+word).trim().length>max&&line){out.push(line);line=word;}else line=(line+" "+word).trim();}if(line)out.push(line);return out;};
+    const pageLines:{text:string;url?:string;bold?:boolean}[][]=[[]];
+    const add=(line:{text:string;url?:string;bold?:boolean})=>{let page=pageLines[pageLines.length-1];if(page.length>=48){pageLines.push([]);page=pageLines[pageLines.length-1];}page.push(line);};
+    add({text:clean(activeList.title),bold:true});add({text:""});
+    wishes.forEach((w,i)=>{wrap(`${i+1}. ${w.title}`,70).forEach((line,j)=>add({text:line,bold:j===0}));if(w.product_url){wrap(w.product_url,78).forEach((line,j)=>add({text:line,url:j===0?w.product_url:undefined}));}add({text:""});});
+    const objects:string[]=[];
+    const addObj=(value:string)=>{objects.push(value);return objects.length;};
+    const catalogId=addObj("");
+    const pagesId=addObj("");
+    const fontId=addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+    const boldFontId=addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+    const pageIds:number[]=[];
+    const pageRefs:string[]=[];
+    pageLines.forEach((lines)=>{
+      let y=790;const commands:string[]=[];const annots:number[]=[];
+      lines.forEach(line=>{
+        if(line.text===""){y-=10;return;}
+        const font=line.bold?boldFontId:fontId;
+        const escaped=line.text.replace(/\\\\/g,"\\\\\\\\").replace(/\\(/g,"\\\\(").replace(/\\)/g,"\\\\)");
+        commands.push(`BT /${line.bold?"F2":"F1"} 11 Tf 50 ${y} Td (${escaped}) Tj ET`);
+        if(line.url){const width=Math.min(495,Math.max(40,line.text.length*5.5));const safeUrl=encodeURI(line.url).replace(/\\\\/g,"%5C").replace(/\\(/g,"%28").replace(/\\)/g,"%29");const aid=addObj(`<< /Type /Annot /Subtype /Link /Rect [50 ${y-3} ${50+width} ${y+11}] /Border [0 0 0] /A << /S /URI /URI (${safeUrl}) >> >>`);annots.push(aid);}
+        y-=17;
+      });
+      const stream=commands.join("\\n");
+      const contentId=addObj(`<< /Length ${stream.length} >>\\nstream\\n${stream}\\nendstream`);
+      const pageId=addObj(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${contentId} 0 R /Annots [${annots.map(id=>id+" 0 R").join(" ")}] >>`);
+      pageIds.push(pageId);pageRefs.push(pageId+" 0 R");
+    });
+    objects[catalogId-1]=`<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
+    objects[pagesId-1]=`<< /Type /Pages /Kids [${pageRefs.join(" ")}] /Count ${pageIds.length} >>`;
+    let pdf="%PDF-1.4\\n";
+    const offsets=[0];
+    objects.forEach((obj,i)=>{offsets.push(pdf.length);pdf+=`${i+1} 0 obj\\n${obj}\\nendobj\\n`;});
+    const xref=pdf.length;pdf+=`xref\\n0 ${objects.length+1}\\n0000000000 65535 f \\n`;
+    offsets.slice(1).forEach(offset=>{pdf+=String(offset).padStart(10,"0")+" 00000 n \\n";});
+    pdf+=`trailer\\n<< /Size ${objects.length+1} /Root ${catalogId} 0 R >>\\nstartxref\\n${xref}\\n%%EOF`;
+    const file=new File([new TextEncoder().encode(pdf)],(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\\s+/g,"-")+".pdf",{type:"application/pdf"});
+    try{
+      if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:activeList.title||"Lista PersonalWish"});return;}
+    }catch(err){if(err instanceof Error&&err.name==="AbortError")return;setError("Condivisione non disponibile: avvio il download del PDF.");}
+    const url=URL.createObjectURL(file);const link=document.createElement("a");link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
   async function importWishlistText(file:File|null) {
