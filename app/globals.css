@@ -514,3 +514,10 @@
 
 .wishImage .wishDragHandle{font-size:18px;filter:none}
 .wishImage .wishDragHandle svg{width:19px;height:19px}
+
+/* Riordino touch e auto-scroll */
+.wishDragHandle{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.wishDragHandle:active{cursor:grabbing}
+.listDragHandle{position:relative;flex:0 0 38px;width:38px;height:42px;border:0;background:#f3eef9;color:#6d5794;border-radius:10px;display:grid;place-items:center}
+.ownerCompactRow{gap:10px}
+.ownerCompactRow.wishDragging,.wishCard.wishDragging{opacity:.5;outline:2px dashed #8b70b8;outline-offset:2px}
