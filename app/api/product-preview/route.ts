@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         "Accept": "text/html,application/xhtml+xml"
       },
       redirect: "follow",
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(10000)
     });
     if (!response.ok) {
       return NextResponse.json({ error: "Il negozio non consente di leggere i dati del prodotto." }, { status: 422 });
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<[/]title>/i)?.[1] || "";
     const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
     const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
-    const title = metaValue(html, "og:title") || metaValue(html, "twitter:title") || jsonLd.title || amazonTitle || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
+    const title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
     let image = metaValue(html, "og:image") || metaValue(html, "twitter:image") || jsonLd.image;
     if (!image && amazon) image = amazonMainImage(html);
     const description = metaValue(html, "og:description") || metaValue(html, "description") || jsonLd.description;
