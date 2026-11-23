@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Gift, Heart, Plus, Users, MessageCircle, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X, ArrowDownUp } from "lucide-react";
+import { Gift, Heart, Plus, Users, MessageCircle, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X, ArrowDownUp, GripVertical } from "lucide-react";
 
 type WishItem = {
   id: string;
@@ -12,6 +12,7 @@ type WishItem = {
   price: number | null;
   image_url: string | null;
   product_url: string | null;
+  position?: number | null;
 };
 type Wishlist = {
   id: string;
@@ -635,6 +636,20 @@ export default function Home() {
     setBusy(false);
   }
 
+  async function moveWish(draggedId:string,targetId:string) {
+    if(!activeList||draggedId===targetId)return;
+    const ordered=[...wishes];
+    const from=ordered.findIndex(item=>item.id===draggedId);
+    const to=ordered.findIndex(item=>item.id===targetId);
+    if(from<0||to<0)return;
+    const [moved]=ordered.splice(from,1);ordered.splice(to,0,moved);
+    setWishlists(current=>current.map(list=>list.id===activeList.id?{...list,wishlist_items:ordered}:list));
+    const supabase=createClient();
+    const updates=await Promise.all(ordered.map((item,index)=>supabase.from("wishlist_items").update({position:index}).eq("id",item.id)));
+    const failed=updates.find(result=>result.error);
+    if(failed?.error){setError("Non sono riuscito a salvare il nuovo ordine: "+failed.error.message);await loadData();}
+  }
+
   async function deleteWish(id: string) {
     if (!activeList || !window.confirm("Vuoi eliminare questo desiderio?")) return;
     const supabase = createClient();
@@ -755,7 +770,7 @@ export default function Home() {
                 </div>
               </div>
               {displayMode === "grid" ? (
-                <div className="wishGrid">{wishes.map((wish, i) => <article className="wishCard" key={wish.id}><div className={`wishImage image${i % 3}`}>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
+                <div className="wishGrid">{wishes.map((wish, i) => <article className={`wishCard ${draggingWishId===wish.id?"wishDragging":""}`} key={wish.id} draggable onDragStart={e=>{setDraggingWishId(wish.id);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",wish.id);}} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const id=e.dataTransfer.getData("text/plain")||draggingWishId;if(id)moveWish(id,wish.id);setDraggingWishId(null);}} onDragEnd={()=>setDraggingWishId(null)}><div className={`wishImage image${i % 3}`}><span className="wishDragHandle" title="Trascina per riordinare"><GripVertical size={19}/></span>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
               ) : (
                 <div className="ownerCompactList">{wishes.map(wish => <div className="ownerCompactRow" key={wish.id}>
                   <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
