@@ -435,7 +435,7 @@ export default function Home() {
     const pageLines:{text:string;url?:string;bold?:boolean}[][]=[[]];
     const add=(line:{text:string;url?:string;bold?:boolean})=>{let page=pageLines[pageLines.length-1];if(page.length>=48){pageLines.push([]);page=pageLines[pageLines.length-1];}page.push(line);};
     add({text:clean(activeList.title),bold:true});add({text:""});
-    wishes.forEach((w,i)=>{wrap(`${i+1}. ${w.title}`,70).forEach((line,j)=>add({text:line,bold:j===0}));if(w.product_url){wrap(w.product_url,78).forEach((line,j)=>add({text:line,url:j===0?w.product_url:undefined}));}add({text:""});});
+    wishes.forEach((w,i)=>{wrap(`${i+1}. ${w.title}`,70).forEach((line,j)=>add({text:line,bold:j===0}));const productUrl=w.product_url;if(productUrl){wrap(productUrl,78).forEach((line,j)=>add({text:line,url:j===0?productUrl:undefined}));}add({text:""});});
     const objects:string[]=[];
     const addObj=(value:string)=>{objects.push(value);return objects.length;};
     const catalogId=addObj("");
