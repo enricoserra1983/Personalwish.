@@ -567,3 +567,6 @@
 .notificationsEmpty span{max-width:360px;font-size:13px;line-height:1.5}
 .notificationsError{padding:12px;border-radius:10px;background:#fff0f0;color:#a22}
 @media(max-width:600px){.notificationsHeader{padding:0 16px}.notificationsContent{margin:24px auto}.notificationsTitleRow{align-items:flex-start;flex-direction:column}.notificationsTitleRow h1{font-size:29px}.notificationsReadAll{width:100%;justify-content:center}.notificationCard{padding:13px;gap:10px}}
+
+.friendRemoveButton{background:#fff0f0;color:#b34b55}
+.friendProfileButton .outline{margin-top:0;white-space:nowrap}
