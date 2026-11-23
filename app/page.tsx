@@ -659,7 +659,7 @@ export default function Home() {
     const host=new URL(url).hostname.toLowerCase();
     const isAmazon=host.includes("amazon.")||host==="amzn.eu"||host.endsWith(".amzn.eu");
     try{
-      const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,includeImage:wishFetchImage}),signal:AbortSignal.timeout(8500)});
+      const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,includeImage:wishFetchImage}),signal:AbortSignal.timeout(17000)});
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||"Il negozio non ha restituito i dati del prodotto.");
       if(data.title)setNewWish(data.title);
