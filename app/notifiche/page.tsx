@@ -84,18 +84,78 @@ export default function NotificationsPage() {
         {unread > 0 && <button className="notificationsReadAll" onClick={() => markRead()}><CheckCheck size={16}/> Segna tutte come lette</button>}
       </div>
       {error && <p className="notificationsError">{error}</p>}
-      {loading ? <div className="notificationsEmpty"><LoaderCircle className="spin" size={22}/> Caricamento notifiche...</div> :
-        items.length ? <div className="notificationsList">{items.map(item => <div key={item.id} className={"notificationCard " + (item.read_at ? "" : "unread")}>
-          <div className="notificationTopRow"><button type="button" className="notificationOpen" onClick={() => openNotification(item)}>
-            <span className="notificationIcon">{iconFor(item.type)}</span>
-            <span className="notificationText"><b>{item.title}</b><span>{item.body}</span><small>{new Date(item.created_at).toLocaleString("it-IT",{dateStyle:"medium",timeStyle:"short"})}</small></span>
-            {!item.read_at && <span className="notificationUnreadDot" aria-label="Non letta"/>}
-          </button><button type="button" className="notificationDelete" aria-label="Elimina notifica" onClick={() => deleteNotification(item)}><X size={17}/></button></div>
-          {item.type === "friend_request" && item.friend_request_id && <div className="notificationActions">
-            <button type="button" className="notificationAccept" onClick={() => answerFriendNotification(item,true)}>Accetta</button>
-            <button type="button" className="notificationDecline" onClick={() => answerFriendNotification(item,false)}>Rifiuta</button>
-          </div>}
-        </div>)}</div> : <div className="notificationsEmpty"><Bell size={28}/><b>Ancora nessuna notifica</b><span>Quando ci saranno novità sulle tue liste o amicizie, le troverai qui.</span></div>}
+      {loading ? (
+        <div className="notificationsEmpty">
+          <LoaderCircle className="spin" size={22} />
+          Caricamento notifiche...
+        </div>
+      ) : items.length > 0 ? (
+        <div className="notificationsList">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className={"notificationCard " + (item.read_at ? "" : "unread")}
+            >
+              <div className="notificationTopRow">
+                <button
+                  type="button"
+                  className="notificationOpen"
+                  onClick={() => openNotification(item)}
+                >
+                  <span className="notificationIcon">{iconFor(item.type)}</span>
+                  <span className="notificationText">
+                    <b>{item.title}</b>
+                    <span>{item.body}</span>
+                    <small>
+                      {new Date(item.created_at).toLocaleString("it-IT", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </small>
+                  </span>
+                  {!item.read_at && (
+                    <span className="notificationUnreadDot" aria-label="Non letta" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="notificationDelete"
+                  aria-label="Elimina notifica"
+                  onClick={() => deleteNotification(item)}
+                >
+                  <X size={17} />
+                </button>
+              </div>
+              {item.type === "friend_request" && item.friend_request_id && (
+                <div className="notificationActions">
+                  <button
+                    type="button"
+                    className="notificationAccept"
+                    onClick={() => answerFriendNotification(item, true)}
+                  >
+                    Accetta
+                  </button>
+                  <button
+                    type="button"
+                    className="notificationDecline"
+                    onClick={() => answerFriendNotification(item, false)}
+                  >
+                    Rifiuta
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="notificationsEmpty">
+          <Bell size={28} />
+          <b>Ancora nessuna notifica</b>
+          <span>
+            Quando ci saranno novità sulle tue liste o amicizie, le troverai qui.
+          </span>
+        </div>
+      )}
     </section>
   </main>;
 }
