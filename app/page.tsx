@@ -430,8 +430,8 @@ export default function Home() {
   }
   async function exportWishlistPdf() {
     if(!activeList)return;
-    const clean=(value:string)=>value.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^\\x20-\\x7E]/g,"?");
-    const wrap=(value:string,max=78)=>{const words=clean(value).split(/\\s+/);const out:string[]=[];let line="";for(const word of words){if((line+" "+word).trim().length>max&&line){out.push(line);line=word;}else line=(line+" "+word).trim();}if(line)out.push(line);return out;};
+    const clean=(value:string)=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\x20-\x7E]/g,"?");
+    const wrap=(value:string,max=78)=>{const words=clean(value).split(/\s+/);const out:string[]=[];let line="";for(const word of words){if((line+" "+word).trim().length>max&&line){out.push(line);line=word;}else line=(line+" "+word).trim();}if(line)out.push(line);return out;};
     const pageLines:{text:string;url?:string;bold?:boolean}[][]=[[]];
     const add=(line:{text:string;url?:string;bold?:boolean})=>{let page=pageLines[pageLines.length-1];if(page.length>=48){pageLines.push([]);page=pageLines[pageLines.length-1];}page.push(line);};
     add({text:clean(activeList.title),bold:true});add({text:""});
@@ -449,25 +449,25 @@ export default function Home() {
       lines.forEach(line=>{
         if(line.text===""){y-=10;return;}
         const font=line.bold?boldFontId:fontId;
-        const escaped=line.text.replace(/\\\\/g,"\\\\\\\\").replace(/\\(/g,"\\\\(").replace(/\\)/g,"\\\\)");
+        const escaped=line.text.replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)");
         commands.push(`BT /${line.bold?"F2":"F1"} 11 Tf 50 ${y} Td (${escaped}) Tj ET`);
-        if(line.url){const width=Math.min(495,Math.max(40,line.text.length*5.5));const safeUrl=encodeURI(line.url).replace(/\\\\/g,"%5C").replace(/\\(/g,"%28").replace(/\\)/g,"%29");const aid=addObj(`<< /Type /Annot /Subtype /Link /Rect [50 ${y-3} ${50+width} ${y+11}] /Border [0 0 0] /A << /S /URI /URI (${safeUrl}) >> >>`);annots.push(aid);}
+        if(line.url){const width=Math.min(495,Math.max(40,line.text.length*5.5));const safeUrl=encodeURI(line.url).replace(/\\/g,"%5C").replace(/\(/g,"%28").replace(/\)/g,"%29");const aid=addObj(`<< /Type /Annot /Subtype /Link /Rect [50 ${y-3} ${50+width} ${y+11}] /Border [0 0 0] /A << /S /URI /URI (${safeUrl}) >> >>`);annots.push(aid);}
         y-=17;
       });
-      const stream=commands.join("\\n");
-      const contentId=addObj(`<< /Length ${stream.length} >>\\nstream\\n${stream}\\nendstream`);
+      const stream=commands.join("\n");
+      const contentId=addObj(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
       const pageId=addObj(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${contentId} 0 R /Annots [${annots.map(id=>id+" 0 R").join(" ")}] >>`);
       pageIds.push(pageId);pageRefs.push(pageId+" 0 R");
     });
     objects[catalogId-1]=`<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
     objects[pagesId-1]=`<< /Type /Pages /Kids [${pageRefs.join(" ")}] /Count ${pageIds.length} >>`;
-    let pdf="%PDF-1.4\\n";
+    let pdf="%PDF-1.4\n";
     const offsets=[0];
-    objects.forEach((obj,i)=>{offsets.push(pdf.length);pdf+=`${i+1} 0 obj\\n${obj}\\nendobj\\n`;});
-    const xref=pdf.length;pdf+=`xref\\n0 ${objects.length+1}\\n0000000000 65535 f \\n`;
-    offsets.slice(1).forEach(offset=>{pdf+=String(offset).padStart(10,"0")+" 00000 n \\n";});
-    pdf+=`trailer\\n<< /Size ${objects.length+1} /Root ${catalogId} 0 R >>\\nstartxref\\n${xref}\\n%%EOF`;
-    const file=new File([new TextEncoder().encode(pdf)],(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\\s+/g,"-")+".pdf",{type:"application/pdf"});
+    objects.forEach((obj,i)=>{offsets.push(pdf.length);pdf+=`${i+1} 0 obj\n${obj}\nendobj\n`;});
+    const xref=pdf.length;pdf+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`;
+    offsets.slice(1).forEach(offset=>{pdf+=String(offset).padStart(10,"0")+" 00000 n \n";});
+    pdf+=`trailer\n<< /Size ${objects.length+1} /Root ${catalogId} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    const file=new File([new TextEncoder().encode(pdf)],(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-")+".pdf",{type:"application/pdf"});
     try{
       if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:activeList.title||"Lista PersonalWish"});return;}
     }catch(err){if(err instanceof Error&&err.name==="AbortError")return;setError("Condivisione non disponibile: avvio il download del PDF.");}
