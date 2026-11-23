@@ -162,7 +162,7 @@ export default function Home() {
 
     const { data, error: listError } = await supabase
       .from("wishlists")
-      .select("id,title,description,share_token,image_url,is_public,private_access_mode,owner_sees_participants,participants_see_participants,owner_sees_reservations,participants_see_reservations,owner_sees_buyer,participants_see_buyer,wishlist_items(id,title,description,price,image_url,product_url)")
+      .select("id,title,description,share_token,image_url,is_public,private_access_mode,owner_sees_participants,participants_see_participants,owner_sees_reservations,participants_see_reservations,owner_sees_buyer,participants_see_buyer,wishlist_items(id,title,description,price,image_url,product_url,position)")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
     if (listError) throw listError;
