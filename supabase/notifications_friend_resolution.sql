@@ -1,5 +1,24 @@
 -- PersonalWish: chiude le notifiche di richiesta quando la richiesta viene gestita
 -- dalla schermata Amici (o dal Centro notifiche).
+-- Allinea anche le notifiche di richieste già accettate o rifiutate in passato.
+update public.notifications n
+set title = case
+      when r.status = 'accepted' then 'Amicizia confermata'
+      else 'Richiesta rifiutata'
+    end,
+    body = case
+      when r.status = 'accepted'
+        then 'Hai accettato la richiesta di amicizia di ' || coalesce(p.display_name, 'questo utente') || '.'
+      else 'Hai rifiutato la richiesta di amicizia di ' || coalesce(p.display_name, 'questo utente') || '.'
+    end,
+    read_at = coalesce(n.read_at, now()),
+    friend_request_id = null
+from public.friend_requests r
+left join public.profiles p on p.id = r.requester_id
+where n.friend_request_id = r.id
+  and n.user_id = r.recipient_id
+  and r.status in ('accepted', 'rejected');
+
 create or replace function public.resolve_friend_request_notification()
 returns trigger
 language plpgsql
