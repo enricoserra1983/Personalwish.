@@ -727,7 +727,7 @@ export default function Home() {
 
   return (
     <main className="shell">
-      {draggingWishId&&dragPointer&&draggedWish&&<div className="wishDragGhost" style={{left:dragPointer.x+14,top:dragPointer.y+14}}><span>{draggedWish.image_url?<img src={draggedWish.image_url} alt=""/>:"🎁"}</span><b>{draggedWish.title}</b></div>
+      {draggingWishId&&dragPointer&&draggedWish&&<div className="wishDragGhost" style={{left:dragPointer.x+14,top:dragPointer.y+14}}><span>{draggedWish.image_url?<img src={draggedWish.image_url} alt=""/>:"🎁"}</span><b>{draggedWish.title}</b></div>}
       <aside className="sidebar">
         <a className="brand" href="/"><span className="brandIcon"><Gift size={21}/></span><span>Personal<span className="brandAccent">Wish</span></span></a>
         <div className="workspaceLabel">IL TUO SPAZIO</div>
