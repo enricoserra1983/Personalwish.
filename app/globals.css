@@ -578,3 +578,10 @@
   .friendProfileButton .outline{padding:7px 8px;font-size:9px;gap:4px}
   .friendProfileButton .avatar{width:32px;height:32px;flex-shrink:0}
 }
+
+.friendsPreviewHeading{margin:8px 0 13px}
+.friendsSectionLink{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0;background:transparent;color:var(--ink);font:800 19px Manrope,sans-serif;text-align:left}
+.friendsSectionLink span{color:var(--purple);font:700 11px 'DM Sans',sans-serif}
+.friendsPreviewHeading p{margin:5px 0 0;color:var(--muted);font-size:11px}
+.friendsPageHeading{margin:4px 0 15px}
+.friendsPageHeading h2{font:800 22px Manrope,sans-serif;margin:13px 0 0}
