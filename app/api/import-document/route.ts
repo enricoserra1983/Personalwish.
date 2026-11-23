@@ -4,6 +4,25 @@ import WordExtractor from "word-extractor";
 
 export const runtime = "nodejs";
 
+function htmlToTextWithLinks(html: string) {
+  return html
+    .replace(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_match, href, label) => {
+      const cleanLabel = label.replace(/<[^>]+>/g, "").trim();
+      return cleanLabel ? cleanLabel + "\n" + href + "\n" : href + "\n";
+    })
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(?:p|div|li|h[1-6]|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&#x27;/gi, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export async function POST(request: Request) {
   try {
     const form = await request.formData();
@@ -21,8 +40,8 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     let text = "";
     if (name.endsWith(".docx")) {
-      const result = await mammoth.extractRawText({ buffer });
-      text = result.value;
+      const result = await mammoth.convertToHtml({ buffer });
+      text = htmlToTextWithLinks(result.value);
     } else {
       const extractor = new WordExtractor();
       const document = await extractor.extract(buffer);
