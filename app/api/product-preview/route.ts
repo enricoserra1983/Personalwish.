@@ -90,7 +90,15 @@ export async function POST(request: NextRequest) {
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<[/]title>/i)?.[1] || "";
     const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
     const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
-    const title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
+    let title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
+    if (amazon && (!title || /captcha|robot check|sorry|sign.?in/i.test(title))) {
+      const segments=finalUrl.pathname.split("/").filter(Boolean);
+      const dpIndex=segments.findIndex(segment=>segment.toLowerCase()==="dp");
+      const slug=dpIndex>0?segments[dpIndex-1]:"";
+      if(slug && !/^(gp|product|ref|dp)$/i.test(slug)) {
+        title=decode(slug.replace(/[-_]+/g," ").replace(/\\b[A-Z0-9]{10}\\b/g,"").trim());
+      }
+    }
     let image = metaValue(html, "og:image") || metaValue(html, "twitter:image") || jsonLd.image;
     if (!image && amazon) image = amazonMainImage(html);
     const description = metaValue(html, "og:description") || metaValue(html, "description") || jsonLd.description;
