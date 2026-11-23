@@ -15,12 +15,14 @@ type SharedItem = {
   price: number | null;
   currency: string;
   reserved?: boolean;
+  reserved_by?: string | null;
 };
 type SharedWishlist = {
   id: string;
   title: string;
   description: string | null;
   items: SharedItem[];
+  participants?: { user_id: string; display_name: string }[];
 };
 
 export default function SharedWishlistPage() {
@@ -127,6 +129,7 @@ export default function SharedWishlistPage() {
               </div>
             )}
           </div>
+          {list.participants && list.participants.length > 0 && <section className="sharedParticipants"><b>Amici che partecipano</b><div>{list.participants.map(person => <span key={person.user_id}>{person.display_name}</span>)}</div></section>}
           {reservationMessage && <p className="reservationNotice" role="status">{reservationMessage}</p>}
           {list.items.length ? (
             displayMode === "grid" ? (
@@ -145,7 +148,7 @@ export default function SharedWishlistPage() {
                         {reservedByMe.includes(item.id) ? (
                           <span className="reservedByMe"><CheckCircle2 size={16}/> Prenotato da te</span>
                         ) : reservedItems.includes(item.id) ? (
-                          <span className="reservedByMe"><CheckCircle2 size={16}/> Già prenotato</span>
+                          <span className="reservedByMe"><CheckCircle2 size={16}/> {item.reserved_by ? `Già prenotato da ${item.reserved_by}` : "Già prenotato"}</span>
                         ) : userId ? (
                           <button type="button" onClick={() => reserveItem(item.id)} disabled={reservingId !== null} className="reserveButton">
                             {reservingId === item.id ? <><LoaderCircle size={15} className="sharedSpinner"/> Prenotazione...</> : <><Gift size={15}/> Prenota regalo</>}
@@ -166,7 +169,7 @@ export default function SharedWishlistPage() {
                   <button type="button" className={`sharedCompactRow ${reservedItems.includes(item.id) ? "isReserved" : ""}`} key={item.id} onClick={() => setDetailItem(item)}>
                     {item.image_url ? <img src={item.image_url} alt="" /> : <span className="sharedCompactPlaceholder"><Gift size={19}/></span>}
                     <span className="sharedCompactInfo"><b>{item.title}</b><small>{item.price == null ? "Prezzo non indicato" : new Intl.NumberFormat("it-IT", { style: "currency", currency: item.currency || "EUR" }).format(item.price)}</small></span>
-                    {reservedItems.includes(item.id) ? <span className="compactReservedLabel"><CheckCircle2 size={13}/> Prenotato</span> : <span className="sharedCompactOpen">Dettagli <ExternalLink size={13}/></span>}
+                    {reservedItems.includes(item.id) ? <span className="compactReservedLabel"><CheckCircle2 size={13}/> {item.reserved_by ? `Da ${item.reserved_by}` : "Già prenotato"}</span> : <span className="sharedCompactOpen">Dettagli <ExternalLink size={13}/></span>}
                   </button>
                 ))}
               </div>
@@ -186,7 +189,7 @@ export default function SharedWishlistPage() {
                     {reservedByMe.includes(detailItem.id) ? (
                       <span className="reservedByMe"><CheckCircle2 size={16}/> Prenotato da te</span>
                     ) : reservedItems.includes(detailItem.id) ? (
-                      <span className="reservedByMe"><CheckCircle2 size={16}/> Già prenotato</span>
+                      <span className="reservedByMe"><CheckCircle2 size={16}/> {detailItem.reserved_by ? `Già prenotato da ${detailItem.reserved_by}` : "Già prenotato"}</span>
                     ) : userId ? (
                       <button type="button" onClick={() => reserveItem(detailItem.id)} disabled={reservingId !== null} className="reserveButton">
                         {reservingId === detailItem.id ? <><LoaderCircle size={15} className="sharedSpinner"/> Prenotazione...</> : <><Gift size={15}/> Prenota regalo</>}
