@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Gift, Heart, Plus, Users, MessageCircle, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X, ArrowDownUp, GripVertical } from "lucide-react";
+import { Gift, Heart, Plus, Users, Link2, Settings2, LockKeyhole, Sparkles, LogOut, LoaderCircle, Trash2, UserRound, ChevronDown, LayoutGrid, List, X, ArrowDownUp, GripVertical } from "lucide-react";
 
 type WishItem = {
   id: string;
@@ -112,7 +112,6 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
   const [detailWish, setDetailWish] = useState<WishItem | null>(null);
 
@@ -218,22 +217,6 @@ export default function Home() {
       active = false;
       window.clearInterval(interval);
     };
-  }, []);
-
-  // Aggiorna il pallino delle chat quando arrivano nuovi messaggi.
-  useEffect(() => {
-    let active = true;
-    const checkUnreadChats = async () => {
-      const { data: auth } = await createClient().auth.getUser();
-      if (!auth.user) return;
-      const { data, error } = await createClient().rpc("get_my_chats");
-      if (!active || error) return;
-      const total = (data || []).reduce((sum: number, chat: { unread_count?: number }) => sum + Number(chat.unread_count || 0), 0);
-      setUnreadChatCount(total);
-    };
-    checkUnreadChats();
-    const interval = window.setInterval(checkUnreadChats, 10000);
-    return () => { active = false; window.clearInterval(interval); };
   }, []);
 
   // Carica i dati della privacy solo dopo aver aperto il pannello.
@@ -776,13 +759,13 @@ export default function Home() {
         <button className={`navItem ${tab === "lists" ? "active" : ""}`} onClick={() => setTab("lists")}><Heart size={18}/> Le mie liste <span className="navCount">{wishlists.length}</span></button>
         <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); }}><Users size={18}/> Amici</button>
         <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
-        <a className="navItem chatNavLink" href="/chat"><MessageCircle size={18}/> Chat{unreadChatCount > 0 && <span className="chatUnreadDot" aria-label="Nuovi messaggi"/>}</a>
+        
         <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>\n        <button className={`navItem ${tab === "transfer" ? "active" : ""}`} onClick={() => setTab("transfer")}><ArrowDownUp size={18}/> Importa / Esporta</button>
         <div className="sideBottom"><div className="avatar">{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</div><div><b>{loading ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
       </aside>
 
       <section className="content">
-        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : tab === "transfer" ? "Importa / Esporta" : "Impostazioni"}</div><div className="topActions"><a className="chatQuickLink" href="/chat" aria-label={unreadChatCount > 0 ? "Apri le chat: nuovi messaggi" : "Apri le chat"} title="Chat"><MessageCircle size={19}/>{unreadChatCount > 0 && <span className="chatUnreadDot" aria-label="Nuovi messaggi"/>}</a><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}{requests.length > 0 && tab !== "friends" && <span className="profileNotificationDot" aria-label={requests.length + " richieste di amicizia in attesa"} />}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button className="accountFriendsButton" onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici{requests.length > 0 && <span className="accountFriendsBadge">{requests.length > 9 ? "9+" : requests.length}</span>}</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button onClick={() => { setTab("transfer"); setShowAccountMenu(false); }}><ArrowDownUp size={16}/> Importa / Esporta</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
+        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : tab === "transfer" ? "Importa / Esporta" : "Impostazioni"}</div><div className="topActions"><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}{requests.length > 0 && tab !== "friends" && <span className="profileNotificationDot" aria-label={requests.length + " richieste di amicizia in attesa"} />}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button className="accountFriendsButton" onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici{requests.length > 0 && <span className="accountFriendsBadge">{requests.length > 9 ? "9+" : requests.length}</span>}</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button onClick={() => { setTab("transfer"); setShowAccountMenu(false); }}><ArrowDownUp size={16}/> Importa / Esporta</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
 
         {error && <div className="authError" role="alert">{error}</div>}
         {loading ? <div className="settingsCard"><LoaderCircle size={20}/> Caricamento delle tue liste...</div> : null}
