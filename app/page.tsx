@@ -101,6 +101,8 @@ export default function Home() {
   const [editingWishId,setEditingWishId] = useState<string|null>(null);
   const [fetchingProduct,setFetchingProduct] = useState(false);
   const [draggingWishId,setDraggingWishId] = useState<string|null>(null);
+  const [dragPointer,setDragPointer] = useState<{x:number;y:number}|null>(null);
+  const [dragOverWishId,setDragOverWishId] = useState<string|null>(null);
   const dragTargetRef = useRef<string|null>(null);
   const [savingWishImage,setSavingWishImage] = useState(false);
   const wishImageInputRef = useRef<HTMLInputElement>(null);
@@ -127,17 +129,19 @@ export default function Home() {
   useEffect(() => {
     if(!draggingWishId)return;
     const onMove=(event:PointerEvent)=>{
+      setDragPointer({x:event.clientX,y:event.clientY});
       const target=document.elementFromPoint(event.clientX,event.clientY)?.closest<HTMLElement>("[data-wish-id]");
-      if(target?.dataset.wishId)dragTargetRef.current=target.dataset.wishId;
-      const edge=90;
-      if(event.clientY<edge)window.scrollBy(0,-Math.max(8,(edge-event.clientY)*0.22));
-      else if(event.clientY>window.innerHeight-edge)window.scrollBy(0,Math.max(8,(event.clientY-(window.innerHeight-edge))*0.22));
+      if(target?.dataset.wishId){dragTargetRef.current=target.dataset.wishId;setDragOverWishId(target.dataset.wishId);}
+      const edge=100;
+      if(event.clientY<edge)window.scrollBy(0,-Math.max(10,(edge-event.clientY)*0.24));
+      else if(event.clientY>window.innerHeight-edge)window.scrollBy(0,Math.max(10,(event.clientY-(window.innerHeight-edge))*0.24));
     };
-    const onUp=()=>{const target=dragTargetRef.current;if(target)void moveWish(draggingWishId,target);setDraggingWishId(null);dragTargetRef.current=null;};
+    const onUp=()=>{const target=dragTargetRef.current;if(target)void moveWish(draggingWishId,target);setDraggingWishId(null);setDragPointer(null);setDragOverWishId(null);dragTargetRef.current=null;};
     window.addEventListener("pointermove",onMove,{passive:true});window.addEventListener("pointerup",onUp);window.addEventListener("pointercancel",onUp);
     return()=>{window.removeEventListener("pointermove",onMove);window.removeEventListener("pointerup",onUp);window.removeEventListener("pointercancel",onUp);};
   },[draggingWishId]);
 
+  const draggedWish = wishlists.flatMap(list=>list.wishlist_items||[]).find(item=>item.id===draggingWishId) || null;
   const activeList = wishlists.find(list => list.id === activeId) || wishlists[0] || null;
   const wishes = activeList?.wishlist_items || [];
   const reservedCount = 0;
@@ -723,6 +727,7 @@ export default function Home() {
 
   return (
     <main className="shell">
+      {draggingWishId&&dragPointer&&draggedWish&&<div className="wishDragGhost" style={{left:dragPointer.x+14,top:dragPointer.y+14}}><span>{draggedWish.image_url?<img src={draggedWish.image_url} alt=""/>:"🎁"}</span><b>{draggedWish.title}</b></div>
       <aside className="sidebar">
         <a className="brand" href="/"><span className="brandIcon"><Gift size={21}/></span><span>Personal<span className="brandAccent">Wish</span></span></a>
         <div className="workspaceLabel">IL TUO SPAZIO</div>
@@ -774,9 +779,9 @@ export default function Home() {
                 </div>
               </div>
               {displayMode === "grid" ? (
-                <div className="wishGrid">{wishes.map((wish, i) => <article data-wish-id={wish.id} className={`wishCard ${draggingWishId===wish.id?"wishDragging":""}`} key={wish.id}><div className={`wishImage image${i % 3}`}><button type="button" className="wishDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
+                <div className="wishGrid">{wishes.map((wish, i) => <article data-wish-id={wish.id} className={`wishCard ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><div className={`wishImage image${i % 3}`}><button type="button" className="wishDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
               ) : (
-                <div className="ownerCompactList">{wishes.map(wish => <div data-wish-id={wish.id} className={`ownerCompactRow ${draggingWishId===wish.id?"wishDragging":""}`} key={wish.id}><button type="button" className="wishDragHandle listDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>
+                <div className="ownerCompactList">{wishes.map(wish => <div data-wish-id={wish.id} className={`ownerCompactRow ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><button type="button" className="wishDragHandle listDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>
                   <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
                     <span className="ownerCompactName">{wish.title}</span>
                     <b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b>
