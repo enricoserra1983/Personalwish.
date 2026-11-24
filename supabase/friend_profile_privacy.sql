@@ -73,7 +73,7 @@ begin
   return jsonb_build_object(
     'user_id', v_profile.id,
     'display_name', v_profile.display_name,
-    'avatar_url', v_profile.avatar_url,
+    'avatar_url', case when coalesce(v_profile.profile_details_visible, true) then v_profile.avatar_url else null end,
     'first_name', case when coalesce(v_profile.profile_details_visible, true) then v_profile.first_name else null end,
     'last_name', case when coalesce(v_profile.profile_details_visible, true) then v_profile.last_name else null end,
     'birth_date', case when coalesce(v_profile.birthday_visible, false) then v_profile.birth_date else null end,
