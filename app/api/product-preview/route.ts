@@ -48,13 +48,12 @@ function readJsonLd(html: string) {
 }
 
 function zalandoMainImage(html: string) {
-  // Zalando serves product photos from img01.ztat.net. Prefer the first
-  // product-article image found in the page HTML, without changing Amazon logic.
+  // Zalando product photos are served from img01.ztat.net.
   const decoded = decode(html);
-  const candidates = decoded.match(/https?:\\?\/\\?\/img01\\.ztat\\.net\\/[^"'\\s<>\\\\]+/gi) || [];
+  const candidates = decoded.match(/https?:\/\/img01\.ztat\.net\/[^"'\s<>\\]+/gi) || [];
   for (const candidate of candidates) {
-    const cleaned = candidate.replace(/\\\\u002F/gi, "/").replace(/\\\\u003F/gi, "?").replace(/&amp;/g, "&");
-    if (/img01\\.ztat\\.net\\/article\\//i.test(cleaned)) {
+    const cleaned = candidate.replace(/\\u002F/gi, "/").replace(/\\u003F/gi, "?").replace(/&amp;/g, "&");
+    if (/img01\.ztat\.net\/article\//i.test(cleaned)) {
       try {
         const url = new URL(cleaned);
         url.searchParams.set("imwidth", "600");
@@ -67,7 +66,7 @@ function zalandoMainImage(html: string) {
 
 function zalandoTitleFromUrl(url: URL) {
   const slug = url.pathname.split("/").filter(Boolean).pop() || "";
-  const withoutCode = slug.replace(/-[a-z]{2}\\d{2}[a-z0-9]{2,}-[a-z0-9]+$/i, "");
+  const withoutCode = slug.replace(/-[a-z]{2}\d{2}[a-z0-9]{2,}-[a-z0-9]+$/i, "");
   return decode(withoutCode.replace(/[-_]+/g, " ").trim());
 }
 
