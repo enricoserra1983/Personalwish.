@@ -48,11 +48,11 @@ function readJsonLd(html: string) {
 }
 
 function zalandoMainImage(html: string) {
-  // Zalando product photos are served from img01.ztat.net.
-  const decoded = decode(html);
-  const candidates = decoded.match(/https?:\/\/img01\.ztat\.net\/[^"'\s<>\\]+/gi) || [];
+  // Zalando may emit absolute, protocol-relative, or JSON-escaped image URLs.
+  const decoded = decode(html).replace(/\\u002F/gi, "/").replace(/\\u003A/gi, ":");
+  const candidates = decoded.match(/(?:https?:)?\/\/img01\.ztat\.net\/[^"'\s<>\\]+/gi) || [];
   for (const candidate of candidates) {
-    const cleaned = candidate.replace(/\\u002F/gi, "/").replace(/\\u003F/gi, "?").replace(/&amp;/g, "&");
+    const cleaned = candidate.replace(/^\/\//, "https://").replace(/[),;]+$/, "").replace(/&amp;/g, "&");
     if (/img01\.ztat\.net\/article\//i.test(cleaned)) {
       try {
         const url = new URL(cleaned);
@@ -200,7 +200,8 @@ export async function POST(request: NextRequest) {
 
     let { response, finalUrl } = await fetchExternalPage(input);
     const isAmazon = finalUrl.hostname.toLowerCase().includes("amazon.");
-    if (isAmazon && [403, 429, 503].includes(response.status)) {
+    const isZalando = /(^|\.)zalando\./i.test(finalUrl.hostname);
+    if ((isAmazon || isZalando) && [403, 429, 503].includes(response.status)) {
       ({ response, finalUrl } = await fetchExternalPage(input, true));
     }
     if (!response.ok) {
@@ -232,8 +233,7 @@ export async function POST(request: NextRequest) {
     const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
     const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
     let title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
-    const isZalando = /(^|\.)zalando\./i.test(finalUrl.hostname);
-    if (isZalando && !title) title = zalandoTitleFromUrl(finalUrl);
+    if (isZalando && (!title || /^(zalando|zalando\.it)$/i.test(title.trim()))) title = zalandoTitleFromUrl(finalUrl);
     if (amazon && (!title || /captcha|robot check|sorry|sign.?in/i.test(title))) {
       const segments=finalUrl.pathname.split("/").filter(Boolean);
       const dpIndex=segments.findIndex(segment=>segment.toLowerCase()==="dp");
