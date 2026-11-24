@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 // PersonalWish product preview endpoint - stable build marker.
 
@@ -64,28 +67,121 @@ function amazonMainImage(html: string) {
   return "";
 }
 
+
+function isPublicIp(address: string) {
+  const version = isIP(address);
+  if (version === 4) {
+    const parts = address.split(".").map(Number);
+    const [a, b] = parts;
+    return !(
+      a === 0 || a === 10 || a === 127 || a >= 224 ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 192 && b === 0) ||
+      (a === 198 && (b === 18 || b === 19))
+    );
+  }
+  if (version === 6) {
+    const ip = address.toLowerCase();
+    return !(
+      ip === "::" || ip === "::1" || ip.startsWith("fc") ||
+      ip.startsWith("fd") || ip.startsWith("fe8") ||
+      ip.startsWith("fe9") || ip.startsWith("fea") ||
+      ip.startsWith("feb") || ip.startsWith("ff") ||
+      ip.startsWith("::ffff:")
+    );
+  }
+  return false;
+}
+
+async function validateExternalUrl(url: URL) {
+  if (!["http:", "https:"].includes(url.protocol)) throw new Error("URL non consentito");
+  if (url.username || url.password) throw new Error("Credenziali URL non consentite");
+  const hostname = url.hostname.toLowerCase().replace(/\\.$/, "");
+  if (!hostname || hostname === "localhost" || hostname.endsWith(".localhost") ||
+      hostname.endsWith(".local") || hostname.endsWith(".internal")) {
+    throw new Error("Host non consentito");
+  }
+  if (isIP(hostname)) {
+    if (!isPublicIp(hostname)) throw new Error("Indirizzo IP non pubblico");
+    return;
+  }
+  const records = await lookup(hostname, { all: true, verbatim: true });
+  if (!records.length || records.some(record => !isPublicIp(record.address))) {
+    throw new Error("Host non pubblico");
+  }
+}
+
+async function fetchExternalPage(startUrl: URL) {
+  let current = startUrl;
+  for (let redirects = 0; redirects <= 3; redirects++) {
+    await validateExternalUrl(current);
+    const response = await fetch(current.toString(), {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml"
+      },
+      redirect: "manual",
+      signal: AbortSignal.timeout(12000)
+    });
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const location = response.headers.get("location");
+      if (!location || redirects === 3) throw new Error("Troppi reindirizzamenti");
+      current = new URL(location, current);
+      continue;
+    }
+    return { response, finalUrl: current };
+  }
+  throw new Error("Troppi reindirizzamenti");
+}
+
+async function readLimitedText(response: Response, maxBytes: number) {
+  const reader = response.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("Pagina troppo grande");
+    }
+    chunks.push(value);
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.byteLength; }
+  return new TextDecoder().decode(merged);
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Devi accedere per recuperare i dati del prodotto." }, { status: 401 });
+    }
+
     const body = await request.json();
     const input = new URL(String(body.url || ""));
     if (!["http:", "https:"].includes(input.protocol)) {
       return NextResponse.json({ error: "Indirizzo non valido." }, { status: 400 });
     }
 
-    const response = await fetch(input.toString(), {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml"
-      },
-      redirect: "follow",
-      signal: AbortSignal.timeout(15000)
-    });
+    const { response, finalUrl } = await fetchExternalPage(input);
     if (!response.ok) {
       return NextResponse.json({ error: "Il negozio non consente di leggere i dati del prodotto." }, { status: 422 });
     }
 
-    const finalUrl = new URL(response.url);
-    const html = (await response.text()).slice(0, 2500000);
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.toLowerCase().includes("text/html") && !contentType.toLowerCase().includes("application/xhtml+xml")) {
+      return NextResponse.json({ error: "Il link non restituisce una pagina prodotto leggibile." }, { status: 422 });
+    }
+    const html = await readLimitedText(response, 2500000);
     const includeImage = body.includeImage !== false;
     const jsonLd = readJsonLd(html);
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<[/]title>/i)?.[1] || "";
