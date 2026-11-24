@@ -26,6 +26,9 @@ export default function LoginPage() {
         setEmail(savedEmail);
         setRememberMe(true);
       }
+      if (new URLSearchParams(window.location.search).get("accountDeleted") === "1") {
+        setMessage("Il tuo account PersonalWish è stato eliminato definitivamente.");
+      }
     } catch {}
   }, []);
 
