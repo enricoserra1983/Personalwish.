@@ -602,3 +602,18 @@
 .notificationAccept{background:#eee8fb;color:#6747b2}
 .notificationDecline{background:#f6f2f2;color:#8d7373}
 @media(max-width:650px){.notificationActions{margin-left:0}.notificationsList{max-height:690px}}
+
+/* Import workflow: create/import choice and destination */
+.importWorkflowCard{display:flex;flex-direction:column;gap:14px;margin:16px 0 24px;padding:18px;border:1px solid var(--line,#e8e3ee);border-radius:18px;background:#fff}
+.importWorkflowActions,.importDestinationOptions{display:flex;gap:10px;flex-wrap:wrap}
+.importWorkflowActions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:10px 18px;border:1px solid #ded5eb;border-radius:12px;background:#fff;color:var(--purple);font-weight:650}
+.importWorkflowActions button.selected{background:#f1ebfa;border-color:var(--purple)}
+.importWorkflowForm,.importWorkflowForm label{display:flex;flex-direction:column;gap:9px}
+.importWorkflowForm label,.transferListChoice>label{font-weight:650}
+.importWorkflowForm input,.transferListChoice>input{width:100%;min-height:46px;padding:10px 13px;border:1px solid #dedee4;border-radius:12px;background:#fff;color:var(--ink)}
+.importWorkflowForm>button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:0;border-radius:12px;background:#eee8f8;color:var(--purple);font-weight:650}
+.importWorkflowForm small,.transferListChoice small{color:var(--muted);font-size:12px}
+.importDestinationOptions{margin:10px 0}
+.importDestinationOptions label{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #e5e0eb;border-radius:10px;font-size:14px}
+.importDestinationOptions input{accent-color:var(--purple)}
+@media(max-width:650px){.importWorkflowCard{padding:14px}.importWorkflowActions button{flex:1}}
