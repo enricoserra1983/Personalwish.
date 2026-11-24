@@ -59,26 +59,26 @@ function zalandoTitleFromUrl(url: URL) {
 }
 
 function zalandoImageFromHtml(html: string) {
-  const tags = html.match(/<img\\b[^>]*>/gi) || [];
+  const tags = html.match(/<img\b[^>]*>/gi) || [];
   for (const tag of tags) {
     const candidates = [
       attribute(tag, "src"),
       attribute(tag, "data-src"),
       attribute(tag, "data-original"),
-      attribute(tag, "srcset").split(",")[0]?.trim().split(/\\s+/)[0] || ""
+      attribute(tag, "srcset").split(",")[0]?.trim().split(/\s+/)[0] || ""
     ];
-    const image = candidates.find(value => /https?:\\/\\/img\\d+\\.ztat\\.net\\/article\\/spp-media-/i.test(value));
+    const image = candidates.find(value => /https?:\/\/img\d+\.ztat\.net\/article\/spp-media-/i.test(value));
     if (image) return decode(image);
   }
-  const embedded = html.match(/https?:\\\\?\\/\\\\?\\/img\\d+\\.ztat\\.net\\\\?\\/article\\\\?\\/spp-media-[^"'\\s<>]+/i)?.[0];
-  return embedded ? decode(embedded.replace(/\\\\\\//g, "/")) : "";
+  const embedded = html.match(/https?:\\?\/\\?\/img\d+\.ztat\.net\\?\/article\\?\/spp-media-[^"'\s<>]+/i)?.[0];
+  return embedded ? decode(embedded.replace(/\\\//g, "/")) : "";
 }
 
 function zalandoDescriptionFromHtml(html: string) {
   const meta = metaValue(html, "og:description") || metaValue(html, "description");
   if (meta) return meta;
-  const details = html.match(/(?:Composizione e istruzioni di lavaggio|Dettagli prodotto)[\\s\\S]{0,1800}/i)?.[0] || "";
-  return details.replace(/<[^>]+>/g, " ").replace(/\\s+/g, " ").trim().slice(0, 700);
+  const details = html.match(/(?:Composizione e istruzioni di lavaggio|Dettagli prodotto)[\s\S]{0,1800}/i)?.[0] || "";
+  return details.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 700);
 }
 
 function amazonMainImage(html: string) {
