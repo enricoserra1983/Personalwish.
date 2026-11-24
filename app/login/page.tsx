@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Gift, LoaderCircle } from "lucide-react";
@@ -13,10 +13,21 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      const savedEmail = window.localStorage.getItem("personalwish-remembered-email");
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch {}
+  }, []);
 
   function getInviteId() {
     const value = new URLSearchParams(window.location.search).get("invite");
@@ -83,6 +94,10 @@ export default function LoginPage() {
       } else {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
+        try {
+          if (rememberMe) window.localStorage.setItem("personalwish-remembered-email", email.trim());
+          else window.localStorage.removeItem("personalwish-remembered-email");
+        } catch {}
         await sendInviteRequest();
         router.replace(nextPath);
         router.refresh();
@@ -133,12 +148,15 @@ export default function LoginPage() {
           {!isForgot && (
             <label>
               Password
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === "signup" ? "Almeno 8 caratteri" : "La tua password"} required minLength={mode === "signup" ? 8 : 6} autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === "signup" ? "Almeno 8 caratteri" : "La tua password"} required minLength={mode === "signup" ? 8 : 6} autoComplete={mode === "signup" ? "new-password" : "current-password"} name={mode === "signup" ? "new-password" : "current-password"} />
             </label>
           )}
 
           {mode === "login" && (
-            <button type="button" className="textButton" onClick={() => changeMode("forgot")}>Password dimenticata?</button>
+            <>
+              <label className="rememberLogin"><input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} /><span>Ricordami su questo dispositivo</span></label>
+              <button type="button" className="textButton" onClick={() => changeMode("forgot")}>Password dimenticata?</button>
+            </>
           )}
           {error && <p className="authError" role="alert">{error}</p>}
           {message && <p className="authMessage" role="status">{message}</p>}
