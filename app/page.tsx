@@ -721,7 +721,7 @@ export default function Home() {
   }
 
   async function fetchProductDetails() {
-    if(!wishUrl.trim())return;
+    if(!wishUrl.trim() || fetchingProduct)return;
     let url:string;
     try{url=new URL(wishUrl.trim()).toString();if(!["http:","https:"].includes(new URL(url).protocol))throw new Error();}
     catch{setError("Inserisci un link valido che inizi con https://");return;}
@@ -729,16 +729,28 @@ export default function Home() {
     const host=new URL(url).hostname.toLowerCase();
     const isAmazon=host.includes("amazon.")||host==="amzn.eu"||host.endsWith(".amzn.eu");
     try{
-      const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,includeImage:true}),signal:AbortSignal.timeout(17000)});
-      const data=await response.json();
-      if(!response.ok)throw new Error(data.error||"Il negozio non ha restituito i dati del prodotto.");
-      if(data.title)setNewWish(data.title);
-      if(data.image)setWishImage(data.image);
-      if(data.description)setWishDescription(data.description);
-      if(!data.title)throw new Error("Nome non disponibile.");
-      if(isAmazon&&!data.image)setError("Nome recuperato. Amazon non ha fornito la foto: puoi aggiungerla dalla galleria.");
+      let lastError:Error|null=null;
+      const attempts=isAmazon?3:1;
+      for(let attempt=0;attempt<attempts;attempt++){
+        try{
+          const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,includeImage:true}),signal:AbortSignal.timeout(17000)});
+          const data=await response.json();
+          if(!response.ok)throw new Error(data.error||"Il negozio non ha restituito i dati del prodotto.");
+          if(!data.title)throw new Error("Nome non disponibile.");
+          setNewWish(data.title);
+          if(data.image)setWishImage(data.image);
+          if(data.description)setWishDescription(data.description);
+          if(isAmazon&&!data.image)setError("Nome recuperato. Amazon non ha fornito la foto: puoi aggiungerla dalla galleria.");
+          lastError=null;
+          break;
+        }catch(error){
+          lastError=error instanceof Error?error:new Error("Recupero non riuscito");
+          if(attempt<attempts-1)await new Promise(resolve=>setTimeout(resolve,900*(attempt+1)));
+        }
+      }
+      if(lastError)throw lastError;
     }catch{
-      setError(isAmazon?"Amazon limita il recupero automatico. Il link è già conservato: inserisci il nome e salva il desiderio senza riprovare più volte.":"Non riesco a leggere i dati del prodotto. Il link è conservato: puoi completare i campi manualmente.");
+      setError(isAmazon?"Amazon non ha restituito i dati neanche dopo 3 tentativi automatici. Il link è conservato: puoi completare i campi manualmente.":"Non riesco a leggere i dati del prodotto. Il link è conservato: puoi completare i campi manualmente.");
     }finally{setFetchingProduct(false);}
   }
 
@@ -940,7 +952,7 @@ export default function Home() {
                   <div className="wishEditorActions"><button type="button" onClick={() => { const wish = detailWish; setDetailWish(null); openWishEditor(wish); }}>Modifica desiderio</button><button type="button" className="outline" onClick={() => setDetailWish(null)}>Chiudi</button></div>
                 </div></section></div>}
             </> : <div className="settingsCard">Non hai ancora aggiunto desideri a questa lista.</div>}
-            {showWishEditor && <div className="shareOverlay wishOverlay" role="presentation" onClick={resetWishEditor}><section className="shareDialog wishEditorDialog" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><button className="shareClose" aria-label="Chiudi" onClick={resetWishEditor}>×</button><div className="wishEditorHeading"><div className="shareDialogIcon"><Gift size={22}/></div><h3>{editingWishId?"Modifica desiderio":"Aggiungi un desiderio"}</h3><p>Scegli come vuoi aggiungere il tuo desiderio</p></div><div className="wishModeSwitch"><button type="button" className={wishMode==="manual"?"selected":""} onClick={()=>setWishMode("manual")}>Scrivi il nome</button><button type="button" className={wishMode==="link"?"selected":""} onClick={()=>setWishMode("link")}>Inserisci un link</button></div>{wishMode==="link" ? <div className="wishLinkBox"><div className="wishFieldLabel">Link del prodotto</div><div className="wishLinkRow"><input value={wishUrl} onChange={e=>setWishUrl(e.target.value)} placeholder="Incolla qui il link del prodotto"/><button type="button" onClick={fetchProductDetails} disabled={fetchingProduct||!wishUrl.trim()}>{fetchingProduct?"Attendi...":"Recupera"}</button></div><p className="wishHint">Proveremo a recuperare nome, immagine e descrizione</p></div> : <div className="wishField"><div className="wishFieldLabel">Link facoltativo</div><input value={wishUrl} onChange={e=>setWishUrl(e.target.value)} placeholder="https://..."/></div>}<div className="wishField"><div className="wishFieldLabel">Nome del desiderio <span>*</span></div><input value={newWish} onChange={e=>setNewWish(e.target.value)} placeholder="Es. Cuffie wireless"/></div><div className="wishField"><div className="wishFieldLabel">Descrizione</div><textarea value={wishDescription} onChange={e=>setWishDescription(e.target.value)} placeholder="Aggiungi qualche dettaglio..." rows={3}/></div><div className="wishField"><div className="wishFieldLabel">Prezzo <span className="wishOptional">facoltativo</span></div><input value={wishPrice} onChange={e=>setWishPrice(e.target.value)} inputMode="decimal" placeholder="Es. 49,90 €"/></div><div className="wishField"><div className="wishFieldLabel">Immagine <span className="wishOptional">facoltativa</span></div><button type="button" className="wishImagePick" onClick={()=>wishImageInputRef.current?.click()} disabled={savingWishImage}><span>＋</span>{savingWishImage?"Caricamento...":wishImage?"Cambia immagine":"Scegli dalla galleria"}</button><input ref={wishImageInputRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>uploadWishImage(e.target.files?.[0]||null)}/>{wishImage && <img src={wishImage} alt="Anteprima desiderio" className="wishEditorPreview"/>}</div><div className="wishEditorActions"><button type="button" onClick={addWish} disabled={busy||!newWish.trim()}>{busy?"Salvataggio...":editingWishId?"Salva modifiche":"Salva desiderio"}</button><button type="button" className="outline" onClick={resetWishEditor}>Annulla</button></div></section></div>}
+            {showWishEditor && <div className="shareOverlay wishOverlay" role="presentation" onClick={resetWishEditor}><section className="shareDialog wishEditorDialog" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><button className="shareClose" aria-label="Chiudi" onClick={resetWishEditor}>×</button><div className="wishEditorHeading"><div className="shareDialogIcon"><Gift size={22}/></div><h3>{editingWishId?"Modifica desiderio":"Aggiungi un desiderio"}</h3><p>Scegli come vuoi aggiungere il tuo desiderio</p></div><div className="wishModeSwitch"><button type="button" className={wishMode==="manual"?"selected":""} onClick={()=>setWishMode("manual")}>Scrivi il nome</button><button type="button" className={wishMode==="link"?"selected":""} onClick={()=>setWishMode("link")}>Inserisci un link</button></div>{wishMode==="link" ? <div className="wishLinkBox"><div className="wishFieldLabel">Link del prodotto</div><div className="wishLinkRow"><input value={wishUrl} onChange={e=>setWishUrl(e.target.value)} placeholder="Incolla qui il link del prodotto"/><button type="button" onClick={fetchProductDetails} disabled={fetchingProduct||!wishUrl.trim()}>{fetchingProduct?"Sto cercando...":"Recupera"}</button></div><p className="wishHint">{fetchingProduct?"Ricerca in corso: non premere di nuovo. Se serve, riproveremo automaticamente.":"Proveremo a recuperare nome, immagine e descrizione."}</p></div> : <div className="wishField"><div className="wishFieldLabel">Link facoltativo</div><input value={wishUrl} onChange={e=>setWishUrl(e.target.value)} placeholder="https://..."/></div>}<div className="wishField"><div className="wishFieldLabel">Nome del desiderio <span>*</span></div><input value={newWish} onChange={e=>setNewWish(e.target.value)} placeholder="Es. Cuffie wireless"/></div><div className="wishField"><div className="wishFieldLabel">Descrizione</div><textarea value={wishDescription} onChange={e=>setWishDescription(e.target.value)} placeholder="Aggiungi qualche dettaglio..." rows={3}/></div><div className="wishField"><div className="wishFieldLabel">Prezzo <span className="wishOptional">facoltativo</span></div><input value={wishPrice} onChange={e=>setWishPrice(e.target.value)} inputMode="decimal" placeholder="Es. 49,90 €"/></div><div className="wishField"><div className="wishFieldLabel">Immagine <span className="wishOptional">facoltativa</span></div><button type="button" className="wishImagePick" onClick={()=>wishImageInputRef.current?.click()} disabled={savingWishImage}><span>＋</span>{savingWishImage?"Caricamento...":wishImage?"Cambia immagine":"Scegli dalla galleria"}</button><input ref={wishImageInputRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>uploadWishImage(e.target.files?.[0]||null)}/>{wishImage && <img src={wishImage} alt="Anteprima desiderio" className="wishEditorPreview"/>}</div><div className="wishEditorActions"><button type="button" onClick={addWish} disabled={busy||!newWish.trim()}>{busy?"Salvataggio...":editingWishId?"Salva modifiche":"Salva desiderio"}</button><button type="button" className="outline" onClick={resetWishEditor}>Annulla</button></div></section></div>}
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
