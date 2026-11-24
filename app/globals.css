@@ -767,3 +767,50 @@
 .friendPublicProfile{display:flex;align-items:center;gap:12px}
 .friendPublicProfile>div:last-child{display:flex;flex-direction:column;gap:4px}
 .friendPublicProfile small{color:var(--muted);font-size:12px}
+
+
+/* Elenco amici nelle esclusioni privacy: righe più leggere e compatte */
+.friendNetworkExclusions .groupFriendRow{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:11px 6px;
+  border-bottom:1px solid rgba(120,110,140,.12);
+  font-size:14px;
+  font-weight:400;
+  line-height:1.35;
+  color:var(--ink);
+  letter-spacing:.1px;
+}
+.friendNetworkExclusions .groupFriendRow:last-child{border-bottom:0}
+.friendNetworkExclusions .groupFriendRow input{
+  appearance:none;
+  -webkit-appearance:none;
+  flex:0 0 19px;
+  width:19px;
+  height:19px;
+  margin:0;
+  border:1.5px solid #b9b3c4;
+  border-radius:6px;
+  background:#fff;
+  display:grid;
+  place-content:center;
+  cursor:pointer;
+}
+.friendNetworkExclusions .groupFriendRow input:checked{
+  background:var(--purple);
+  border-color:var(--purple);
+}
+.friendNetworkExclusions .groupFriendRow input:checked::after{
+  content:"";
+  width:5px;
+  height:9px;
+  border:solid #fff;
+  border-width:0 2px 2px 0;
+  transform:rotate(45deg);
+  margin-top:-2px;
+}
+.friendNetworkExclusions .groupFriendRow input:focus-visible{
+  outline:3px solid rgba(128,86,190,.2);
+  outline-offset:2px;
+}
