@@ -215,9 +215,6 @@ export async function POST(request: NextRequest) {
     let finalUrl: URL;
     try {
       ({ response, finalUrl } = await fetchExternalPage(input));
-      if (isAmazon && [403, 429, 503].includes(response.status)) {
-        ({ response, finalUrl } = await fetchExternalPage(input, true));
-      }
     } catch (error) {
       if (!isZalando) throw error;
       const fallbackTitle = zalandoTitleFromUrl(input);
@@ -247,20 +244,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Il link non restituisce una pagina prodotto leggibile." }, { status: 422 });
     }
     let html = await readLimitedText(response, 2500000);
-    if (isAmazon && /captcha|robot check|validatecaptcha|sorry.{0,30}automated/i.test(html)) {
-      const retryResult = await fetchExternalPage(input, true);
-      if (retryResult.response.ok) {
-        const retryType = retryResult.response.headers.get("content-type") || "";
-        if (retryType.toLowerCase().includes("text/html") || retryType.toLowerCase().includes("application/xhtml+xml")) {
-          const retryHtml = await readLimitedText(retryResult.response, 2500000);
-          if (!/captcha|robot check|validatecaptcha|sorry.{0,30}automated/i.test(retryHtml)) {
-            response = retryResult.response;
-            finalUrl = retryResult.finalUrl;
-            html = retryHtml;
-          }
-        }
-      }
-    }
     const includeImage = body.includeImage !== false;
     const jsonLd = readJsonLd(html);
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<[/]title>/i)?.[1] || "";
