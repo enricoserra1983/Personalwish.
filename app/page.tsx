@@ -65,6 +65,7 @@ export default function Home() {
   const [friendNetworkVisibility,setFriendNetworkVisibility]=useState<"all"|"except"|"none">("all");
   const [allowIndirectFriendVisibility,setAllowIndirectFriendVisibility]=useState(true);
   const [friendNetworkExcludedIds,setFriendNetworkExcludedIds]=useState<string[]>([]);
+  const [friendExclusionSearch,setFriendExclusionSearch]=useState("");
   const [savingPrivacySettings,setSavingPrivacySettings]=useState(false);
   const [profileAvatarUrl,setProfileAvatarUrl]=useState("");
   const [savingProfile,setSavingProfile]=useState(false);
@@ -1054,10 +1055,16 @@ export default function Home() {
             {friendNetworkVisibility==="except" && <div className="friendNetworkExclusions">
               <b>Escludi queste persone</b>
               <small>Gli amici selezionati non compariranno nella rete visibile del tuo profilo.</small>
-              {friends.length ? friends.map(person=><label className="groupFriendRow" key={person.user_id}>
-                <input type="checkbox" checked={friendNetworkExcludedIds.includes(person.user_id)} onChange={e=>setFriendNetworkExcludedIds(current=>e.target.checked?[...current,person.user_id]:current.filter(id=>id!==person.user_id))}/>
-                {person.display_name}
-              </label>) : <small>Non hai ancora amici da escludere.</small>}
+              {friends.length ? <>
+                <input className="friendExclusionSearch" type="search" value={friendExclusionSearch} onChange={e=>setFriendExclusionSearch(e.target.value)} placeholder="Cerca un amico..." aria-label="Cerca un amico da escludere"/>
+                <div className="friendExclusionList">
+                  {friends.filter(person=>person.display_name.toLocaleLowerCase("it").includes(friendExclusionSearch.trim().toLocaleLowerCase("it"))).map(person=><label className="groupFriendRow" key={person.user_id}>
+                    <input type="checkbox" checked={friendNetworkExcludedIds.includes(person.user_id)} onChange={e=>setFriendNetworkExcludedIds(current=>e.target.checked?[...current,person.user_id]:current.filter(id=>id!==person.user_id))}/>
+                    {person.display_name}
+                  </label>)}
+                  {!friends.some(person=>person.display_name.toLocaleLowerCase("it").includes(friendExclusionSearch.trim().toLocaleLowerCase("it"))) && <small className="friendExclusionEmpty">Nessun amico trovato.</small>}
+                </div>
+              </> : <small>Non hai ancora amici da escludere.</small>}
             </div>}
             <div className="settingsPrivacyRow"><div><b>Consenti che il mio profilo compaia nelle reti degli amici</b><small>Se disattivi, il tuo nome e il collegamento al profilo non appariranno negli elenchi degli amici dei tuoi amici.</small></div><PrivacyToggle label={allowIndirectFriendVisibility?"Visibile":"Nascosto"} value={allowIndirectFriendVisibility} onClick={()=>setAllowIndirectFriendVisibility(v=>!v)}/></div>
             <div className="addRow settingsPrivacySave"><button type="button" onClick={savePrivacySettings} disabled={savingPrivacySettings}>{savingPrivacySettings?"Salvataggio...":"Salva privacy del profilo"}</button></div>
