@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import WordExtractor from "word-extractor";
 import pdf from "pdf-parse";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,12 @@ function htmlToTextWithLinks(html: string) {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Devi accedere per importare un documento." }, { status: 401 });
+    }
+
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {
