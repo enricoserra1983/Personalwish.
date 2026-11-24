@@ -816,7 +816,7 @@ export default function Home() {
 
   function getShareUrl() {
     if (!activeList) return "";
-    return `${window.location.origin}/lista/${activeList.share_token}`;
+    return `https://personalwish.vercel.app/lista/${activeList.share_token}`;
   }
 
   async function copyShareLink() {
