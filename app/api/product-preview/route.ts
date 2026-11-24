@@ -47,6 +47,30 @@ function readJsonLd(html: string) {
   return { title: "", image: "", description: "" };
 }
 
+function zalandoMainImage(html: string) {
+  // Zalando serves product photos from img01.ztat.net. Prefer the first
+  // product-article image found in the page HTML, without changing Amazon logic.
+  const decoded = decode(html);
+  const candidates = decoded.match(/https?:\\?\/\\?\/img01\\.ztat\\.net\\/[^"'\\s<>\\\\]+/gi) || [];
+  for (const candidate of candidates) {
+    const cleaned = candidate.replace(/\\\\u002F/gi, "/").replace(/\\\\u003F/gi, "?").replace(/&amp;/g, "&");
+    if (/img01\\.ztat\\.net\\/article\\//i.test(cleaned)) {
+      try {
+        const url = new URL(cleaned);
+        url.searchParams.set("imwidth", "600");
+        return url.toString();
+      } catch {}
+    }
+  }
+  return "";
+}
+
+function zalandoTitleFromUrl(url: URL) {
+  const slug = url.pathname.split("/").filter(Boolean).pop() || "";
+  const withoutCode = slug.replace(/-[a-z]{2}\\d{2}[a-z0-9]{2,}-[a-z0-9]+$/i, "");
+  return decode(withoutCode.replace(/[-_]+/g, " ").trim());
+}
+
 function amazonMainImage(html: string) {
   const tags = html.match(/<img[^>]*>/gi) || [];
   for (const tag of tags) {
@@ -209,6 +233,8 @@ export async function POST(request: NextRequest) {
     const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
     const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
     let title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
+    const isZalando = /(^|\\.)zalando\\./i.test(finalUrl.hostname);
+    if (isZalando && !title) title = zalandoTitleFromUrl(finalUrl);
     if (amazon && (!title || /captcha|robot check|sorry|sign.?in/i.test(title))) {
       const segments=finalUrl.pathname.split("/").filter(Boolean);
       const dpIndex=segments.findIndex(segment=>segment.toLowerCase()==="dp");
@@ -219,6 +245,7 @@ export async function POST(request: NextRequest) {
     }
     let image = includeImage ? (metaValue(html, "og:image") || metaValue(html, "twitter:image") || jsonLd.image) : "";
     if (includeImage && !image && amazon) image = amazonMainImage(html);
+    if (includeImage && !image && isZalando) image = zalandoMainImage(html);
     const description = metaValue(html, "og:description") || metaValue(html, "description") || jsonLd.description;
     const cleanTitle = title.toLowerCase().trim();
     if (!title || ["amazon.it", "amazon.com", "amazon"].includes(cleanTitle)) {
