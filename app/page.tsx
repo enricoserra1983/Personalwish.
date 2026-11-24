@@ -88,6 +88,11 @@ export default function Home() {
   const [activeId, setActiveId] = useState("");
   const [newListTitle, setNewListTitle] = useState("");
   const [showNewListForm, setShowNewListForm] = useState(false);
+  const [showHomeListActions, setShowHomeListActions] = useState(false);
+  const [homeListAction, setHomeListAction] = useState<"create"|"import"|null>(null);
+  const [importDestination, setImportDestination] = useState<"existing"|"new">("existing");
+  const [importTargetListId, setImportTargetListId] = useState("");
+  const [importNewListTitle, setImportNewListTitle] = useState("");
   const [editingListTitle, setEditingListTitle] = useState(false);
   const [editedListTitle, setEditedListTitle] = useState("");
   const [showEditMenu, setShowEditMenu] = useState(false);
@@ -541,10 +546,12 @@ export default function Home() {
     const url=URL.createObjectURL(file);const link=document.createElement("a");link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
-  async function importWishlistText(file:File|null) {
-    if(!file||!activeList)return;
+  async function importWishlistText(file:File|null, destination: "existing"|"new" = importDestination, newTitle = importNewListTitle, targetListId = importTargetListId) {
+    if(!file)return;
     const extension=file.name.toLowerCase().split(".").pop();
-    if(!["txt","doc","docx"].includes(extension||"")){setError("Scegli un file TXT, DOC o DOCX.");return;}
+    if(!["txt","doc","docx","pdf"].includes(extension||"")){setError("Scegli un file TXT, DOC, DOCX o PDF.");return;}
+    if(destination==="new"&&!newTitle.trim()){setError("Inserisci il nome della nuova lista.");return;}
+    if(destination==="existing"&&!targetListId){setError("Seleziona la lista in cui importare i desideri.");return;}
     setBusy(true);setError("");
     try {
       let raw="";
@@ -560,15 +567,36 @@ export default function Home() {
       const products:{title:string;product_url:string|null}[]=[];
       for(const row of rows){
         if(/^https?:\/\//i.test(row)&&products.length&&!products[products.length-1].product_url){products[products.length-1].product_url=row;continue;}
-        if(row.toLowerCase()===activeList.title.toLowerCase())continue;
         products.push({title:row,product_url:null});
       }
       const unique=products.filter((item,index)=>products.findIndex(other=>other.title.toLowerCase()===item.title.toLowerCase())===index);
       if(!unique.length)throw new Error("Nel documento non ho trovato prodotti da importare.");
-      if(!window.confirm(`Importare ${unique.length} desideri nella lista "${activeList.title}"?`)){setBusy(false);return;}
-      const {error}=await createClient().from("wishlist_items").insert(unique.map(item=>({wishlist_id:activeList.id,title:item.title,product_url:item.product_url})));
-      if(error)throw new Error("Importazione non riuscita: "+error.message);
-      setError(`Importati ${unique.length} desideri.`);await loadData();
+      let destinationId=targetListId;
+      let destinationTitle=wishlists.find(list=>list.id===targetListId)?.title||"";
+      if(destination==="new") {
+        const supabase=createClient();
+        const {data:auth}=await supabase.auth.getUser();
+        if(!auth.user)throw new Error("Sessione scaduta. Accedi nuovamente.");
+        const {data:list,error:listError}=await supabase.from("wishlists").insert({
+          owner_id:auth.user.id,title:newTitle.trim(),description:"Una raccolta di cose che mi piacerebbe ricevere.",
+        }).select("id,title").single();
+        if(listError||!list)throw new Error("Non è stato possibile creare la nuova lista: "+(listError?.message||"errore sconosciuto"));
+        destinationId=list.id;destinationTitle=list.title;
+      }
+      const filtered=unique.filter(item=>item.title.toLowerCase()!==destinationTitle.toLowerCase());
+      if(!filtered.length)throw new Error("Nel documento non ho trovato desideri da importare.");
+      if(!window.confirm(`Importare ${filtered.length} desideri nella lista "${destinationTitle}"?`)){
+        if(destination==="new") await createClient().from("wishlists").delete().eq("id",destinationId);
+        return;
+      }
+      const {error}=await createClient().from("wishlist_items").insert(filtered.map(item=>({wishlist_id:destinationId,title:item.title,product_url:item.product_url})));
+      if(error) {
+        if(destination==="new") await createClient().from("wishlists").delete().eq("id",destinationId);
+        throw new Error("Importazione non riuscita: "+error.message);
+      }
+      setError(`Importati ${filtered.length} desideri nella lista "${destinationTitle}".`);
+      setShowHomeListActions(false);setHomeListAction(null);setImportNewListTitle("");
+      await loadData();setActiveId(destinationId);
     } catch(err) {
       setError(err instanceof Error?err.message:"Errore durante l'importazione del documento.");
     } finally {setBusy(false);}
@@ -587,17 +615,14 @@ export default function Home() {
     setBusy(true); setError("");
     const supabase = createClient();
     const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) { router.replace("/login"); return; }
+    if (!auth.user) { router.replace("/login"); setBusy(false); return; }
     const { data, error: insertError } = await supabase.from("wishlists").insert({
-      owner_id: auth.user.id,
-      title,
-      description: "Una raccolta di cose che mi piacerebbe ricevere.",
+      owner_id: auth.user.id,title,description:"Una raccolta di cose che mi piacerebbe ricevere.",
     }).select("id").single();
     if (insertError) setError(insertError.message);
     else {
-      setNewListTitle("");
-      await loadData();
-      if (data?.id) setActiveId(data.id);
+      setNewListTitle("");setShowNewListForm(false);setShowHomeListActions(false);setHomeListAction(null);
+      await loadData();if(data?.id)setActiveId(data.id);
     }
     setBusy(false);
   }
@@ -817,11 +842,18 @@ export default function Home() {
               <span className="wishlistCardTitle">{list.title}</span>
               <span className="wishlistCardCount">{list.wishlist_items?.length || 0} desideri</span>
             </button>)}
-            <button type="button" className="wishlistCard wishlistAddCard" onClick={()=>setShowNewListForm(v=>!v)}>
-              <span className="wishlistAddIcon"><Plus size={24}/></span><span className="wishlistCardTitle">Nuova lista</span><span className="wishlistCardCount">Crea una lista</span>
+            <button type="button" className="wishlistCard wishlistAddCard" onClick={()=>{setShowHomeListActions(v=>!v);setHomeListAction(null);setShowNewListForm(false);}}>
+              <span className="wishlistAddIcon"><Plus size={24}/></span><span className="wishlistCardTitle">Nuova lista</span><span className="wishlistCardCount">Crea o importa</span>
             </button>
           </div>
-          {showNewListForm && <div className="addRow"><input value={newListTitle} onChange={e=>setNewListTitle(e.target.value)} placeholder="Nome della nuova lista..."/><button onClick={createWishlist} disabled={busy || !newListTitle.trim()}><Plus size={17}/> Crea</button></div>}
+          {showHomeListActions && <div className="importWorkflowCard">
+            <div className="importWorkflowActions">
+              <button type="button" className={homeListAction==="create"?"selected":""} onClick={()=>{setHomeListAction("create");setShowNewListForm(true);}}> <Plus size={16}/> Crea</button>
+              <button type="button" className={homeListAction==="import"?"selected":""} onClick={()=>{setHomeListAction("import");setShowNewListForm(false);setImportDestination("new");setImportNewListTitle("");}}> <ArrowDownUp size={16}/> Importa</button>
+            </div>
+            {homeListAction==="create" && <div className="addRow"><input value={newListTitle} onChange={e=>setNewListTitle(e.target.value)} placeholder="Nome della nuova lista..."/><button onClick={createWishlist} disabled={busy || !newListTitle.trim()}><Plus size={17}/> Crea lista</button></div>}
+            {homeListAction==="import" && <div className="importWorkflowForm"><label>Nome della nuova lista</label><input value={importNewListTitle} onChange={e=>setImportNewListTitle(e.target.value)} placeholder="Es. Regali di Natale"/><button type="button" onClick={()=>importTextRef.current?.click()} disabled={busy||!importNewListTitle.trim()}><ArrowDownUp size={16}/> Scegli file da importare</button><small>Formati supportati: TXT, DOC, DOCX e PDF</small><input ref={importTextRef} type="file" accept=".txt,.doc,.docx,.pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" hidden onChange={e=>{importWishlistText(e.target.files?.[0]||null,"new",importNewListTitle);e.currentTarget.value="";}}/></div>}
+          </div>}
           {activeList ? <>
             <div className="listHero">
               <button type="button" className="listSettingsButton" aria-label="Impostazioni lista" title="Impostazioni lista" onClick={()=>setShowEditMenu(v=>!v)}><Settings2 size={20}/></button>
