@@ -292,26 +292,26 @@ export default function Home() {
     setFriends(f||[]); setRequests(r||[]);
   }
 
-  async function openFriendProfile(person:{user_id:string;display_name:string}) {
+  function openFriendProfile(person:{user_id:string;display_name:string}) {
     setFriendVisitCounts(current => {
       const next = {...current, [person.user_id]: (current[person.user_id] || 0) + 1};
       try { localStorage.setItem("personalwish_friend_visits_"+profileUserId, JSON.stringify(next)); } catch {}
       return next;
     });
-    setSelectedFriend(person);
-    setFriendProfileDetails(null);
-    setFriendWishlists([]);
-    setFriendListsLoading(true);
-    const supabase=createClient();
-    const [{data:profileData,error:profileError},{data:listsData,error:listsError}]=await Promise.all([
-      supabase.rpc("get_friend_profile",{p_friend_id:person.user_id}),
-      supabase.rpc("get_friend_shared_wishlists",{p_friend_id:person.user_id})
-    ]);
-    if(profileError) setError(profileError.message);
-    else setFriendProfileDetails(profileData);
-    if(listsError) setError(listsError.message);
-    else setFriendWishlists(listsData||[]);
-    setFriendListsLoading(false);
+    router.push("/amico/"+person.user_id);
+  }
+  const [expandedFriendListsId,setExpandedFriendListsId]=useState<string|null>(null);
+  const [friendListsById,setFriendListsById]=useState<Record<string,{id:string;title:string;description:string|null;share_token:string;created_at:string}[]>>({});
+  const [loadingFriendListsId,setLoadingFriendListsId]=useState<string|null>(null);
+  async function toggleFriendLists(person:{user_id:string;display_name:string}) {
+    if(expandedFriendListsId===person.user_id){setExpandedFriendListsId(null);return;}
+    setExpandedFriendListsId(person.user_id);
+    if(friendListsById[person.user_id]) return;
+    setLoadingFriendListsId(person.user_id);
+    const {data,error}=await createClient().rpc("get_friend_shared_wishlists",{p_friend_id:person.user_id});
+    if(error) setError(error.message);
+    else setFriendListsById(current=>({...current,[person.user_id]:data||[]}));
+    setLoadingFriendListsId(null);
   }
 
   async function loadFriendGroups() {
@@ -982,7 +982,7 @@ export default function Home() {
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
-        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div>{showAllFriends ? <><div className="friendsPageHeading"><button type="button" className="textButton" onClick={()=>setShowAllFriends(false)}>← Torna alla tua rete</button><h2>Tutti i tuoi amici</h2></div>{friends.length ? friends.map(person=><div className="settingsCard friendProfileButton" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><button type="button" className="friendNameLink" onClick={()=>openFriendProfile(person)}>{person.display_name}</button><button type="button" className="outline" onClick={()=>openFriendProfile(person)}>Visualizza profilo</button><button type="button" className="outline friendRemoveButton" onClick={()=>removeFriend(person)}><UserRoundX size={15}/> Rimuovi</button></div>) : <div className="settingsCard">Non hai ancora amici.</div>}{selectedFriend && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">PROFILO AMICO</div><h3>Profilo di {selectedFriend.display_name}</h3><p>Le informazioni mostrate rispettano le impostazioni privacy di questa persona.</p></div><button className="closeBtn" onClick={()=>setSelectedFriend(null)}>×</button></div>
+        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div>{showAllFriends ? <><div className="friendsPageHeading"><button type="button" className="textButton" onClick={()=>setShowAllFriends(false)}>← Torna alla tua rete</button><h2>Tutti i tuoi amici</h2></div>{friends.length ? friends.map(person=><div className="settingsCard friendProfileButton" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><button type="button" className="friendNameLink" onClick={()=>openFriendProfile(person)}>{person.display_name}</button><button type="button" className="outline friendListsToggle" onClick={()=>toggleFriendLists(person)}>{expandedFriendListsId===person.user_id?"Nascondi liste":"Visualizza liste"}</button><button type="button" className="outline friendRemoveButton" onClick={()=>removeFriend(person)}><UserRoundX size={14}/> Rimuovi</button>{expandedFriendListsId===person.user_id && <div className="friendInlineLists">{loadingFriendListsId===person.user_id?<small>Caricamento liste…</small>:friendListsById[person.user_id]?.length?friendListsById[person.user_id].map(list=><a className="friendInlineList" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><b>{list.title}</b><span>Apri →</span></a>):<small>Non ci sono liste condivise con te.</small>}</div>}</div>) : <div className="settingsCard">Non hai ancora amici.</div>}{selectedFriend && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">PROFILO AMICO</div><h3>Profilo di {selectedFriend.display_name}</h3><p>Le informazioni mostrate rispettano le impostazioni privacy di questa persona.</p></div><button className="closeBtn" onClick={()=>setSelectedFriend(null)}>×</button></div>
             {friendProfileDetails && <div className="settingsCard friendPublicProfile">
               <div className="avatar">{friendProfileDetails.avatar_url?<img src={friendProfileDetails.avatar_url} alt="Foto profilo"/>:selectedFriend.display_name.charAt(0).toUpperCase()}</div>
               <div><b>{[friendProfileDetails.first_name,friendProfileDetails.last_name].filter(Boolean).join(" ") || selectedFriend.display_name}</b>
@@ -996,7 +996,7 @@ export default function Home() {
               </button>)}</div> : <p>Non ci sono amici visibili in questa rete.</p>}
             </div>}
             <h4>Le sue liste</h4>
-            {friendListsLoading ? <div className="settingsCard"><LoaderCircle size={18}/> Caricamento delle liste...</div> : friendWishlists.length ? <div className="friendWishlistGrid">{friendWishlists.map(list=><a className="friendWishlistCard" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><div><b>{list.title}</b><small>{list.description || "Lista dei desideri"}</small></div><strong>Apri →</strong></a>)}</div> : <div className="settingsCard">Al momento {selectedFriend.display_name} non ha liste condivise con te.</div>}</section>}</> : <><div className="friendsPreviewHeading"><button type="button" className="friendsSectionLink" onClick={()=>setShowAllFriends(true)}>I tuoi amici <span>Vedi tutti →</span></button><p>Le persone con cui interagisci più spesso.</p></div>{friends.length ? [...friends].sort((a,b)=>(friendVisitCounts[b.user_id]||0)-(friendVisitCounts[a.user_id]||0)).slice(0,5).map(person=><div className="settingsCard friendProfileButton" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><button type="button" className="friendNameLink" onClick={()=>openFriendProfile(person)}>{person.display_name}</button><button type="button" className="outline" onClick={()=>openFriendProfile(person)}>Visualizza profilo</button><button type="button" className="outline friendRemoveButton" onClick={()=>removeFriend(person)}><UserRoundX size={15}/> Rimuovi</button></div>) : <div className="settingsCard">Non hai ancora amici.</div>}{selectedFriend && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">PROFILO AMICO</div><h3>Profilo di {selectedFriend.display_name}</h3><p>Le informazioni mostrate rispettano le impostazioni privacy di questa persona.</p></div><button className="closeBtn" onClick={()=>setSelectedFriend(null)}>×</button></div>
+            {friendListsLoading ? <div className="settingsCard"><LoaderCircle size={18}/> Caricamento delle liste...</div> : friendWishlists.length ? <div className="friendWishlistGrid">{friendWishlists.map(list=><a className="friendWishlistCard" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><div><b>{list.title}</b><small>{list.description || "Lista dei desideri"}</small></div><strong>Apri →</strong></a>)}</div> : <div className="settingsCard">Al momento {selectedFriend.display_name} non ha liste condivise con te.</div>}</section>}</> : <><div className="friendsPreviewHeading"><button type="button" className="friendsSectionLink" onClick={()=>setShowAllFriends(true)}>I tuoi amici <span>Vedi tutti →</span></button><p>Le persone con cui interagisci più spesso.</p></div>{friends.length ? [...friends].sort((a,b)=>(friendVisitCounts[b.user_id]||0)-(friendVisitCounts[a.user_id]||0)).slice(0,5).map(person=><div className="settingsCard friendProfileButton" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><button type="button" className="friendNameLink" onClick={()=>openFriendProfile(person)}>{person.display_name}</button><button type="button" className="outline friendListsToggle" onClick={()=>toggleFriendLists(person)}>{expandedFriendListsId===person.user_id?"Nascondi liste":"Visualizza liste"}</button><button type="button" className="outline friendRemoveButton" onClick={()=>removeFriend(person)}><UserRoundX size={14}/> Rimuovi</button>{expandedFriendListsId===person.user_id && <div className="friendInlineLists">{loadingFriendListsId===person.user_id?<small>Caricamento liste…</small>:friendListsById[person.user_id]?.length?friendListsById[person.user_id].map(list=><a className="friendInlineList" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><b>{list.title}</b><span>Apri →</span></a>):<small>Non ci sono liste condivise con te.</small>}</div>}</div>) : <div className="settingsCard">Non hai ancora amici.</div>}{selectedFriend && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">PROFILO AMICO</div><h3>Profilo di {selectedFriend.display_name}</h3><p>Le informazioni mostrate rispettano le impostazioni privacy di questa persona.</p></div><button className="closeBtn" onClick={()=>setSelectedFriend(null)}>×</button></div>
             {friendProfileDetails && <div className="settingsCard friendPublicProfile">
               <div className="avatar">{friendProfileDetails.avatar_url?<img src={friendProfileDetails.avatar_url} alt="Foto profilo"/>:selectedFriend.display_name.charAt(0).toUpperCase()}</div>
               <div><b>{[friendProfileDetails.first_name,friendProfileDetails.last_name].filter(Boolean).join(" ") || selectedFriend.display_name}</b>
