@@ -219,11 +219,11 @@ export async function POST(request: NextRequest) {
     }
 
     const isZalandoInput = input.hostname.toLowerCase() === "zalando.it" || input.hostname.toLowerCase().endsWith(".zalando.it");
+    const isAmazon = input.hostname.toLowerCase().includes("amazon.");
     let response: Response;
     let finalUrl: URL;
     try {
       ({ response, finalUrl } = await fetchExternalPage(input));
-      const isAmazon = finalUrl.hostname.toLowerCase().includes("amazon.");
       if (isAmazon && [403, 429, 503].includes(response.status)) {
         ({ response, finalUrl } = await fetchExternalPage(input, true));
       }
