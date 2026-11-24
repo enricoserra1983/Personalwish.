@@ -661,3 +661,18 @@
  .transferActions>div:not(.transferImportCard){padding:13px}
  .transferActions>div:not(.transferImportCard) button{min-height:38px;padding:0 12px;font-size:12px}
 }
+
+/* Account deletion in profile */
+.deleteAccountSection{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:20px;padding:18px;border:1px solid #f0dada;border-radius:14px;background:#fffafa}
+.deleteAccountSection>div{min-width:0}
+.deleteAccountSection b{font-size:14px;color:#9d3d46}
+.deleteAccountSection p{margin:5px 0 0;color:#817780;font-size:12px;line-height:1.5}
+.deleteAccountSection>button{flex-shrink:0;min-height:40px;padding:0 14px;border:1px solid #e8c7ca;border-radius:10px;background:#fff0f0;color:#a23f49;font-size:12px;font-weight:700}
+.deleteAccountSection>button:disabled{opacity:.55}
+/* Login remember-me checkbox */
+.authForm .rememberLogin{display:flex;flex-direction:row;align-items:center;gap:9px;margin-top:-5px;color:#6f687b;font-size:12px;font-weight:500}
+.authForm .rememberLogin input{width:17px;height:17px;min-height:17px;margin:0;accent-color:#7956c8;flex:0 0 17px}
+@media(max-width:650px){
+ .deleteAccountSection{align-items:flex-start;flex-direction:column;gap:12px;padding:14px}
+ .deleteAccountSection>button{width:100%}
+}
