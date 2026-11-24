@@ -662,7 +662,7 @@ export default function Home() {
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||"Il negozio non ha restituito i dati del prodotto.");
       if(data.title)setNewWish(data.title);
-      if(wishFetchImage&&data.image)setWishImage(data.image);
+      if(data.image)setWishImage(data.image);
       if(data.description)setWishDescription(data.description);
       if(!data.title)throw new Error("Nome non disponibile.");
       if(isAmazon&&!data.image)setError("Nome recuperato. Amazon non ha fornito la foto: puoi aggiungerla dalla galleria.");
