@@ -890,3 +890,50 @@
   .friendNetworkSelectButton{min-width:132px;max-width:150px;padding:8px 9px;font-size:11px}
   .friendNetworkSelectMenu{width:168px}
 }
+
+
+/* Fix definitivo: isola il menu privacy dagli stili globali dei pulsanti */
+.settingsPrivacyRow:has(.friendNetworkSelectWrap){align-items:center}
+.friendNetworkSelectWrap{position:relative!important;display:block!important;flex:0 0 158px!important;width:158px!important;min-width:158px!important;z-index:40}
+.friendNetworkSelectButton,
+.settingsPrivacyRow .friendNetworkSelectButton{
+  appearance:none!important;-webkit-appearance:none!important;
+  display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;
+  width:100%!important;min-width:0!important;max-width:none!important;min-height:36px!important;height:36px!important;
+  margin:0!important;padding:0 10px!important;
+  border:1px solid #e5dfed!important;border-radius:9px!important;
+  background:#fff!important;color:#393247!important;
+  box-shadow:none!important;font-family:'DM Sans',sans-serif!important;font-size:11px!important;
+  font-weight:500!important;line-height:1!important;text-align:left!important;white-space:nowrap!important;
+}
+.friendNetworkSelectButton svg{display:block!important;width:14px!important;height:14px!important;flex:0 0 14px!important;margin:0!important}
+.friendNetworkSelectMenu,
+.settingsPrivacyRow .friendNetworkSelectMenu{
+  position:absolute!important;display:flex!important;flex-direction:column!important;
+  top:calc(100% + 5px)!important;right:0!important;left:auto!important;bottom:auto!important;
+  width:158px!important;min-width:158px!important;max-width:158px!important;height:auto!important;
+  margin:0!important;padding:4px!important;overflow:hidden!important;
+  border:1px solid #e9e3ef!important;border-radius:10px!important;
+  background:#fff!important;box-shadow:0 5px 18px rgba(35,25,50,.13)!important;
+}
+.friendNetworkSelectMenu button,
+.settingsPrivacyRow .friendNetworkSelectMenu button{
+  appearance:none!important;-webkit-appearance:none!important;
+  display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;
+  width:100%!important;min-width:0!important;max-width:none!important;height:34px!important;min-height:34px!important;
+  margin:0!important;padding:0 8px!important;
+  border:0!important;border-bottom:1px solid #f0edf3!important;border-radius:0!important;
+  background:#fff!important;color:#393247!important;box-shadow:none!important;
+  font-family:'DM Sans',sans-serif!important;font-size:11px!important;font-weight:400!important;
+  line-height:1!important;text-align:left!important;white-space:nowrap!important;
+}
+.friendNetworkSelectMenu button:last-child{border-bottom:0!important}
+.friendNetworkSelectMenu button.selected,
+.settingsPrivacyRow .friendNetworkSelectMenu button.selected{
+  background:#f6f1fc!important;color:#7652bd!important;font-weight:600!important;
+}
+.friendNetworkSelectCheck{display:inline-block!important;color:#7652bd!important;font-size:13px!important;font-weight:700!important}
+@media(max-width:520px){
+ .friendNetworkSelectWrap{flex-basis:145px!important;width:145px!important;min-width:145px!important}
+ .friendNetworkSelectMenu,.settingsPrivacyRow .friendNetworkSelectMenu{width:145px!important;min-width:145px!important;max-width:145px!important}
+}
