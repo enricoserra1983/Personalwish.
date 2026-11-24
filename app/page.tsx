@@ -54,6 +54,7 @@ export default function Home() {
   const [profileUserId, setProfileUserId] = useState("");
   const [firstName,setFirstName]=useState("");
   const [lastName,setLastName]=useState("");
+  const [city,setCity]=useState("");
   const [birthDate,setBirthDate]=useState("");
   const [birthdayVisible,setBirthdayVisible]=useState(false);
   const [allowUserSearch,setAllowUserSearch]=useState(true);
@@ -80,7 +81,7 @@ export default function Home() {
   const [friendVisitCounts,setFriendVisitCounts] = useState<Record<string,number>>({});
   const [selectedFriend,setSelectedFriend] = useState<{user_id:string;display_name:string}|null>(null);
   const [friendWishlists,setFriendWishlists] = useState<{id:string;title:string;description:string|null;share_token:string;created_at:string}[]>([]);
-  const [friendProfileDetails,setFriendProfileDetails] = useState<{first_name:string|null;last_name:string|null;birth_date:string|null;avatar_url:string|null;friends_visible:boolean;friends:{user_id:string;display_name:string;avatar_url:string|null}[]} | null>(null);
+  const [friendProfileDetails,setFriendProfileDetails] = useState<{first_name:string|null;last_name:string|null;birth_date:string|null;city:string|null;avatar_url:string|null;friends_visible:boolean;friends:{user_id:string;display_name:string;avatar_url:string|null}[]} | null>(null);
   const [friendListsLoading,setFriendListsLoading] = useState(false);
   const [requests,setRequests] = useState<{id:string;requester_id:string;requester_name:string;wishlist_title:string|null}[]>([]);
   const [friendSearch,setFriendSearch] = useState("");
@@ -181,7 +182,7 @@ export default function Home() {
       return;
     }
     const user = auth.user;
-    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("username,first_name,last_name,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity,profile_details_visible,friend_network_visibility,allow_indirect_friend_visibility,friend_network_excluded_ids").eq("id",user.id).maybeSingle();
+    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("username,first_name,last_name,city,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity,profile_details_visible,friend_network_visibility,allow_indirect_friend_visibility,friend_network_excluded_ids").eq("id",user.id).maybeSingle();
     if(profileLoadError) throw profileLoadError;
     const metadataName = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
     const name = [profile?.first_name,profile?.last_name].filter(Boolean).join(" ") || metadataName;
@@ -197,6 +198,7 @@ export default function Home() {
     if (profileError) throw profileError;
     setFirstName(profile?.first_name||"");
     setLastName(profile?.last_name||"");
+    setCity(profile?.city||"");
     setBirthDate(profile?.birth_date||"");
     setBirthdayVisible(profile?.birthday_visible||false);
     setAllowUserSearch(profile?.allow_user_search ?? true);
@@ -493,6 +495,7 @@ export default function Home() {
       last_name:lastName.trim()||null,
       display_name:fullName,
       birth_date:birthDate||null,
+      city:city.trim()||null,
       birthday_visible:birthdayVisible,
     }).eq("id",profileUserId);
     if(error) setError("Non è stato possibile salvare il profilo: "+error.message);
@@ -1023,7 +1026,7 @@ export default function Home() {
         {tab === "profile" && <><div className="welcome"><div><h1>Il mio profilo.</h1><p>Personalizza le informazioni che condividi su PersonalWish.</p></div></div>
           <section className="profileEditor">
             <div className="profilePhotoArea"><div className="avatar profileAvatarLarge">{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</div><div><b>La tua foto profilo</b><p>Questa immagine ti rappresenterà nelle chat e tra gli amici.</p><button type="button" className="outline" onClick={()=>avatarInputRef.current?.click()} disabled={uploadingAvatar}>{uploadingAvatar?"Caricamento...":"Scegli una foto"}</button><input ref={avatarInputRef} type="file" accept="image/*" hidden onChange={e=>{uploadProfileAvatar(e.target.files?.[0]||null);e.currentTarget.value="";}}/></div></div>
-            <div className="profileFormGrid"><label>Nome<input value={firstName} onChange={e=>setFirstName(e.target.value)} maxLength={60} placeholder="Il tuo nome"/></label><label>Cognome<input value={lastName} onChange={e=>setLastName(e.target.value)} maxLength={60} placeholder="Il tuo cognome"/></label><label>Data di nascita<input type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label><div className="profileEmailField"><span>Email</span><b>{profileEmail}</b></div></div>
+            <div className="profileFormGrid"><label>Nome<input value={firstName} onChange={e=>setFirstName(e.target.value)} maxLength={60} placeholder="Il tuo nome"/></label><label>Cognome<input value={lastName} onChange={e=>setLastName(e.target.value)} maxLength={60} placeholder="Il tuo cognome"/></label><label>Città<input value={city} onChange={e=>setCity(e.target.value)} maxLength={80} placeholder="La tua città"/></label><label>Data di nascita<input type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label><div className="profileEmailField"><span>Email</span><b>{profileEmail}</b></div></div>
             <div className="birthdayPrivacy"><div><b>Mostra il mio compleanno agli amici</b><p>Se disattivato, la data resta privata e gli amici non riceveranno promemoria.</p></div><PrivacyToggle label={birthdayVisible?"Visibile agli amici":"Privato"} value={birthdayVisible} onClick={()=>setBirthdayVisible(v=>!v)}/></div>
             <div className="addRow"><button type="button" onClick={saveProfile} disabled={savingProfile}>{savingProfile?"Salvataggio...":"Salva modifiche"}</button></div>
           </section>
