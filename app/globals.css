@@ -617,3 +617,19 @@
 .importDestinationOptions label{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #e5e0eb;border-radius:10px;font-size:14px}
 .importDestinationOptions input{accent-color:var(--purple)}
 @media(max-width:650px){.importWorkflowCard{padding:14px}.importWorkflowActions button{flex:1}}
+
+/* Home: compact create/import chooser */
+.importWorkflowCard{max-width:440px;margin:8px 0 16px;padding:10px 12px;gap:8px;border-radius:13px}
+.importWorkflowActions{gap:7px}
+.importWorkflowActions button{min-height:34px;padding:7px 13px;border-radius:9px;font-size:12px;gap:5px}
+.importWorkflowActions button svg{width:14px;height:14px}
+.importWorkflowForm{gap:6px}
+.importWorkflowForm label{font-size:12px;font-weight:600}
+.importWorkflowForm input{min-height:36px;padding:7px 10px;border-radius:9px;font-size:12px}
+.importWorkflowForm>button{align-self:flex-start;min-height:34px;padding:7px 12px;border-radius:9px;font-size:12px}
+.importWorkflowForm>button svg{width:14px;height:14px}
+.importWorkflowForm small{font-size:10px}
+.importWorkflowCard .addRow{gap:6px;margin:0}
+.importWorkflowCard .addRow input{min-height:35px;padding:7px 10px;font-size:12px}
+.importWorkflowCard .addRow button{min-height:35px;padding:0 11px;font-size:11px}
+@media(max-width:650px){.importWorkflowCard{max-width:100%;padding:9px 10px;margin:7px 0 13px}.importWorkflowActions button{flex:0 1 auto}}
