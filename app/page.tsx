@@ -60,6 +60,10 @@ export default function Home() {
   const [allowFriendRequests,setAllowFriendRequests]=useState(true);
   const [notifyFriendRequests,setNotifyFriendRequests]=useState(true);
   const [notifyListActivity,setNotifyListActivity]=useState(true);
+  const [profileDetailsVisible,setProfileDetailsVisible]=useState(true);
+  const [friendNetworkVisibility,setFriendNetworkVisibility]=useState<"all"|"except"|"none">("all");
+  const [allowIndirectFriendVisibility,setAllowIndirectFriendVisibility]=useState(true);
+  const [friendNetworkExcludedIds,setFriendNetworkExcludedIds]=useState<string[]>([]);
   const [savingPrivacySettings,setSavingPrivacySettings]=useState(false);
   const [profileAvatarUrl,setProfileAvatarUrl]=useState("");
   const [savingProfile,setSavingProfile]=useState(false);
@@ -176,7 +180,7 @@ export default function Home() {
       return;
     }
     const user = auth.user;
-    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("username,first_name,last_name,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity").eq("id",user.id).maybeSingle();
+    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("username,first_name,last_name,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity,profile_details_visible,friend_network_visibility,allow_indirect_friend_visibility,friend_network_excluded_ids").eq("id",user.id).maybeSingle();
     if(profileLoadError) throw profileLoadError;
     const metadataName = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
     const name = [profile?.first_name,profile?.last_name].filter(Boolean).join(" ") || metadataName;
@@ -198,6 +202,10 @@ export default function Home() {
     setAllowFriendRequests(profile?.allow_friend_requests ?? true);
     setNotifyFriendRequests(profile?.notify_friend_requests ?? true);
     setNotifyListActivity(profile?.notify_list_activity ?? true);
+    setProfileDetailsVisible(profile?.profile_details_visible ?? true);
+    setFriendNetworkVisibility(profile?.friend_network_visibility ?? "all");
+    setAllowIndirectFriendVisibility(profile?.allow_indirect_friend_visibility ?? true);
+    setFriendNetworkExcludedIds(profile?.friend_network_excluded_ids ?? []);
     setProfileAvatarUrl(profile?.avatar_url||"");
 
     const { data, error: listError } = await supabase
@@ -491,6 +499,10 @@ export default function Home() {
       allow_friend_requests:allowFriendRequests,
       notify_friend_requests:notifyFriendRequests,
       notify_list_activity:notifyListActivity,
+      profile_details_visible:profileDetailsVisible,
+      friend_network_visibility:friendNetworkVisibility,
+      allow_indirect_friend_visibility:allowIndirectFriendVisibility,
+      friend_network_excluded_ids:friendNetworkVisibility==="except"?friendNetworkExcludedIds:[],
     }).eq("id",profileUserId);
     if(error) setError("Non è stato possibile salvare le preferenze: "+error.message);
     else setError("Preferenze di privacy e sicurezza salvate.");
@@ -882,12 +894,12 @@ export default function Home() {
         <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); }}><Users size={18}/> Amici</button>
         <button className={`navItem ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}><Users size={18}/> I miei gruppi</button>
         <a className="navItem chatNavLink" href="/notifiche"><Bell size={18}/> Notifiche{unreadNotificationCount > 0 && <span className="chatUnreadDot" aria-label="Notifiche non lette"/>}</a>
-        <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}><Settings2 size={18}/> Impostazioni</button>\n        <button className={`navItem ${tab === "transfer" ? "active" : ""}`} onClick={() => setTab("transfer")}><ArrowDownUp size={18}/> Importa / Esporta</button>
+        <button className={`navItem ${tab === "settings" ? "active" : ""}`} onClick={() => { setTab("settings"); loadFriends(); }}><Settings2 size={18}/> Impostazioni</button>\n        <button className={`navItem ${tab === "transfer" ? "active" : ""}`} onClick={() => setTab("transfer")}><ArrowDownUp size={18}/> Importa / Esporta</button>
         <div className="sideBottom"><div className="avatar">{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</div><div><b>{loading ? "Caricamento..." : profileName}</b><small>Account personale</small></div><button className="outline" onClick={signOut}><LogOut size={15}/> Esci</button></div>
       </aside>
 
       <section className="content">
-        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : tab === "transfer" ? "Importa / Esporta" : "Impostazioni"}</div><div className="topActions"><a className="notificationQuickLink" href="/notifiche" aria-label={unreadNotificationCount > 0 ? `Apri le notifiche: ${unreadNotificationCount} non lette` : "Apri le notifiche"} title="Notifiche"><Bell size={19}/>{(unreadNotificationCount > 0 || requests.length > 0) && <span className="notificationBellDot" aria-label="Notifiche o richieste di amicizia non lette"/>}</a><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button className="accountFriendsButton" onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici{requests.length > 0 && <span className="accountFriendsBadge">{requests.length > 9 ? "9+" : requests.length}</span>}</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button onClick={() => { setTab("transfer"); setShowAccountMenu(false); }}><ArrowDownUp size={16}/> Importa / Esporta</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
+        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : tab === "transfer" ? "Importa / Esporta" : "Impostazioni"}</div><div className="topActions"><a className="notificationQuickLink" href="/notifiche" aria-label={unreadNotificationCount > 0 ? `Apri le notifiche: ${unreadNotificationCount} non lette` : "Apri le notifiche"} title="Notifiche"><Bell size={19}/>{(unreadNotificationCount > 0 || requests.length > 0) && <span className="notificationBellDot" aria-label="Notifiche o richieste di amicizia non lette"/>}</a><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button className="accountFriendsButton" onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici{requests.length > 0 && <span className="accountFriendsBadge">{requests.length > 9 ? "9+" : requests.length}</span>}</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); loadFriends(); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button onClick={() => { setTab("transfer"); setShowAccountMenu(false); }}><ArrowDownUp size={16}/> Importa / Esporta</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
 
         {error && <div className="authError" role="alert">{error}</div>}
         {loading ? <div className="settingsCard"><LoaderCircle size={20}/> Caricamento delle tue liste...</div> : null}
@@ -975,6 +987,28 @@ export default function Home() {
             <p className="settingsPrivacyIntro">Decidi se gli altri utenti possono trovarti e inviarti richieste di amicizia.</p>
             <div className="settingsPrivacyRow"><div><b>Comparire nelle ricerche</b><small>Se disattivi, il tuo account non apparirà cercando il nome utente o l'email.</small></div><PrivacyToggle label={allowUserSearch?"Visibile":"Nascosto"} value={allowUserSearch} onClick={()=>setAllowUserSearch(v=>!v)}/></div>
             <div className="settingsPrivacyRow"><div><b>Ricevere richieste di amicizia</b><small>Se disattivi, gli altri utenti non potranno inviarti nuove richieste.</small></div><PrivacyToggle label={allowFriendRequests?"Consentite":"Bloccate"} value={allowFriendRequests} onClick={()=>setAllowFriendRequests(v=>!v)}/></div>
+          </section>
+          <section className="settingsPrivacySection">
+            <h3><Users size={18}/> Profilo e rete di amici</h3>
+            <p className="settingsPrivacyIntro">Decidi quali informazioni personali mostrare agli amici e chi può vedere la tua rete.</p>
+            <div className="settingsPrivacyRow"><div><b>Mostra i miei dati personali agli amici</b><small>Consente di mostrare nome e cognome nel tuo profilo. La data di compleanno segue l'impostazione separata nel profilo.</small></div><PrivacyToggle label={profileDetailsVisible?"Visibili":"Privati"} value={profileDetailsVisible} onClick={()=>setProfileDetailsVisible(v=>!v)}/></div>
+            <div className="settingsPrivacyRow"><div><b>Chi può vedere il mio elenco amici?</b><small>Puoi mostrare tutta la rete, nascondere alcune persone oppure mantenerla privata.</small></div>
+              <select value={friendNetworkVisibility} onChange={e=>setFriendNetworkVisibility(e.target.value as "all"|"except"|"none")} className="privacySelect">
+                <option value="all">Tutti i miei amici</option>
+                <option value="except">Tutti tranne…</option>
+                <option value="none">Nessuno</option>
+              </select>
+            </div>
+            {friendNetworkVisibility==="except" && <div className="friendNetworkExclusions">
+              <b>Escludi queste persone</b>
+              <small>Gli amici selezionati non compariranno nella rete visibile del tuo profilo.</small>
+              {friends.length ? friends.map(person=><label className="groupFriendRow" key={person.user_id}>
+                <input type="checkbox" checked={friendNetworkExcludedIds.includes(person.user_id)} onChange={e=>setFriendNetworkExcludedIds(current=>e.target.checked?[...current,person.user_id]:current.filter(id=>id!==person.user_id))}/>
+                {person.display_name}
+              </label>) : <small>Non hai ancora amici da escludere.</small>}
+            </div>}
+            <div className="settingsPrivacyRow"><div><b>Non mostrare il mio profilo nelle reti degli amici</b><small>Se attivi questa opzione, il tuo nome e il collegamento al tuo profilo non appariranno negli elenchi degli amici dei tuoi amici.</small></div><PrivacyToggle label={allowIndirectFriendVisibility?"Consenti":"Nascondi"} value={allowIndirectFriendVisibility} onClick={()=>setAllowIndirectFriendVisibility(v=>!v)}/></div>
+            <div className="addRow settingsPrivacySave"><button type="button" onClick={savePrivacySettings} disabled={savingPrivacySettings}>{savingPrivacySettings?"Salvataggio...":"Salva privacy del profilo"}</button></div>
           </section>
           <section className="settingsPrivacySection">
             <h3><Bell size={18}/> Notifiche</h3>
