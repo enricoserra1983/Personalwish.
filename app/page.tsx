@@ -58,6 +58,7 @@ export default function Home() {
   const [birthdayVisible,setBirthdayVisible]=useState(false);
   const [profileAvatarUrl,setProfileAvatarUrl]=useState("");
   const [savingProfile,setSavingProfile]=useState(false);
+  const [deletingAccount,setDeletingAccount]=useState(false);
   const [uploadingAvatar,setUploadingAvatar]=useState(false);
   const avatarInputRef=useRef<HTMLInputElement>(null);
   const importTextRef=useRef<HTMLInputElement>(null);
@@ -606,6 +607,23 @@ export default function Home() {
     router.replace("/login");
     router.refresh();
   }
+  async function deleteMyAccount() {
+    const confirmed = window.confirm("Vuoi eliminare definitivamente il tuo account PersonalWish? Verranno cancellati anche profilo, liste e dati collegati. Questa operazione non può essere annullata.");
+    if (!confirmed) return;
+    setDeletingAccount(true);
+    setError("");
+    const supabase = createClient();
+    const { error: deleteError } = await supabase.rpc("delete_my_account");
+    if (deleteError) {
+      setError("Non è stato possibile eliminare l'account: " + deleteError.message + ". Verifica di aver applicato la procedura SQL di eliminazione account in Supabase.");
+      setDeletingAccount(false);
+      return;
+    }
+    try { await supabase.auth.signOut(); } catch {}
+    router.replace("/login?accountDeleted=1");
+    router.refresh();
+  }
+
 
   async function createWishlist() {
     const title = newListTitle.trim();
@@ -906,6 +924,10 @@ export default function Home() {
             <div className="profileFormGrid"><label>Nome<input value={firstName} onChange={e=>setFirstName(e.target.value)} maxLength={60} placeholder="Il tuo nome"/></label><label>Cognome<input value={lastName} onChange={e=>setLastName(e.target.value)} maxLength={60} placeholder="Il tuo cognome"/></label><label>Data di nascita<input type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label><div className="profileEmailField"><span>Email</span><b>{profileEmail}</b></div></div>
             <div className="birthdayPrivacy"><div><b>Mostra il mio compleanno agli amici</b><p>Se disattivato, la data resta privata e gli amici non riceveranno promemoria.</p></div><PrivacyToggle label={birthdayVisible?"Visibile agli amici":"Privato"} value={birthdayVisible} onClick={()=>setBirthdayVisible(v=>!v)}/></div>
             <div className="addRow"><button type="button" onClick={saveProfile} disabled={savingProfile}>{savingProfile?"Salvataggio...":"Salva modifiche"}</button></div>
+          </section>
+          <section className="deleteAccountSection">
+            <div><b>Elimina account</b><p>Elimina definitivamente il tuo account PersonalWish, il profilo e i dati personali collegati.</p></div>
+            <button type="button" onClick={deleteMyAccount} disabled={deletingAccount}>{deletingAccount?"Eliminazione...":"Elimina definitivamente account"}</button>
           </section></>}
         {tab === "transfer" && <><div className="welcome"><div><div className="eyebrow">GESTIONE DELLE LISTE</div><h1>Importa / Esporta.</h1><p>Salva una copia dei tuoi desideri o aggiungi rapidamente nuovi elementi da un documento.</p></div></div><section className="profileEditor transferPanel"><div className="transferActions"><div className="transferImportCard"><b>Importa da un documento</b><p>Importa desideri da un file TXT, DOC, DOCX o PDF.</p><div className="transferListChoice"><label>Destinazione dell'importazione</label><div className="importDestinationOptions"><label><input type="radio" name="importDestination" checked={importDestination==="existing"} onChange={()=>setImportDestination("existing")}/> Lista esistente</label><label><input type="radio" name="importDestination" checked={importDestination==="new"} onChange={()=>setImportDestination("new")}/> Crea nuova lista</label></div>{importDestination==="existing" ? <><select value={importTargetListId||activeList?.id||""} onChange={e=>setImportTargetListId(e.target.value)} disabled={!wishlists.length}><option value="" disabled>Seleziona una lista</option>{wishlists.map(list=><option key={list.id} value={list.id}>{list.title}</option>)}</select><small>I desideri verranno aggiunti alla lista scelta, senza modificare quelli già presenti.</small></> : <><input value={importNewListTitle} onChange={e=>setImportNewListTitle(e.target.value)} placeholder="Nome della nuova lista..."/><small>La lista verrà creata durante l'importazione.</small></>}</div><button type="button" onClick={()=>importTextRef.current?.click()} disabled={busy||(importDestination==="existing"&&!(importTargetListId||activeList?.id))||(importDestination==="new"&&!importNewListTitle.trim())}><ArrowDownUp size={16}/> Scegli documento</button><input ref={importTextRef} type="file" accept=".txt,.doc,.docx,.pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" hidden onChange={e=>{importWishlistText(e.target.files?.[0]||null,importDestination,importNewListTitle,importTargetListId||activeList?.id||"");e.currentTarget.value="";}}/></div><div><b>Esporta in formato testo</b><p>Crea un file TXT e apre il menu di condivisione del dispositivo.</p><button type="button" onClick={exportWishlistText} disabled={!activeList}>Esporta file di testo</button></div><div><b>Esporta in PDF</b><p>Prepara una versione stampabile della lista, da salvare come PDF.</p><button type="button" onClick={exportWishlistPdf} disabled={!activeList}>Esporta PDF</button></div></div></section></>}
         {tab === "settings" && <><div className="welcome"><div><div className="eyebrow">PREFERENZE</div><h1>Impostazioni.</h1><p>Gestisci la privacy e la sicurezza delle tue liste.</p></div></div><div className="settingsCard"><LockKeyhole/><div><b>Privacy e sicurezza</b><p>Ogni lista può avere impostazioni indipendenti per partecipanti e prenotazioni.</p></div></div></>}
