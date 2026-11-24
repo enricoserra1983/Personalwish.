@@ -571,23 +571,21 @@ export default function Home() {
       }
       const unique=products.filter((item,index)=>products.findIndex(other=>other.title.toLowerCase()===item.title.toLowerCase())===index);
       if(!unique.length)throw new Error("Nel documento non ho trovato prodotti da importare.");
+      const destinationTitle=destination==="new" ? newTitle.trim() : (wishlists.find(list=>list.id===targetListId)?.title||"");
+      if(!destinationTitle)throw new Error("Non è stato possibile identificare la lista di destinazione.");
+      const filtered=unique.filter(item=>item.title.toLowerCase()!==destinationTitle.toLowerCase());
+      if(!filtered.length)throw new Error("Nel documento non ho trovato desideri da importare.");
+      if(!window.confirm(`Importare ${filtered.length} desideri nella lista "${destinationTitle}"?`))return;
       let destinationId=targetListId;
-      let destinationTitle=wishlists.find(list=>list.id===targetListId)?.title||"";
       if(destination==="new") {
         const supabase=createClient();
         const {data:auth}=await supabase.auth.getUser();
         if(!auth.user)throw new Error("Sessione scaduta. Accedi nuovamente.");
         const {data:list,error:listError}=await supabase.from("wishlists").insert({
-          owner_id:auth.user.id,title:newTitle.trim(),description:"Una raccolta di cose che mi piacerebbe ricevere.",
-        }).select("id,title").single();
+          owner_id:auth.user.id,title:destinationTitle,description:"Una raccolta di cose che mi piacerebbe ricevere.",
+        }).select("id").single();
         if(listError||!list)throw new Error("Non è stato possibile creare la nuova lista: "+(listError?.message||"errore sconosciuto"));
-        destinationId=list.id;destinationTitle=list.title;
-      }
-      const filtered=unique.filter(item=>item.title.toLowerCase()!==destinationTitle.toLowerCase());
-      if(!filtered.length)throw new Error("Nel documento non ho trovato desideri da importare.");
-      if(!window.confirm(`Importare ${filtered.length} desideri nella lista "${destinationTitle}"?`)){
-        if(destination==="new") await createClient().from("wishlists").delete().eq("id",destinationId);
-        return;
+        destinationId=list.id;
       }
       const {error}=await createClient().from("wishlist_items").insert(filtered.map(item=>({wishlist_id:destinationId,title:item.title,product_url:item.product_url})));
       if(error) {
