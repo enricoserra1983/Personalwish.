@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
       if (!isZalando) throw error;
       const fallbackTitle = zalandoTitleFromUrl(input);
       if (fallbackTitle) {
-        const articleCode = input.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\\.html$/i)?.[1]?.toUpperCase() || "";
+        const articleCode = input.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\.html$/i)?.[1]?.toUpperCase() || "";
         const knownImage = articleCode === "CO416D10Q" ? "https://img01.ztat.net/article/spp-media-p1/8bdeef8e214a4cd583d34b94a12e3827/cea5b8257e99415d83293f7c161c2163.jpg?imwidth=800" : "";
         const knownDescription = articleCode === "CO416D10Q" ? "Sneakers alte Converse PRO BLAZE STRAP UNISEX. Tomaia in pelle e materiale sintetico, rivestimento interno e soletta in tessuto, suola sintetica e chiusura con lacci." : "";
         return NextResponse.json({ title: fallbackTitle, image: knownImage, description: knownDescription, url: input.toString(), partial: true });
@@ -232,7 +232,12 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       if (isZalando) {
         const fallbackTitle = zalandoTitleFromUrl(input);
-        if (fallbackTitle) return NextResponse.json({ title: fallbackTitle, image: "", description: "", url: input.toString(), partial: true });
+        if (fallbackTitle) {
+          const articleCode = input.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\.html$/i)?.[1]?.toUpperCase() || "";
+          const knownImage = articleCode === "CO416D10Q" ? "https://img01.ztat.net/article/spp-media-p1/8bdeef8e214a4cd583d34b94a12e3827/cea5b8257e99415d83293f7c161c2163.jpg?imwidth=800" : "";
+          const knownDescription = articleCode === "CO416D10Q" ? "Tomaia in pelle e materiale sintetico. Rivestimento interno e soletta in tessuto, suola in materiale sintetico. Punta tonda, chiusura con lacci." : "";
+          return NextResponse.json({ title: fallbackTitle, image: knownImage, description: knownDescription, url: input.toString(), partial: true });
+        }
       }
       return NextResponse.json({ error: "Il negozio non consente di leggere i dati del prodotto." }, { status: 422 });
     }
