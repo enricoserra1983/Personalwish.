@@ -218,13 +218,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Indirizzo non valido." }, { status: 400 });
     }
 
-    let { response, finalUrl } = await fetchExternalPage(input);
-    const isAmazon = finalUrl.hostname.toLowerCase().includes("amazon.");
-    const isZalando = /(^|\.)zalando\./i.test(finalUrl.hostname);
-    if ((isAmazon || isZalando) && [403, 429, 503].includes(response.status)) {
-      ({ response, finalUrl } = await fetchExternalPage(input, true));
+    const isZalandoInput = input.hostname.toLowerCase() === "zalando.it" || input.hostname.toLowerCase().endsWith(".zalando.it");
+    let response: Response;
+    let finalUrl: URL;
+    try {
+      ({ response, finalUrl } = await fetchExternalPage(input));
+      const isAmazon = finalUrl.hostname.toLowerCase().includes("amazon.");
+      if (isAmazon && [403, 429, 503].includes(response.status)) {
+        ({ response, finalUrl } = await fetchExternalPage(input, true));
+      }
+    } catch (error) {
+      if (!isZalandoInput) throw error;
+      const fallbackTitle = zalandoTitleFromUrl(input);
+      const known = knownZalandoProduct(zalandoArticleCode(input));
+      if (fallbackTitle) {
+        return NextResponse.json({
+          title: fallbackTitle,
+          image: known.image,
+          description: known.description,
+          url: input.toString(),
+          partial: true
+        });
+      }
+      throw error;
     }
     if (!response.ok) {
+      if (isZalandoInput) {
+        const fallbackTitle = zalandoTitleFromUrl(input);
+        const known = knownZalandoProduct(zalandoArticleCode(input));
+        if (fallbackTitle) {
+          return NextResponse.json({
+            title: fallbackTitle,
+            image: known.image,
+            description: known.description,
+            url: input.toString(),
+            partial: true
+          });
+        }
+      }
       return NextResponse.json({ error: "Il negozio non consente di leggere i dati del prodotto." }, { status: 422 });
     }
 
