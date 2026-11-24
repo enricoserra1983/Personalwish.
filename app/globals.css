@@ -720,3 +720,20 @@
  .settingsPrivacyRow small{font-size:10px}
  .settingsPrivacyRow .toggleRow{min-width:98px;padding:7px 8px;font-size:10px}
 }
+
+
+/* Mobile settings layout: keep descriptions wide and switches compact. */
+.settingsPrivacyRow{align-items:center;gap:14px}
+.settingsPrivacyRow>div{flex:1 1 auto;width:auto;min-width:0}
+.settingsPrivacyRow>.toggleRow{width:126px;min-width:126px;max-width:126px;flex:0 0 126px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.settingsPrivacyRow>.toggleRow>span:first-child{white-space:nowrap;font-size:10px}
+.settingsPrivacyRow>.toggleRow .switch{flex:0 0 34px}
+@media(max-width:650px){
+ .settingsPrivacySection{padding:15px 14px}
+ .settingsPrivacyRow{gap:10px;padding:13px 0}
+ .settingsPrivacyRow>div{flex:1 1 0}
+ .settingsPrivacyRow b{font-size:13px;line-height:1.3}
+ .settingsPrivacyRow small{font-size:11px;line-height:1.45}
+ .settingsPrivacyRow>.toggleRow{width:112px;min-width:112px;max-width:112px;flex-basis:112px;padding:7px 8px}
+ .settingsPrivacyRow>.toggleRow>span:first-child{font-size:9px}
+}
