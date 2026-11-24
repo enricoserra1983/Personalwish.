@@ -1,0 +1,66 @@
+"use client";
+
+import {useEffect,useState} from "react";
+import {useParams,useRouter} from "next/navigation";
+import {createClient} from "@/lib/supabase/client";
+import {ArrowLeft,Users,Gift,MapPin,CalendarDays,LoaderCircle} from "lucide-react";
+
+type FriendProfile={
+  user_id:string;display_name:string;first_name:string|null;last_name:string|null;
+  city:string|null;birth_date:string|null;avatar_url:string|null;
+  friends_visible:boolean;friends:{user_id:string;display_name:string;avatar_url:string|null}[];
+};
+type SharedList={id:string;title:string;description:string|null;share_token:string;created_at:string};
+
+export default function FriendProfilePage(){
+  const params=useParams<{id:string}>();
+  const router=useRouter();
+  const friendId=params.id;
+  const [profile,setProfile]=useState<FriendProfile|null>(null);
+  const [lists,setLists]=useState<SharedList[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
+
+  useEffect(()=>{
+    let active=true;
+    async function load(){
+      setLoading(true);
+      const supabase=createClient();
+      const [{data:p,error:pe},{data:l,error:le}]=await Promise.all([
+        supabase.rpc("get_friend_profile",{p_friend_id:friendId}),
+        supabase.rpc("get_friend_shared_wishlists",{p_friend_id:friendId})
+      ]);
+      if(!active)return;
+      if(pe){setError(pe.message);setLoading(false);return;}
+      if(le){setError(le.message);setLoading(false);return;}
+      setProfile(p as FriendProfile);
+      setLists((l||[]) as SharedList[]);
+      setLoading(false);
+    }
+    if(friendId)load();
+    return()=>{active=false;};
+  },[friendId]);
+
+  if(loading)return <main className="friendProfilePage"><div className="friendProfileLoading"><LoaderCircle size={22}/> Caricamento profilo…</div></main>;
+  if(error||!profile)return <main className="friendProfilePage"><button className="textButton" onClick={()=>router.back()}><ArrowLeft size={16}/> Torna indietro</button><div className="settingsCard">{error||"Profilo non disponibile."}</div></main>;
+
+  const fullName=[profile.first_name,profile.last_name].filter(Boolean).join(" ")||profile.display_name;
+  return <main className="friendProfilePage">
+    <header className="friendProfileTop"><button className="textButton" onClick={()=>router.back()}><ArrowLeft size={17}/> Torna indietro</button><span>PersonalWish</span></header>
+    <section className="friendProfileHero">
+      <div className="friendProfileHeroAvatar">{profile.avatar_url?<img src={profile.avatar_url} alt="Foto profilo"/>:profile.display_name.charAt(0).toUpperCase()}</div>
+      <div className="eyebrow">PROFILO PERSONALWISH</div>
+      <h1>{fullName}</h1>
+      {profile.city&&<p><MapPin size={15}/>{profile.city}</p>}
+      {profile.birth_date&&<p><CalendarDays size={15}/>Compleanno: {new Date(profile.birth_date+"T00:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"long"})}</p>}
+    </section>
+    <section className="friendProfileContent">
+      <div className="friendProfileSectionTitle"><Gift size={18}/><h2>Le sue liste condivise con te</h2></div>
+      {lists.length?<div className="friendProfileLists">{lists.map(list=><a className="friendWishlistCard" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><div><b>{list.title}</b><small>{list.description||"Lista dei desideri"}</small></div><strong>Apri →</strong></a>)}</div>:<div className="settingsCard">Al momento non ci sono liste che questa persona ha condiviso con te.</div>}
+      {profile.friends_visible&&<div className="friendProfileNetwork">
+        <div className="friendProfileSectionTitle"><Users size={18}/><h2>La sua rete</h2></div>
+        {profile.friends.length?<div className="friendProfileNetworkGrid">{profile.friends.map(person=><button className="friendProfileNetworkPerson" key={person.user_id} onClick={()=>router.push("/amico/"+person.user_id)}><span className="avatar">{person.avatar_url?<img src={person.avatar_url} alt=""/>:person.display_name.charAt(0).toUpperCase()}</span><b>{person.display_name}</b><span>Apri →</span></button>)}</div>:<p className="friendProfileMuted">Non ci sono amici visibili in questa rete.</p>}
+      </div>}
+    </section>
+  </main>;
+}
