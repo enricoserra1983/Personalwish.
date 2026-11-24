@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import WordExtractor from "word-extractor";
+import pdf from "pdf-parse";
 
 export const runtime = "nodejs";
 
@@ -31,15 +32,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Seleziona un documento da importare." }, { status: 400 });
     }
     const name = file.name.toLowerCase();
-    if (!name.endsWith(".doc") && !name.endsWith(".docx")) {
-      return NextResponse.json({ error: "Sono supportati i documenti DOC e DOCX." }, { status: 400 });
+    if (!name.endsWith(".doc") && !name.endsWith(".docx") && !name.endsWith(".pdf")) {
+      return NextResponse.json({ error: "Sono supportati i documenti TXT, DOC, DOCX e PDF." }, { status: 400 });
     }
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: "Il documento non può superare 10 MB." }, { status: 413 });
     }
     const buffer = Buffer.from(await file.arrayBuffer());
     let text = "";
-    if (name.endsWith(".docx")) {
+    if (name.endsWith(".pdf")) {
+      const result = await pdf(buffer);
+      text = result.text || "";
+    } else if (name.endsWith(".docx")) {
       const result = await mammoth.convertToHtml({ buffer });
       text = htmlToTextWithLinks(result.value);
     } else {
@@ -52,6 +56,6 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ text });
   } catch {
-    return NextResponse.json({ error: "Non riesco a leggere questo documento Word. Prova a salvarlo in DOCX o TXT." }, { status: 400 });
+    return NextResponse.json({ error: "Non riesco a leggere questo documento. Verifica che il PDF contenga testo selezionabile oppure prova un file DOCX o TXT." }, { status: 400 });
   }
 }
