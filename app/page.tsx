@@ -984,6 +984,7 @@ export default function Home() {
             {friendProfileDetails && <div className="settingsCard friendPublicProfile">
               <div className="avatar">{friendProfileDetails.avatar_url?<img src={friendProfileDetails.avatar_url} alt="Foto profilo"/>:selectedFriend.display_name.charAt(0).toUpperCase()}</div>
               <div><b>{[friendProfileDetails.first_name,friendProfileDetails.last_name].filter(Boolean).join(" ") || selectedFriend.display_name}</b>
+                {friendProfileDetails.city && <small>{friendProfileDetails.city}</small>}
                 {friendProfileDetails.birth_date && <small>Compleanno: {new Date(friendProfileDetails.birth_date+"T00:00:00").toLocaleDateString("it-IT")}</small>}
               </div>
             </div>}
