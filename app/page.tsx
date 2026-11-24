@@ -176,7 +176,7 @@ export default function Home() {
       return;
     }
     const user = auth.user;
-    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("first_name,last_name,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity").eq("id",user.id).maybeSingle();
+    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("username,first_name,last_name,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity").eq("id",user.id).maybeSingle();
     if(profileLoadError) throw profileLoadError;
     const metadataName = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
     const name = [profile?.first_name,profile?.last_name].filter(Boolean).join(" ") || metadataName;
@@ -186,6 +186,7 @@ export default function Home() {
 
     const { error: profileError } = await supabase.from("profiles").upsert({
       id: user.id,
+      username: profile?.username || String(metadataName),
       display_name: String(name),
     }, { onConflict: "id" });
     if (profileError) throw profileError;
