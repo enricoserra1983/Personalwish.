@@ -937,3 +937,79 @@
  .friendNetworkSelectWrap{flex-basis:145px!important;width:145px!important;min-width:145px!important}
  .friendNetworkSelectMenu,.settingsPrivacyRow .friendNetworkSelectMenu{width:145px!important;min-width:145px!important;max-width:145px!important}
 }
+
+
+/* Schede amici compatte e liste espandibili */
+.friendProfileButton{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  min-height:58px;padding:9px 10px;border-radius:13px;
+}
+.friendProfileButton .avatar{width:34px;height:34px;flex:0 0 34px;font-size:14px}
+.friendProfileButton .friendNameLink{
+  flex:1 1 auto;min-width:75px;padding:3px 0;background:transparent;
+  color:var(--ink);font:700 14px Manrope,sans-serif;text-align:left;
+}
+.friendProfileButton .outline{
+  min-height:31px;padding:6px 9px;border-radius:8px;font-size:10px;line-height:1.15;
+}
+.friendProfileButton .friendRemoveButton{gap:4px}
+.friendProfileButton .friendInlineLists{
+  display:flex;flex-direction:column;gap:6px;flex:1 0 100%;width:100%;
+  padding:8px 0 1px 42px;border-top:1px solid var(--line);
+}
+.friendInlineLists>small{font-size:11px;color:var(--muted)}
+.friendInlineList{
+  display:flex;align-items:center;gap:8px;min-width:0;padding:8px 9px;
+  border:1px solid var(--line);border-radius:9px;background:#fff;
+  color:var(--ink);text-decoration:none;font-size:11px;
+}
+.friendInlineList b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.friendInlineList>span:last-child{color:var(--purple);font-weight:700;font-size:10px}
+@media(max-width:520px){
+ .friendProfileButton{gap:6px;padding:8px 9px;min-height:52px}
+ .friendProfileButton .avatar{width:30px;height:30px;flex-basis:30px}
+ .friendProfileButton .friendNameLink{font-size:13px}
+ .friendProfileButton .outline{min-height:29px;padding:5px 7px;font-size:9px}
+ .friendProfileButton .friendRemoveButton{font-size:0}
+ .friendProfileButton .friendRemoveButton svg{width:14px;height:14px}
+ .friendProfileButton .friendInlineLists{padding-left:36px}
+}
+
+/* Pagina profilo amico */
+.friendProfilePage{min-height:100vh;padding:20px max(18px,calc((100vw - 760px)/2));background:var(--bg);color:var(--ink)}
+.friendProfileTop{display:flex;align-items:center;justify-content:space-between;max-width:760px;margin:0 auto 18px}
+.friendProfileTop>span{font:800 16px Manrope,sans-serif;color:var(--purple)}
+.friendProfileTop .textButton{display:flex;align-items:center;gap:6px}
+.friendProfileHero{
+  max-width:760px;margin:0 auto 18px;padding:30px 18px 24px;
+  border:1px solid var(--line);border-radius:18px;background:#fff;text-align:center;
+}
+.friendProfileHeroAvatar{
+  display:grid;place-items:center;width:82px;height:82px;margin:0 auto 14px;
+  overflow:hidden;border-radius:50%;background:#eee8fb;color:var(--purple);
+  font:800 30px Manrope,sans-serif;
+}
+.friendProfileHeroAvatar img{width:100%;height:100%;object-fit:cover}
+.friendProfileHero .eyebrow{font-size:10px;letter-spacing:2px;color:var(--muted)}
+.friendProfileHero h1{margin:7px 0 10px;font:800 25px Manrope,sans-serif}
+.friendProfileHero p{display:flex;align-items:center;justify-content:center;gap:6px;margin:5px 0;color:var(--muted);font-size:12px}
+.friendProfileContent{max-width:760px;margin:0 auto;padding:18px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.friendProfileSectionTitle{display:flex;align-items:center;gap:9px;margin:0 0 12px;color:var(--purple)}
+.friendProfileSectionTitle h2{margin:0;color:var(--ink);font:700 16px Manrope,sans-serif}
+.friendProfileLists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.friendProfileNetwork{margin-top:24px}
+.friendProfileNetworkGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.friendProfileNetworkPerson{display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);text-align:left}
+.friendProfileNetworkPerson .avatar{width:30px;height:30px;flex:0 0 30px}
+.friendProfileNetworkPerson b{flex:1;min-width:0;font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.friendProfileNetworkPerson>span:last-child{font-size:10px;color:var(--purple)}
+.friendProfileMuted{color:var(--muted);font-size:12px}
+.friendProfileLoading{display:flex;align-items:center;justify-content:center;gap:9px;min-height:65vh;color:var(--muted);font-size:13px}
+@media(max-width:520px){
+ .friendProfilePage{padding:15px 13px}
+ .friendProfileHero{padding:24px 14px 20px}
+ .friendProfileHeroAvatar{width:72px;height:72px}
+ .friendProfileHero h1{font-size:22px}
+ .friendProfileContent{padding:14px}
+ .friendProfileLists,.friendProfileNetworkGrid{grid-template-columns:1fr}
+}
