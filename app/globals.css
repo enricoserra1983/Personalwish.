@@ -698,3 +698,25 @@
  .deleteAccountSection{flex-direction:column;align-items:flex-start;gap:7px;padding:10px 12px}
  .deleteAccountSection>button{align-self:flex-start;width:auto;min-height:29px;padding:0 10px;font-size:10px}
 }
+
+/* Settings: privacy, contact and notification preferences */
+.settingsPrivacySection{margin:16px 0;padding:17px 18px;border:1px solid var(--line,#e8e3ee);border-radius:15px;background:#fff}
+.settingsPrivacySection h3{display:flex;align-items:center;gap:9px;margin:0 0 5px;font-size:16px;color:var(--ink)}
+.settingsPrivacyIntro{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.45}
+.settingsPrivacyRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid #f0edf3}
+.settingsPrivacyRow>div{flex:1;min-width:0}
+.settingsPrivacyRow b{display:block;font-size:13px}
+.settingsPrivacyRow small{display:block;margin-top:3px;color:var(--muted);font-size:11px;line-height:1.4}
+.settingsPrivacyRow .toggleRow{flex-shrink:0;min-width:112px;padding:8px 10px;font-size:11px}
+.settingsPrivacySave{justify-content:flex-end;margin-top:8px}
+.settingsPrivacySave button{min-height:36px;padding:0 14px;font-size:12px}
+.friendSearchUsername{display:block;margin-top:2px;color:var(--muted);font-size:10px}
+@media(max-width:650px){
+ .settingsPrivacySection{margin:12px 0;padding:13px;border-radius:12px}
+ .settingsPrivacySection h3{font-size:14px}
+ .settingsPrivacyIntro{font-size:11px}
+ .settingsPrivacyRow{gap:8px;padding:10px 0}
+ .settingsPrivacyRow b{font-size:12px}
+ .settingsPrivacyRow small{font-size:10px}
+ .settingsPrivacyRow .toggleRow{min-width:98px;padding:7px 8px;font-size:10px}
+}
