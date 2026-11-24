@@ -729,28 +729,16 @@ export default function Home() {
     const host=new URL(url).hostname.toLowerCase();
     const isAmazon=host.includes("amazon.")||host==="amzn.eu"||host.endsWith(".amzn.eu");
     try{
-      let lastError:Error|null=null;
-      const attempts=isAmazon?3:1;
-      for(let attempt=0;attempt<attempts;attempt++){
-        try{
-          const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,includeImage:true}),signal:AbortSignal.timeout(17000)});
-          const data=await response.json();
-          if(!response.ok)throw new Error(data.error||"Il negozio non ha restituito i dati del prodotto.");
-          if(!data.title)throw new Error("Nome non disponibile.");
-          setNewWish(data.title);
-          if(data.image)setWishImage(data.image);
-          if(data.description)setWishDescription(data.description);
-          if(isAmazon&&!data.image)setError("Nome recuperato. Amazon non ha fornito la foto: puoi aggiungerla dalla galleria.");
-          lastError=null;
-          break;
-        }catch(error){
-          lastError=error instanceof Error?error:new Error("Recupero non riuscito");
-          if(attempt<attempts-1)await new Promise(resolve=>setTimeout(resolve,900*(attempt+1)));
-        }
-      }
-      if(lastError)throw lastError;
+      const response=await fetch("/api/product-preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,includeImage:true}),signal:AbortSignal.timeout(17000)});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||"Il negozio non ha restituito i dati del prodotto.");
+      if(data.title)setNewWish(data.title);
+      if(data.image)setWishImage(data.image);
+      if(data.description)setWishDescription(data.description);
+      if(!data.title)throw new Error("Nome non disponibile.");
+      if(isAmazon&&!data.image)setError("Nome recuperato. Amazon non ha fornito la foto: puoi aggiungerla dalla galleria.");
     }catch{
-      setError(isAmazon?"Amazon non ha restituito i dati neanche dopo 3 tentativi automatici. Il link è conservato: puoi completare i campi manualmente.":"Non riesco a leggere i dati del prodotto. Il link è conservato: puoi completare i campi manualmente.");
+      setError(isAmazon?"Amazon limita il recupero automatico. Il link è conservato: puoi inserire il nome e completare i campi manualmente.":"Non riesco a leggere i dati del prodotto. Il link è conservato: puoi completare i campi manualmente.");
     }finally{setFetchingProduct(false);}
   }
 
