@@ -688,3 +688,13 @@
  .deleteAccountSection>button{width:auto;min-height:30px;padding:0 8px;font-size:10px;white-space:nowrap}
  .deleteAccountSection p{font-size:10px}
 }
+
+/* Settings: compact account deletion panel */
+.deleteAccountSection{display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin-top:12px;padding:10px 12px;border-radius:10px}
+.deleteAccountSection b{font-size:12px}
+.deleteAccountSection p{margin:2px 0 0;font-size:11px;line-height:1.35}
+.deleteAccountSection>button{align-self:flex-start;width:auto;min-height:29px;padding:0 10px;border-radius:7px;font-size:10px}
+@media(max-width:650px){
+ .deleteAccountSection{flex-direction:column;align-items:flex-start;gap:7px;padding:10px 12px}
+ .deleteAccountSection>button{align-self:flex-start;width:auto;min-height:29px;padding:0 10px;font-size:10px}
+}
