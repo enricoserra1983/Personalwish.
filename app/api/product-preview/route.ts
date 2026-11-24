@@ -282,7 +282,7 @@ export async function POST(request: NextRequest) {
     let description = metaValue(html, "og:description") || metaValue(html, "description") || jsonLd.description;
     if (isZalando && !description) description = zalandoDescriptionFromHtml(html);
     if (isZalando && (!image || !description)) {
-      const articleCode = finalUrl.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\\.html$/i)?.[1]?.toUpperCase() || "";
+      const articleCode = finalUrl.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\.html$/i)?.[1]?.toUpperCase() || "";
       if (articleCode === "CO416D10Q") {
         if (!image && includeImage) image = "https://img01.ztat.net/article/spp-media-p1/8bdeef8e214a4cd583d34b94a12e3827/cea5b8257e99415d83293f7c161c2163.jpg?imwidth=800";
         if (!description) description = "Sneakers alte Converse PRO BLAZE STRAP UNISEX. Tomaia in pelle e materiale sintetico, rivestimento interno e soletta in tessuto, suola sintetica e chiusura con lacci.";
