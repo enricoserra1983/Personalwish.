@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
     const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
     const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
     let title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
-    const isZalando = /(^|\\.)zalando\\./i.test(finalUrl.hostname);
+    const isZalando = /(^|\.)zalando\./i.test(finalUrl.hostname);
     if (isZalando && !title) title = zalandoTitleFromUrl(finalUrl);
     if (amazon && (!title || /captcha|robot check|sorry|sign.?in/i.test(title))) {
       const segments=finalUrl.pathname.split("/").filter(Boolean);
