@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Gift, ExternalLink, LoaderCircle, Heart, LockKeyhole, CheckCircle2, LayoutGrid, List, X } from "lucide-react";
+import { Gift, ExternalLink, LoaderCircle, Heart, LockKeyhole, CheckCircle2, LayoutGrid, List, X, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type SharedItem = {
@@ -37,6 +37,7 @@ export default function SharedWishlistPage() {
   const [reservationMessage, setReservationMessage] = useState("");
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
   const [detailItem, setDetailItem] = useState<SharedItem | null>(null);
+  const [participantsOpen, setParticipantsOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -129,7 +130,7 @@ export default function SharedWishlistPage() {
               </div>
             )}
           </div>
-          {list.participants && list.participants.length > 0 && <section className="sharedParticipants"><b>Amici che partecipano</b><div>{list.participants.map(person => <span key={person.user_id}>{person.display_name}</span>)}</div></section>}
+          {list.participants && list.participants.length > 0 && <section className={`sharedParticipants ${participantsOpen ? "isOpen" : ""}`}><button type="button" className="sharedParticipantsToggle" onClick={() => setParticipantsOpen(open => !open)} aria-expanded={participantsOpen}><span><b>Amici che partecipano</b><small>{list.participants.length} {list.participants.length === 1 ? "partecipante" : "partecipanti"}</small></span><ChevronDown size={18} aria-hidden="true"/></button>{participantsOpen && <div className="sharedParticipantsNames">{list.participants.map(person => <span key={person.user_id}>{person.display_name}</span>)}</div>}</section>}
           {reservationMessage && <p className="reservationNotice" role="status">{reservationMessage}</p>}
           {list.items.length ? (
             displayMode === "grid" ? (
