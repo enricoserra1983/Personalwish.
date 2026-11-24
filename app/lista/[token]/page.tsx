@@ -131,6 +131,7 @@ export default function SharedWishlistPage() {
             )}
           </div>
           {list.participants && list.participants.length > 0 && <section className={`sharedParticipants ${participantsOpen ? "isOpen" : ""}`}><button type="button" className="sharedParticipantsToggle" onClick={() => setParticipantsOpen(open => !open)} aria-expanded={participantsOpen}><span><b>Amici che partecipano</b><small>{list.participants.length} {list.participants.length === 1 ? "partecipante" : "partecipanti"}</small></span><ChevronDown size={18} aria-hidden="true"/></button>{participantsOpen && <div className="sharedParticipantsNames">{list.participants.map(person => <span key={person.user_id}>{person.display_name}</span>)}</div>}</section>}
+          {!userId && <div className="sharedSignupNotice"><div><b>Vuoi partecipare anche tu?</b><span>Registrati gratuitamente per vedere chi partecipa e prenotare un desiderio.</span></div><Link href={`/login?next=${encodeURIComponent(`/lista/${params.token}`)}`}>Crea account</Link></div>}
           {reservationMessage && <p className="reservationNotice" role="status">{reservationMessage}</p>}
           {list.items.length ? (
             displayMode === "grid" ? (
