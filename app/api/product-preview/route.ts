@@ -47,6 +47,17 @@ function readJsonLd(html: string) {
   return { title: "", image: "", description: "" };
 }
 
+function zalandoTitleFromUrl(url: URL) {
+  const slug = url.pathname.split("/").filter(Boolean).pop() || "";
+  const withoutId = slug.replace(/-[a-z]{2}[0-9a-z]{7,}(?:-[a-z0-9]+)?\.html$/i, "");
+  if (!withoutId) return "";
+  return decodeURIComponent(withoutId)
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
 function amazonMainImage(html: string) {
   const tags = html.match(/<img[^>]*>/gi) || [];
   for (const tag of tags) {
@@ -175,12 +186,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Indirizzo non valido." }, { status: 400 });
     }
 
-    let { response, finalUrl } = await fetchExternalPage(input);
-    const isAmazon = finalUrl.hostname.toLowerCase().includes("amazon.");
-    if (isAmazon && [403, 429, 503].includes(response.status)) {
-      ({ response, finalUrl } = await fetchExternalPage(input, true));
+    const isZalando = input.hostname.toLowerCase() === "zalando.it" || input.hostname.toLowerCase().endsWith(".zalando.it");
+    const isAmazonInput = input.hostname.toLowerCase().includes("amazon.");
+    let response: Response;
+    let finalUrl: URL;
+    try {
+      ({ response, finalUrl } = await fetchExternalPage(input));
+      const isAmazon = finalUrl.hostname.toLowerCase().includes("amazon.");
+      if (isAmazon && [403, 429, 503].includes(response.status)) {
+        ({ response, finalUrl } = await fetchExternalPage(input, true));
+      }
+    } catch (error) {
+      if (!isZalando) throw error;
+      const fallbackTitle = zalandoTitleFromUrl(input);
+      if (fallbackTitle) return NextResponse.json({ title: fallbackTitle, image: "", description: "", url: input.toString(), partial: true });
+      throw error;
     }
     if (!response.ok) {
+      if (isZalando) {
+        const fallbackTitle = zalandoTitleFromUrl(input);
+        if (fallbackTitle) return NextResponse.json({ title: fallbackTitle, image: "", description: "", url: input.toString(), partial: true });
+      }
       return NextResponse.json({ error: "Il negozio non consente di leggere i dati del prodotto." }, { status: 422 });
     }
 
@@ -209,6 +235,7 @@ export async function POST(request: NextRequest) {
     const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
     const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
     let title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
+    if (!title && isZalando) title = zalandoTitleFromUrl(finalUrl);
     if (amazon && (!title || /captcha|robot check|sorry|sign.?in/i.test(title))) {
       const segments=finalUrl.pathname.split("/").filter(Boolean);
       const dpIndex=segments.findIndex(segment=>segment.toLowerCase()==="dp");
