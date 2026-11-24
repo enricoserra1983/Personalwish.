@@ -43,13 +43,7 @@ begin
     raise exception 'Profilo non trovato';
   end if;
 
-  v_show_friends :=
-    v_profile.friend_network_visibility <> 'none'
-    and exists (
-      select 1 from public.profiles viewer
-      where viewer.id = auth.uid()
-        and coalesce(viewer.allow_indirect_friend_visibility, true)
-    );
+  v_show_friends := v_profile.friend_network_visibility <> 'none';
 
   if v_show_friends then
     select coalesce(jsonb_agg(jsonb_build_object(
