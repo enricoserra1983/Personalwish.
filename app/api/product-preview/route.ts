@@ -114,14 +114,17 @@ async function validateExternalUrl(url: URL) {
   }
 }
 
-async function fetchExternalPage(startUrl: URL) {
+async function fetchExternalPage(startUrl: URL, retry = false) {
   let current = startUrl;
   for (let redirects = 0; redirects <= 3; redirects++) {
     await validateExternalUrl(current);
     const response = await fetch(current.toString(), {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml"
+        "User-Agent": retry
+          ? "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": retry ? "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7" : "en-US,en;q=0.9"
       },
       redirect: "manual",
       signal: AbortSignal.timeout(12000)
@@ -172,7 +175,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Indirizzo non valido." }, { status: 400 });
     }
 
-    const { response, finalUrl } = await fetchExternalPage(input);
+    let { response, finalUrl } = await fetchExternalPage(input);
+    const isAmazon = finalUrl.hostname.toLowerCase().includes("amazon.");
+    if (isAmazon && [403, 429, 503].includes(response.status)) {
+      ({ response, finalUrl } = await fetchExternalPage(input, true));
+    }
     if (!response.ok) {
       return NextResponse.json({ error: "Il negozio non consente di leggere i dati del prodotto." }, { status: 422 });
     }
@@ -181,7 +188,21 @@ export async function POST(request: NextRequest) {
     if (!contentType.toLowerCase().includes("text/html") && !contentType.toLowerCase().includes("application/xhtml+xml")) {
       return NextResponse.json({ error: "Il link non restituisce una pagina prodotto leggibile." }, { status: 422 });
     }
-    const html = await readLimitedText(response, 2500000);
+    let html = await readLimitedText(response, 2500000);
+    if (isAmazon && /captcha|robot check|validatecaptcha|sorry.{0,30}automated/i.test(html)) {
+      const retryResult = await fetchExternalPage(input, true);
+      if (retryResult.response.ok) {
+        const retryType = retryResult.response.headers.get("content-type") || "";
+        if (retryType.toLowerCase().includes("text/html") || retryType.toLowerCase().includes("application/xhtml+xml")) {
+          const retryHtml = await readLimitedText(retryResult.response, 2500000);
+          if (!/captcha|robot check|validatecaptcha|sorry.{0,30}automated/i.test(retryHtml)) {
+            response = retryResult.response;
+            finalUrl = retryResult.finalUrl;
+            html = retryHtml;
+          }
+        }
+      }
+    }
     const includeImage = body.includeImage !== false;
     const jsonLd = readJsonLd(html);
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<[/]title>/i)?.[1] || "";
