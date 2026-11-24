@@ -63,6 +63,7 @@ export default function Home() {
   const [notifyListActivity,setNotifyListActivity]=useState(true);
   const [profileDetailsVisible,setProfileDetailsVisible]=useState(true);
   const [friendNetworkVisibility,setFriendNetworkVisibility]=useState<"all"|"except"|"none">("all");
+  const [showFriendNetworkMenu,setShowFriendNetworkMenu]=useState(false);
   const [allowIndirectFriendVisibility,setAllowIndirectFriendVisibility]=useState(true);
   const [friendNetworkExcludedIds,setFriendNetworkExcludedIds]=useState<string[]>([]);
   const [friendExclusionSearch,setFriendExclusionSearch]=useState("");
@@ -1046,11 +1047,16 @@ export default function Home() {
             <p className="settingsPrivacyIntro">Decidi quali informazioni personali mostrare agli amici e chi può vedere la tua rete.</p>
             <div className="settingsPrivacyRow"><div><b>Mostra i miei dati personali agli amici</b><small>Consente di mostrare nome e cognome nel tuo profilo. La data di compleanno segue l'impostazione separata nel profilo.</small></div><PrivacyToggle label={profileDetailsVisible?"Visibili":"Privati"} value={profileDetailsVisible} onClick={()=>setProfileDetailsVisible(v=>!v)}/></div>
             <div className="settingsPrivacyRow"><div><b>Chi può vedere il mio elenco amici?</b><small>Puoi mostrare tutta la rete, nascondere alcune persone oppure mantenerla privata.</small></div>
-              <select value={friendNetworkVisibility} onChange={e=>setFriendNetworkVisibility(e.target.value as "all"|"except"|"none")} className="privacySelect">
-                <option value="all">Tutti i miei amici</option>
-                <option value="except">Tutti tranne…</option>
-                <option value="none">Nessuno</option>
-              </select>
+              <div className="friendNetworkSelectWrap">
+                <button type="button" className="friendNetworkSelectButton" aria-expanded={showFriendNetworkMenu} onClick={()=>setShowFriendNetworkMenu(v=>!v)}>
+                  {friendNetworkVisibility==="all"?"Tutti i miei amici":friendNetworkVisibility==="except"?"Tutti tranne…":"Nessuno"} <ChevronDown size={15}/>
+                </button>
+                {showFriendNetworkMenu && <div className="friendNetworkSelectMenu">
+                  {([{value:"all",label:"Tutti i miei amici"},{value:"except",label:"Tutti tranne…"},{value:"none",label:"Nessuno"}] as const).map(option=><button type="button" key={option.value} className={friendNetworkVisibility===option.value?"selected":""} onClick={()=>{setFriendNetworkVisibility(option.value);setShowFriendNetworkMenu(false);}}>
+                    <span>{option.label}</span>{friendNetworkVisibility===option.value && <span className="friendNetworkSelectCheck">✓</span>}
+                  </button>)}
+                </div>}
+              </div>
             </div>
             {friendNetworkVisibility==="except" && <div className="friendNetworkExclusions">
               <b>Escludi queste persone</b>
