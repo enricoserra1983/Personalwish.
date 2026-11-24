@@ -676,3 +676,15 @@
  .deleteAccountSection{align-items:flex-start;flex-direction:column;gap:12px;padding:14px}
  .deleteAccountSection>button{width:100%}
 }
+
+/* Compact danger-zone action, located in Settings */
+.deleteAccountSection{justify-content:flex-start;gap:12px;margin-top:14px;padding:10px 12px;border-radius:10px;background:#fffdfd}
+.deleteAccountSection>div{flex:1}
+.deleteAccountSection b{font-size:12px}
+.deleteAccountSection p{margin-top:3px;font-size:11px}
+.deleteAccountSection>button{min-height:32px;padding:0 10px;border-radius:8px;font-size:11px}
+@media(max-width:650px){
+ .deleteAccountSection{flex-direction:row;align-items:center;gap:9px;padding:9px 10px}
+ .deleteAccountSection>button{width:auto;min-height:30px;padding:0 8px;font-size:10px;white-space:nowrap}
+ .deleteAccountSection p{font-size:10px}
+}
