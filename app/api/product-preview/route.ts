@@ -99,7 +99,7 @@ function isPublicIp(address: string) {
 async function validateExternalUrl(url: URL) {
   if (!["http:", "https:"].includes(url.protocol)) throw new Error("URL non consentito");
   if (url.username || url.password) throw new Error("Credenziali URL non consentite");
-  const hostname = url.hostname.toLowerCase().replace(/\\.$/, "");
+  const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
   if (!hostname || hostname === "localhost" || hostname.endsWith(".localhost") ||
       hostname.endsWith(".local") || hostname.endsWith(".internal")) {
     throw new Error("Host non consentito");
