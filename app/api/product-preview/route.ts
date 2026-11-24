@@ -47,40 +47,6 @@ function readJsonLd(html: string) {
   return { title: "", image: "", description: "" };
 }
 
-function zalandoTitleFromUrl(url: URL) {
-  const slug = url.pathname.split("/").filter(Boolean).pop() || "";
-  const withoutId = slug.replace(/-[a-z]{2}[0-9a-z]{7,}(?:-[a-z0-9]+)?\.html$/i, "");
-  if (!withoutId) return "";
-  return decodeURIComponent(withoutId)
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, letter => letter.toUpperCase());
-}
-
-function zalandoImageFromHtml(html: string) {
-  const tags = html.match(/<img\b[^>]*>/gi) || [];
-  for (const tag of tags) {
-    const candidates = [
-      attribute(tag, "src"),
-      attribute(tag, "data-src"),
-      attribute(tag, "data-original"),
-      attribute(tag, "srcset").split(",")[0]?.trim().split(/\s+/)[0] || ""
-    ];
-    const image = candidates.find(value => /https?:\/\/img\d+\.ztat\.net\/article\/spp-media-/i.test(value));
-    if (image) return decode(image);
-  }
-  const embedded = html.match(/https?:\\?\/\\?\/img\d+\.ztat\.net\\?\/article\\?\/spp-media-[^"'\s<>]+/i)?.[0];
-  return embedded ? decode(embedded.replace(/\\\//g, "/")) : "";
-}
-
-function zalandoDescriptionFromHtml(html: string) {
-  const meta = metaValue(html, "og:description") || metaValue(html, "description");
-  if (meta) return meta;
-  const details = html.match(/(?:Composizione e istruzioni di lavaggio|Dettagli prodotto)[\s\S]{0,1800}/i)?.[0] || "";
-  return details.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 700);
-}
-
 function amazonMainImage(html: string) {
   const tags = html.match(/<img[^>]*>/gi) || [];
   for (const tag of tags) {
@@ -148,17 +114,14 @@ async function validateExternalUrl(url: URL) {
   }
 }
 
-async function fetchExternalPage(startUrl: URL, retry = false) {
+async function fetchExternalPage(startUrl: URL) {
   let current = startUrl;
   for (let redirects = 0; redirects <= 3; redirects++) {
     await validateExternalUrl(current);
     const response = await fetch(current.toString(), {
       headers: {
-        "User-Agent": retry
-          ? "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": retry ? "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7" : "en-US,en;q=0.9"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml"
       },
       redirect: "manual",
       signal: AbortSignal.timeout(12000)
@@ -209,33 +172,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Indirizzo non valido." }, { status: 400 });
     }
 
-    const isZalando = input.hostname.toLowerCase() === "zalando.it" || input.hostname.toLowerCase().endsWith(".zalando.it");
-    const isAmazon = input.hostname.toLowerCase().includes("amazon.");
-    let response: Response;
-    let finalUrl: URL;
-    try {
-      ({ response, finalUrl } = await fetchExternalPage(input));
-    } catch (error) {
-      if (!isZalando) throw error;
-      const fallbackTitle = zalandoTitleFromUrl(input);
-      if (fallbackTitle) {
-        const articleCode = input.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\.html$/i)?.[1]?.toUpperCase() || "";
-        const knownImage = articleCode === "CO416D10Q" ? "https://img01.ztat.net/article/spp-media-p1/8bdeef8e214a4cd583d34b94a12e3827/cea5b8257e99415d83293f7c161c2163.jpg?imwidth=800" : "";
-        const knownDescription = articleCode === "CO416D10Q" ? "Sneakers alte Converse PRO BLAZE STRAP UNISEX. Tomaia in pelle e materiale sintetico, rivestimento interno e soletta in tessuto, suola sintetica e chiusura con lacci." : "";
-        return NextResponse.json({ title: fallbackTitle, image: knownImage, description: knownDescription, url: input.toString(), partial: true });
-      }
-      throw error;
-    }
+    const { response, finalUrl } = await fetchExternalPage(input);
     if (!response.ok) {
-      if (isZalando) {
-        const fallbackTitle = zalandoTitleFromUrl(input);
-        if (fallbackTitle) {
-          const articleCode = input.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\.html$/i)?.[1]?.toUpperCase() || "";
-          const knownImage = articleCode === "CO416D10Q" ? "https://img01.ztat.net/article/spp-media-p1/8bdeef8e214a4cd583d34b94a12e3827/cea5b8257e99415d83293f7c161c2163.jpg?imwidth=800" : "";
-          const knownDescription = articleCode === "CO416D10Q" ? "Tomaia in pelle e materiale sintetico. Rivestimento interno e soletta in tessuto, suola in materiale sintetico. Punta tonda, chiusura con lacci." : "";
-          return NextResponse.json({ title: fallbackTitle, image: knownImage, description: knownDescription, url: input.toString(), partial: true });
-        }
-      }
       return NextResponse.json({ error: "Il negozio non consente di leggere i dati del prodotto." }, { status: 422 });
     }
 
@@ -243,14 +181,13 @@ export async function POST(request: NextRequest) {
     if (!contentType.toLowerCase().includes("text/html") && !contentType.toLowerCase().includes("application/xhtml+xml")) {
       return NextResponse.json({ error: "Il link non restituisce una pagina prodotto leggibile." }, { status: 422 });
     }
-    let html = await readLimitedText(response, 2500000);
+    const html = await readLimitedText(response, 2500000);
     const includeImage = body.includeImage !== false;
     const jsonLd = readJsonLd(html);
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<[/]title>/i)?.[1] || "";
     const amazon = finalUrl.hostname.toLowerCase().includes("amazon.");
     const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
     let title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
-    if (!title && isZalando) title = zalandoTitleFromUrl(finalUrl);
     if (amazon && (!title || /captcha|robot check|sorry|sign.?in/i.test(title))) {
       const segments=finalUrl.pathname.split("/").filter(Boolean);
       const dpIndex=segments.findIndex(segment=>segment.toLowerCase()==="dp");
@@ -261,16 +198,7 @@ export async function POST(request: NextRequest) {
     }
     let image = includeImage ? (metaValue(html, "og:image") || metaValue(html, "twitter:image") || jsonLd.image) : "";
     if (includeImage && !image && amazon) image = amazonMainImage(html);
-    if (includeImage && !image && isZalando) image = zalandoImageFromHtml(html);
-    let description = metaValue(html, "og:description") || metaValue(html, "description") || jsonLd.description;
-    if (isZalando && !description) description = zalandoDescriptionFromHtml(html);
-    if (isZalando && (!image || !description)) {
-      const articleCode = finalUrl.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\.html$/i)?.[1]?.toUpperCase() || "";
-      if (articleCode === "CO416D10Q") {
-        if (!image && includeImage) image = "https://img01.ztat.net/article/spp-media-p1/8bdeef8e214a4cd583d34b94a12e3827/cea5b8257e99415d83293f7c161c2163.jpg?imwidth=800";
-        if (!description) description = "Sneakers alte Converse PRO BLAZE STRAP UNISEX. Tomaia in pelle e materiale sintetico, rivestimento interno e soletta in tessuto, suola sintetica e chiusura con lacci.";
-      }
-    }
+    const description = metaValue(html, "og:description") || metaValue(html, "description") || jsonLd.description;
     const cleanTitle = title.toLowerCase().trim();
     if (!title || ["amazon.it", "amazon.com", "amazon"].includes(cleanTitle)) {
       return NextResponse.json({ error: "Il sito non ha restituito il nome del prodotto. Puoi inserirlo manualmente." }, { status: 422 });
