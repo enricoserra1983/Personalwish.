@@ -3,7 +3,7 @@
 import {useEffect,useState} from "react";
 import {useParams,useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {ArrowLeft,Users,Gift,MapPin,CalendarDays,LoaderCircle} from "lucide-react";
+import {ArrowLeft,Users,Gift,MapPin,CalendarDays,LoaderCircle,ChevronDown,Search} from "lucide-react";
 
 type FriendProfile={
   user_id:string;display_name:string;first_name:string|null;last_name:string|null;
@@ -20,6 +20,8 @@ export default function FriendProfilePage(){
   const [lists,setLists]=useState<SharedList[]>([]);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
+  const [networkOpen,setNetworkOpen]=useState(false);
+  const [networkSearch,setNetworkSearch]=useState("");
 
   useEffect(()=>{
     let active=true;
@@ -42,7 +44,7 @@ export default function FriendProfilePage(){
   },[friendId]);
 
   if(loading)return <main className="friendProfilePage"><div className="friendProfileLoading"><LoaderCircle size={22}/> Caricamento profilo…</div></main>;
-  if(error||!profile)return <main className="friendProfilePage"><button className="textButton" onClick={()=>router.back()}><ArrowLeft size={16}/> Torna indietro</button><div className="settingsCard">{error||"Profilo non disponibile."}</div></main>;
+  if(error||!profile)return <main className="friendProfilePage"><button className="textButton" onClick={()=>router.push("/?section=friends")}><ArrowLeft size={16}/> Torna indietro</button><div className="settingsCard">{error||"Profilo non disponibile."}</div></main>;
 
   const fullName=[profile.first_name,profile.last_name].filter(Boolean).join(" ")||profile.display_name;
   return <main className="friendProfilePage">
@@ -58,8 +60,15 @@ export default function FriendProfilePage(){
       <div className="friendProfileSectionTitle"><Gift size={18}/><h2>Le sue liste condivise con te</h2></div>
       {lists.length?<div className="friendProfileLists">{lists.map(list=><a className="friendWishlistCard" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><div><b>{list.title}</b><small>{list.description||"Lista dei desideri"}</small></div><strong>Apri →</strong></a>)}</div>:<div className="settingsCard">Al momento non ci sono liste che questa persona ha condiviso con te.</div>}
       {profile.friends_visible&&<div className="friendProfileNetwork">
-        <div className="friendProfileSectionTitle"><Users size={18}/><h2>La sua rete</h2></div>
-        {profile.friends.length?<div className="friendProfileNetworkGrid">{profile.friends.map(person=><button className="friendProfileNetworkPerson" key={person.user_id} onClick={()=>router.push("/amico/"+person.user_id)}><span className="avatar">{person.avatar_url?<img src={person.avatar_url} alt=""/>:person.display_name.charAt(0).toUpperCase()}</span><b>{person.display_name}</b><span>Apri →</span></button>)}</div>:<p className="friendProfileMuted">Non ci sono amici visibili in questa rete.</p>}
+        <button type="button" className="friendProfileNetworkToggle" onClick={()=>setNetworkOpen(v=>!v)} aria-expanded={networkOpen}>
+          <span className="friendProfileSectionTitle"><Users size={18}/><h2>La sua rete ({profile.friends.length})</h2></span>
+          <ChevronDown size={18} className={networkOpen?"rotated":""}/>
+        </button>
+        {networkOpen&&(profile.friends.length?<div className="friendProfileNetworkPanel">
+          <label className="friendProfileNetworkSearch"><Search size={15}/><input type="search" value={networkSearch} onChange={e=>setNetworkSearch(e.target.value)} placeholder="Cerca tra i suoi amici..." /></label>
+          <div className="friendProfileNetworkScroll">{profile.friends.filter(person=>person.display_name.toLocaleLowerCase("it").includes(networkSearch.trim().toLocaleLowerCase("it"))).map(person=><div className="friendProfileNetworkPerson" key={person.user_id}><span className="avatar">{person.avatar_url?<img src={person.avatar_url} alt=""/>:person.display_name.charAt(0).toUpperCase()}</span><b>{person.display_name}</b></div>)}
+          {profile.friends.every(person=>!person.display_name.toLocaleLowerCase("it").includes(networkSearch.trim().toLocaleLowerCase("it")))&&<p className="friendProfileMuted">Nessun profilo trovato.</p>}</div>
+        </div>:<p className="friendProfileMuted">Non ci sono amici visibili in questa rete.</p>)}
       </div>}
     </section>
   </main>;
