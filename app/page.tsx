@@ -745,7 +745,7 @@ export default function Home() {
 
   function resetWishEditor() {
     setNewWish("");setWishDescription("");setWishUrl("");setWishImage("");setWishPrice("");
-    setEditingWishId(null);setWishMode("manual");setShowWishEditor(false);
+    setEditingWishId(null);setShowWishEditor(false);
   }
 
   async function fetchProductDetails() {
@@ -753,7 +753,7 @@ export default function Home() {
     let url:string;
     try{url=new URL(wishUrl.trim()).toString();if(!["http:","https:"].includes(new URL(url).protocol))throw new Error();}
     catch{setError("Inserisci un link valido che inizi con https://");return;}
-    setFetchingProduct(true);setError("");setWishUrl(url);setWishMode("link");
+    setFetchingProduct(true);setError("");setWishUrl(url);
     const host=new URL(url).hostname.toLowerCase();
     const isAmazon=host.includes("amazon.")||host==="amzn.eu"||host.endsWith(".amzn.eu");
     try{
@@ -799,7 +799,7 @@ export default function Home() {
     if(wish) {
       setEditingWishId(wish.id);setNewWish(wish.title);setWishDescription(wish.description||"");
       setWishUrl(wish.product_url||"");setWishImage(wish.image_url||"");
-      setWishPrice(wish.price==null?"":String(wish.price));setWishMode(wish.product_url?"link":"manual");
+      setWishPrice(wish.price==null?"":String(wish.price));
     } else resetWishEditor();
     setShowWishEditor(true);
   }
