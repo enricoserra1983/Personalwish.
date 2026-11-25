@@ -35,7 +35,19 @@ export default function FriendProfilePage(){
       if(!active)return;
       if(pe){setError(pe.message);setLoading(false);return;}
       if(le){setError(le.message);setLoading(false);return;}
-      setProfile(p as FriendProfile);
+      const rawProfile=p as FriendProfile;
+      const signAvatar=async(path:string|null)=>{
+        if(!path)return null;
+        if(path.startsWith("http"))return path;
+        const {data}=await supabase.storage.from("profile-images").createSignedUrl(path,3600);
+        return data?.signedUrl||null;
+      };
+      const [profileAvatar,friendsWithAvatars]=await Promise.all([
+        signAvatar(rawProfile.avatar_url),
+        Promise.all((rawProfile.friends||[]).map(async person=>({...person,avatar_url:await signAvatar(person.avatar_url)})))
+      ]);
+      if(!active)return;
+      setProfile({...rawProfile,avatar_url:profileAvatar,friends:friendsWithAvatars});
       setLists((l||[]) as SharedList[]);
       setLoading(false);
     }
