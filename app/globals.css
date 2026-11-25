@@ -1061,3 +1061,12 @@
 .listSettingsMenuItem.danger svg{color:#b64d59}
 .listSettingsMenuItem:disabled{opacity:.55;cursor:wait}
 @media(max-width:520px){.listSettingsMenu{top:60px;right:12px;width:220px}.listHero{overflow:visible}}
+
+
+/* Aiuto recupero link prodotto e visibilità password */
+.productLinkHelpButton{display:inline-flex;align-items:center;justify-content:center;padding:2px;border:0;background:transparent;color:var(--purple);cursor:pointer}
+.productLinkHelpText{margin:0;padding:8px 10px;border-radius:9px;background:var(--lav);color:var(--ink);font-size:11px;line-height:1.45}
+.passwordInputWrap{position:relative;width:100%}
+.passwordInputWrap input{padding-right:46px!important}
+.passwordVisibilityButton{position:absolute;right:7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:0;border-radius:7px;background:transparent;color:#81758f;cursor:pointer}
+.passwordVisibilityButton:focus-visible,.productLinkHelpButton:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
