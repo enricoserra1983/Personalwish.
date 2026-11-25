@@ -87,34 +87,38 @@ begin
       from public.friendships viewer_edge
       join public.friendships owner_edge
         on (
-          (owner_edge.user_low = viewer_edge.user_low
-           and owner_edge.user_high = p_profile_id)
-          or
-          (owner_edge.user_high = viewer_edge.user_low
-           and owner_edge.user_low = p_profile_id)
-          or
-          (owner_edge.user_low = viewer_edge.user_high
-           and owner_edge.user_high = p_profile_id)
-          or
-          (owner_edge.user_high = viewer_edge.user_high
-           and owner_edge.user_low = p_profile_id)
+          case
+            when owner_edge.user_low = p_profile_id then owner_edge.user_high
+            else owner_edge.user_low
+          end
+        ) = (
+          case
+            when viewer_edge.user_low = v_viewer then viewer_edge.user_high
+            else viewer_edge.user_low
+          end
         )
       where (
-        (viewer_edge.user_low = v_viewer and viewer_edge.user_high <> p_profile_id)
-        or
-        (viewer_edge.user_high = v_viewer and viewer_edge.user_low <> p_profile_id)
+        viewer_edge.user_low = v_viewer
+        or viewer_edge.user_high = v_viewer
       )
       and (
-        (owner_edge.user_low = viewer_edge.user_low and owner_edge.user_high = p_profile_id)
-        or
-        (owner_edge.user_high = viewer_edge.user_low and owner_edge.user_low = p_profile_id)
-        or
-        (owner_edge.user_low = viewer_edge.user_high and owner_edge.user_high = p_profile_id)
-        or
-        (owner_edge.user_high = viewer_edge.user_high and owner_edge.user_low = p_profile_id)
+        owner_edge.user_low = p_profile_id
+        or owner_edge.user_high = p_profile_id
       )
+      and (
+        case
+          when viewer_edge.user_low = v_viewer then viewer_edge.user_high
+          else viewer_edge.user_low
+        end
+      ) <> p_profile_id
+      and (
+        case
+          when viewer_edge.user_low = v_viewer then viewer_edge.user_high
+          else viewer_edge.user_low
+        end
+      ) <> v_viewer
     );
-  end if;
+  end if;;
 
   return false;
 end;
