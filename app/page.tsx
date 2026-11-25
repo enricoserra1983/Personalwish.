@@ -79,6 +79,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"lists" | "friends" | "groups" | "profile" | "settings" | "transfer">("lists");
   useEffect(()=>{ if(typeof window!=="undefined" && new URLSearchParams(window.location.search).get("section")==="friends") setTab("friends"); },[]);
+  useEffect(()=>{ if(tab==="friends"){ loadFriends(); loadFriendGroups(); } },[tab]);
   const [friends,setFriends] = useState<{user_id:string;display_name:string}[]>([]);
   const [showAllFriends,setShowAllFriends] = useState(false);
   const [friendVisitCounts,setFriendVisitCounts] = useState<Record<string,number>>({});
