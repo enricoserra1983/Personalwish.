@@ -187,7 +187,12 @@ export default function Home() {
       return;
     }
     const user = auth.user;
-    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("username,first_name,last_name,city,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity,profile_details_visible,profile_avatar_visibility,friend_network_visibility,allow_indirect_friend_visibility,friend_network_excluded_ids").eq("id",user.id).maybeSingle();
+    let profileResult=await supabase.from("profiles").select("username,first_name,last_name,city,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity,profile_details_visible,profile_avatar_visibility,friend_network_visibility,allow_indirect_friend_visibility,friend_network_excluded_ids").eq("id",user.id).maybeSingle();
+    // Compatibilità temporanea: l'app resta utilizzabile anche prima di applicare la migration SQL.
+    if(profileResult.error && profileResult.error.code==="42703") {
+      profileResult=await supabase.from("profiles").select("username,first_name,last_name,city,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity,profile_details_visible,friend_network_visibility,allow_indirect_friend_visibility,friend_network_excluded_ids").eq("id",user.id).maybeSingle();
+    }
+    const {data:profile,error:profileLoadError}=profileResult;
     if(profileLoadError) throw profileLoadError;
     const metadataName = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
     const name = [profile?.first_name,profile?.last_name].filter(Boolean).join(" ") || metadataName;
