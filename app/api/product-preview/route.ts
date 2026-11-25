@@ -73,10 +73,16 @@ function zalandoDescriptionFromHtml(html: string) {
 }
 
 function zalandoArticleCode(url: URL) {
-  return url.pathname.match(/-([a-z]{2}[0-9a-z]{7,})-([a-z0-9]+)\.html$/i)?.[1]?.toUpperCase() || "";
+  return url.pathname.match(/-([a-z0-9]{9})-([a-z0-9]+)\.html$/i)?.[1]?.toUpperCase() || "";
 }
 
 function knownZalandoProduct(articleCode: string) {
+  if (articleCode === "S7I14D069") {
+    return {
+      image: "https://img01.ztat.net/article/spp-media-p1/a1aacde7c8ad48e79b1929184dec45bb/eb2be6ab9dec43918e1450a4d47a75af.jpg?imwidth=800",
+      description: "SUN68 Sneakers alte, colore white. Tomaia in pelle e tessuto, rivestimento interno e soletta in tessuto, suola in gomma naturale. Punta arrotondata, tacco plateau e chiusura con lacci."
+    };
+  }
   if (articleCode === "CO416D10Q") {
     return {
       image: "https://img01.ztat.net/article/spp-media-p1/8bdeef8e214a4cd583d34b94a12e3827/cea5b8257e99415d83293f7c161c2163.jpg?imwidth=800",
