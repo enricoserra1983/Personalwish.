@@ -65,6 +65,7 @@ export default function Home() {
   const [profileAvatarVisibility,setProfileAvatarVisibility]=useState<"all"|"friends"|"friends_of_friends"|"none">("all");
   const [friendNetworkVisibility,setFriendNetworkVisibility]=useState<"all"|"except"|"none">("all");
   const [showFriendNetworkMenu,setShowFriendNetworkMenu]=useState(false);
+  const [showProfileAvatarMenu,setShowProfileAvatarMenu]=useState(false);
   const [allowIndirectFriendVisibility,setAllowIndirectFriendVisibility]=useState(true);
   const [friendNetworkExcludedIds,setFriendNetworkExcludedIds]=useState<string[]>([]);
   const [friendExclusionSearch,setFriendExclusionSearch]=useState("");
@@ -1111,9 +1112,16 @@ export default function Home() {
             <h3><Users size={18}/> Profilo e rete di amici</h3>
             <p className="settingsPrivacyIntro">Decidi quali informazioni personali mostrare agli amici e chi può vedere la tua rete.</p>
             <div className="settingsPrivacyRow"><div><b>Chi può vedere la mia foto profilo?</b><small>Questa scelta è indipendente dai dati personali e viene applicata anche all'accesso alle immagini.</small></div>
-              <select value={profileAvatarVisibility} onChange={e=>setProfileAvatarVisibility(e.target.value as "all"|"friends"|"friends_of_friends"|"none")} aria-label="Visibilità della foto profilo">
-                <option value="all">Tutti</option><option value="friends">Solo amici</option><option value="friends_of_friends">Amici e amici di amici</option><option value="none">Nessuno</option>
-              </select>
+              <div className="profileAvatarSelectWrap">
+                <button type="button" className="profileAvatarSelectButton" aria-expanded={showProfileAvatarMenu} onClick={()=>setShowProfileAvatarMenu(v=>!v)}>
+                  <span>{profileAvatarVisibility==="all"?"Tutti":profileAvatarVisibility==="friends"?"Solo amici":profileAvatarVisibility==="friends_of_friends"?"Amici e amici di amici":"Nessuno"}</span><ChevronDown size={15}/>
+                </button>
+                {showProfileAvatarMenu&&<div className="profileAvatarSelectMenu">
+                  {([{value:"all",label:"Tutti"},{value:"friends",label:"Solo amici"},{value:"friends_of_friends",label:"Amici e amici di amici"},{value:"none",label:"Nessuno"}] as const).map(option=><button type="button" key={option.value} className={profileAvatarVisibility===option.value?"selected":""} onClick={()=>{setProfileAvatarVisibility(option.value);setShowProfileAvatarMenu(false);}}>
+                    <span>{option.label}</span>{profileAvatarVisibility===option.value&&<span className="profileAvatarSelectCheck">✓</span>}
+                  </button>)}
+                </div>}
+              </div>
             </div>
             <div className="settingsPrivacyRow"><div><b>Mostra i miei dati personali agli amici</b><small>Consente di mostrare nome e cognome nel tuo profilo. La data di compleanno segue l'impostazione separata nel profilo.</small></div><PrivacyToggle label={profileDetailsVisible?"Visibili":"Privati"} value={profileDetailsVisible} onClick={()=>setProfileDetailsVisible(v=>!v)}/></div>
             <div className="settingsPrivacyRow"><div><b>Chi può vedere il mio elenco amici?</b><small>Puoi mostrare tutta la rete, nascondere alcune persone oppure mantenerla privata.</small></div>
