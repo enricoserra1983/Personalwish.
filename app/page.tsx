@@ -215,7 +215,35 @@ export default function Home() {
     setFriendNetworkVisibility(profile?.friend_network_visibility ?? "all");
     setAllowIndirectFriendVisibility(profile?.allow_indirect_friend_visibility ?? true);
     setFriendNetworkExcludedIds(profile?.friend_network_excluded_ids ?? []);
-    const avatarValue=profile?.avatar_url||"";
+    let avatarValue=profile?.avatar_url||"";
+    // Migra automaticamente le vecchie foto pubbliche nel bucket privato.
+    if(avatarValue.startsWith("http")) {
+      try {
+        const marker="/storage/v1/object/public/wishlist-images/";
+        const parsedAvatarUrl=new URL(avatarValue);
+        const markerIndex=parsedAvatarUrl.pathname.indexOf(marker);
+        if(markerIndex>=0) {
+          const legacyPath=decodeURIComponent(parsedAvatarUrl.pathname.slice(markerIndex+marker.length));
+          if(legacyPath.startsWith(user.id+"/profile/")) {
+            const {data:legacyFile,error:legacyDownloadError}=await supabase.storage.from("wishlist-images").download(legacyPath);
+            if(!legacyDownloadError&&legacyFile) {
+              const ext=(legacyPath.split(".").pop()||"jpg").replace(/[^a-zA-Z0-9]/g,"").toLowerCase()||"jpg";
+              const privatePath=user.id+"/profile/avatar-migrated-"+Date.now()+"."+ext;
+              const {error:privateUploadError}=await supabase.storage.from("profile-images").upload(privatePath,legacyFile,{upsert:false,contentType:legacyFile.type||"image/jpeg"});
+              if(!privateUploadError) {
+                const {error:savePathError}=await supabase.from("profiles").update({avatar_url:privatePath}).eq("id",user.id);
+                if(!savePathError) {
+                  await supabase.storage.from("wishlist-images").remove([legacyPath]);
+                  avatarValue=privatePath;
+                } else {
+                  await supabase.storage.from("profile-images").remove([privatePath]);
+                }
+              }
+            }
+          }
+        }
+      } catch {}
+    }
     if(avatarValue && !avatarValue.startsWith("http")) {
       const {data:avatarSigned}=await supabase.storage.from("profile-images").createSignedUrl(avatarValue,3600);
       setProfileAvatarUrl(avatarSigned?.signedUrl||"");
