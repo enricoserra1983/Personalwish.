@@ -62,6 +62,7 @@ export default function Home() {
   const [notifyFriendRequests,setNotifyFriendRequests]=useState(true);
   const [notifyListActivity,setNotifyListActivity]=useState(true);
   const [profileDetailsVisible,setProfileDetailsVisible]=useState(true);
+  const [profileAvatarVisibility,setProfileAvatarVisibility]=useState<"all"|"friends"|"friends_of_friends"|"none">("all");
   const [friendNetworkVisibility,setFriendNetworkVisibility]=useState<"all"|"except"|"none">("all");
   const [showFriendNetworkMenu,setShowFriendNetworkMenu]=useState(false);
   const [allowIndirectFriendVisibility,setAllowIndirectFriendVisibility]=useState(true);
@@ -186,7 +187,7 @@ export default function Home() {
       return;
     }
     const user = auth.user;
-    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("username,first_name,last_name,city,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity,profile_details_visible,friend_network_visibility,allow_indirect_friend_visibility,friend_network_excluded_ids").eq("id",user.id).maybeSingle();
+    const {data:profile,error:profileLoadError}=await supabase.from("profiles").select("username,first_name,last_name,city,birth_date,birthday_visible,avatar_url,allow_user_search,allow_friend_requests,notify_friend_requests,notify_list_activity,profile_details_visible,profile_avatar_visibility,friend_network_visibility,allow_indirect_friend_visibility,friend_network_excluded_ids").eq("id",user.id).maybeSingle();
     if(profileLoadError) throw profileLoadError;
     const metadataName = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
     const name = [profile?.first_name,profile?.last_name].filter(Boolean).join(" ") || metadataName;
@@ -210,10 +211,15 @@ export default function Home() {
     setNotifyFriendRequests(profile?.notify_friend_requests ?? true);
     setNotifyListActivity(profile?.notify_list_activity ?? true);
     setProfileDetailsVisible(profile?.profile_details_visible ?? true);
+    setProfileAvatarVisibility(profile?.profile_avatar_visibility ?? "all");
     setFriendNetworkVisibility(profile?.friend_network_visibility ?? "all");
     setAllowIndirectFriendVisibility(profile?.allow_indirect_friend_visibility ?? true);
     setFriendNetworkExcludedIds(profile?.friend_network_excluded_ids ?? []);
-    setProfileAvatarUrl(profile?.avatar_url||"");
+    const avatarValue=profile?.avatar_url||"";
+    if(avatarValue && !avatarValue.startsWith("http")) {
+      const {data:avatarSigned}=await supabase.storage.from("profile-images").createSignedUrl(avatarValue,3600);
+      setProfileAvatarUrl(avatarSigned?.signedUrl||"");
+    } else setProfileAvatarUrl(avatarValue);
 
     const { data, error: listError } = await supabase
       .from("wishlists")
@@ -516,6 +522,7 @@ export default function Home() {
       notify_friend_requests:notifyFriendRequests,
       notify_list_activity:notifyListActivity,
       profile_details_visible:profileDetailsVisible,
+      profile_avatar_visibility:profileAvatarVisibility,
       friend_network_visibility:friendNetworkVisibility,
       allow_indirect_friend_visibility:allowIndirectFriendVisibility,
       friend_network_excluded_ids:friendNetworkVisibility==="except"?friendNetworkExcludedIds:[],
@@ -534,12 +541,14 @@ export default function Home() {
     const supabase=createClient();
     const ext=(file.name.split(".").pop()||"jpg").replace(/[^a-zA-Z0-9]/g,"").toLowerCase()||"jpg";
     const path=`${profileUserId}/profile/avatar-${Date.now()}.${ext}`;
-    const {error:uploadError}=await supabase.storage.from("wishlist-images").upload(path,file,{upsert:true,contentType:file.type});
+    const {error:uploadError}=await supabase.storage.from("profile-images").upload(path,file,{upsert:true,contentType:file.type});
     if(uploadError){setError("Caricamento foto non riuscito: "+uploadError.message);setUploadingAvatar(false);return;}
-    const url=supabase.storage.from("wishlist-images").getPublicUrl(path).data.publicUrl;
-    const {error:updateError}=await supabase.from("profiles").update({avatar_url:url}).eq("id",profileUserId);
+    const {error:updateError}=await supabase.from("profiles").update({avatar_url:path}).eq("id",profileUserId);
     if(updateError)setError("Foto caricata ma non salvata: "+updateError.message);
-    else setProfileAvatarUrl(url+"?v="+Date.now());
+    else {
+      const {data:signed}=await supabase.storage.from("profile-images").createSignedUrl(path,3600);
+      setProfileAvatarUrl(signed?.signedUrl||"");
+    }
     setUploadingAvatar(false);
   }
 
@@ -1060,6 +1069,11 @@ export default function Home() {
           <section className="settingsPrivacySection">
             <h3><Users size={18}/> Profilo e rete di amici</h3>
             <p className="settingsPrivacyIntro">Decidi quali informazioni personali mostrare agli amici e chi può vedere la tua rete.</p>
+            <div className="settingsPrivacyRow"><div><b>Chi può vedere la mia foto profilo?</b><small>Questa scelta è indipendente dai dati personali e viene applicata anche all'accesso alle immagini.</small></div>
+              <select value={profileAvatarVisibility} onChange={e=>setProfileAvatarVisibility(e.target.value as "all"|"friends"|"friends_of_friends"|"none")} aria-label="Visibilità della foto profilo">
+                <option value="all">Tutti</option><option value="friends">Solo amici</option><option value="friends_of_friends">Amici e amici di amici</option><option value="none">Nessuno</option>
+              </select>
+            </div>
             <div className="settingsPrivacyRow"><div><b>Mostra i miei dati personali agli amici</b><small>Consente di mostrare nome e cognome nel tuo profilo. La data di compleanno segue l'impostazione separata nel profilo.</small></div><PrivacyToggle label={profileDetailsVisible?"Visibili":"Privati"} value={profileDetailsVisible} onClick={()=>setProfileDetailsVisible(v=>!v)}/></div>
             <div className="settingsPrivacyRow"><div><b>Chi può vedere il mio elenco amici?</b><small>Puoi mostrare tutta la rete, nascondere alcune persone oppure mantenerla privata.</small></div>
               <div className="friendNetworkSelectWrap">
