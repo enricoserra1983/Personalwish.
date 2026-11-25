@@ -39,7 +39,7 @@ export default function FriendProfilePage(){
       const signAvatar=async(path:string|null)=>{
         if(!path)return null;
         if(path.startsWith("http"))return path;
-        const {data}=await supabase.storage.from("profile-images").createSignedUrl(path,3600);
+        const {data}=await supabase.storage.from("profile-images").createSignedUrl(path,600);
         return data?.signedUrl||null;
       };
       const [profileAvatar,friendsWithAvatars]=await Promise.all([
