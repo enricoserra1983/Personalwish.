@@ -82,6 +82,14 @@ begin
   end if;
 
   if v_visibility = 'friends_of_friends' then
+    if exists (
+      select 1 from public.friendships f
+      where (f.user_low = v_viewer and f.user_high = p_profile_id)
+         or (f.user_high = v_viewer and f.user_low = p_profile_id)
+    ) then
+      return true;
+    end if;
+
     return exists (
       select 1
       from public.friendships viewer_edge
