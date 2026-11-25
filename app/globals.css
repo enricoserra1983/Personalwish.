@@ -1039,3 +1039,25 @@
 }
 .friendProfileNetworkScroll .friendProfileNetworkPerson .avatar{width:28px;height:28px;flex-basis:28px;font-size:11px}
 .friendProfileNetworkScroll .friendProfileNetworkPerson b{font-size:11px}
+
+
+/* Menu impostazioni lista: pannello sovrapposto all'hero */
+.listHero{overflow:visible;isolation:isolate}
+.listSettingsBackdrop{position:fixed;inset:0;z-index:18;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:default}
+.listSettingsButton{z-index:22}
+.listSettingsMenu{position:absolute;top:62px;right:16px;z-index:23;width:min(245px,calc(100vw - 54px));padding:9px;border:1px solid #e8e0f1;border-radius:14px;background:#fff;box-shadow:0 12px 34px rgba(42,28,65,.2)}
+.listSettingsMenuTitle{padding:9px 10px 10px;color:var(--ink);font:800 14px Manrope,sans-serif}
+.listSettingsMenuItem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:42px;padding:0 10px;border:0;border-radius:9px;background:#fff;color:#625779;text-align:left;font:600 12px 'DM Sans',sans-serif;cursor:pointer}
+.listSettingsMenuItem:active,.listSettingsMenuItem:hover{background:#f6f1fc;color:var(--purple)}
+.listSettingsMenuItem svg{flex:0 0 auto;color:var(--purple)}
+.listSettingsMenuItem .menuChevronOpen{transform:rotate(180deg)}
+.listSettingsSubpanel{display:flex;flex-direction:column;gap:8px;padding:7px 9px 11px}
+.listSettingsSubpanel input{width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;border:1px solid #e5deed;border-radius:8px;background:#fff;color:var(--ink);font:12px 'DM Sans',sans-serif}
+.listSettingsSubpanel>div{display:flex;gap:7px}
+.listSettingsSubpanel button{min-height:32px;padding:0 11px;border:1px solid #e5deed;border-radius:8px;background:var(--purple);color:#fff;font-size:11px;font-weight:700}
+.listSettingsSubpanel button.outline{background:#fff;color:var(--purple)}
+.listSettingsMenuDivider{height:1px;margin:6px 4px;background:#eee9f3}
+.listSettingsMenuItem.danger{color:#b64d59}
+.listSettingsMenuItem.danger svg{color:#b64d59}
+.listSettingsMenuItem:disabled{opacity:.55;cursor:wait}
+@media(max-width:520px){.listSettingsMenu{top:60px;right:12px;width:220px}.listHero{overflow:visible}}
