@@ -549,7 +549,8 @@ export default function Home() {
   async function savePrivacySettings() {
     setSavingPrivacySettings(true);
     setError("");
-    const {error}=await createClient().from("profiles").update({
+    const supabase=createClient();
+    const privacyUpdate={
       allow_user_search:allowUserSearch,
       allow_friend_requests:allowFriendRequests,
       notify_friend_requests:notifyFriendRequests,
@@ -559,9 +560,16 @@ export default function Home() {
       friend_network_visibility:friendNetworkVisibility,
       allow_indirect_friend_visibility:allowIndirectFriendVisibility,
       friend_network_excluded_ids:friendNetworkVisibility==="except"?friendNetworkExcludedIds:[],
-    }).eq("id",profileUserId);
+    };
+    let {error}=await supabase.from("profiles").update(privacyUpdate).eq("id",profileUserId);
+    if(error?.code==="42703") {
+      const {profile_avatar_visibility:_avatarVisibility,...legacyPrivacyUpdate}=privacyUpdate;
+      const fallback=await supabase.from("profiles").update(legacyPrivacyUpdate).eq("id",profileUserId);
+      error=fallback.error;
+      if(!error)setError("Le altre preferenze sono state salvate. Per applicare la visibilità della foto profilo occorre completare la migration.");
+    }
     if(error) setError("Non è stato possibile salvare le preferenze: "+error.message);
-    else setError("Preferenze di privacy e sicurezza salvate.");
+    else if(!error) setError(current=>current||"Preferenze di privacy e sicurezza salvate.");
     setSavingPrivacySettings(false);
   }
 
