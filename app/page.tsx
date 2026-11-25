@@ -82,7 +82,7 @@ export default function Home() {
   const [tab, setTab] = useState<"lists" | "friends" | "groups" | "profile" | "settings" | "transfer">("lists");
   useEffect(()=>{ if(typeof window!=="undefined" && new URLSearchParams(window.location.search).get("section")==="friends") setTab("friends"); },[]);
   useEffect(()=>{ if(tab==="friends"){ loadFriends(); loadFriendGroups(); } },[tab]);
-  const [friends,setFriends] = useState<{user_id:string;display_name:string}[]>([]);
+  const [friends,setFriends] = useState<{user_id:string;display_name:string;avatar_url:string|null}[]>([]);
   const [showAllFriends,setShowAllFriends] = useState(false);
   const [friendVisitCounts,setFriendVisitCounts] = useState<Record<string,number>>({});
   const [selectedFriend,setSelectedFriend] = useState<{user_id:string;display_name:string}|null>(null);
@@ -331,7 +331,19 @@ export default function Home() {
   async function loadFriends() {
     const supabase=createClient();
     const [{data:f},{data:r}]=await Promise.all([supabase.rpc("get_my_friends"),supabase.rpc("get_my_friend_requests")]);
-    setFriends(f||[]); setRequests(r||[]);
+    const friendsWithAvatars=await Promise.all((f||[]).map(async (person:{user_id:string;display_name:string})=>{
+      try {
+        const {data:profile,error}=await supabase.rpc("get_friend_profile",{p_friend_id:person.user_id});
+        if(error||!profile?.avatar_url) return {...person,avatar_url:null};
+        const path=profile.avatar_url as string;
+        if(path.startsWith("http")) return {...person,avatar_url:path};
+        const {data:signed}=await supabase.storage.from("profile-images").createSignedUrl(path,600);
+        return {...person,avatar_url:signed?.signedUrl||null};
+      } catch {
+        return {...person,avatar_url:null};
+      }
+    }));
+    setFriends(friendsWithAvatars); setRequests(r||[]);
   }
 
   function openFriendProfile(person:{user_id:string;display_name:string}) {
@@ -1048,7 +1060,7 @@ export default function Home() {
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
-        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div>{showAllFriends ? <><div className="friendsPageHeading"><button type="button" className="textButton" onClick={()=>setShowAllFriends(false)}>← Torna alla tua rete</button><h2>Tutti i tuoi amici</h2></div>{friends.length ? friends.map(person=><div className="settingsCard friendProfileButton" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><button type="button" className="friendNameLink" onClick={()=>openFriendProfile(person)}>{person.display_name}</button><button type="button" className="outline friendListsToggle" onClick={()=>toggleFriendLists(person)}>{expandedFriendListsId===person.user_id?"Nascondi liste":"Visualizza liste"}</button><button type="button" className="outline friendRemoveButton" onClick={()=>removeFriend(person)}><UserRoundX size={14}/> Rimuovi</button>{expandedFriendListsId===person.user_id && <div className="friendInlineLists">{loadingFriendListsId===person.user_id?<small>Caricamento liste…</small>:friendListsById[person.user_id]?.length?friendListsById[person.user_id].map(list=><a className="friendInlineList" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><b>{list.title}</b><span>Apri →</span></a>):<small>Non ci sono liste condivise con te.</small>}</div>}</div>) : <div className="settingsCard">Non hai ancora amici.</div>}{selectedFriend && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">PROFILO AMICO</div><h3>Profilo di {selectedFriend.display_name}</h3><p>Le informazioni mostrate rispettano le impostazioni privacy di questa persona.</p></div><button className="closeBtn" onClick={()=>setSelectedFriend(null)}>×</button></div>
+        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div>{showAllFriends ? <><div className="friendsPageHeading"><button type="button" className="textButton" onClick={()=>setShowAllFriends(false)}>← Torna alla tua rete</button><h2>Tutti i tuoi amici</h2></div>{friends.length ? friends.map(person=><div className="settingsCard friendProfileButton" key={person.user_id}><div className="avatar">{person.avatar_url?<img src={person.avatar_url} alt="Foto profilo"/>:person.display_name.charAt(0).toUpperCase()}</div><button type="button" className="friendNameLink" onClick={()=>openFriendProfile(person)}>{person.display_name}</button><button type="button" className="outline friendListsToggle" onClick={()=>toggleFriendLists(person)}>{expandedFriendListsId===person.user_id?"Nascondi liste":"Visualizza liste"}</button><button type="button" className="outline friendRemoveButton" onClick={()=>removeFriend(person)}><UserRoundX size={14}/> Rimuovi</button>{expandedFriendListsId===person.user_id && <div className="friendInlineLists">{loadingFriendListsId===person.user_id?<small>Caricamento liste…</small>:friendListsById[person.user_id]?.length?friendListsById[person.user_id].map(list=><a className="friendInlineList" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><b>{list.title}</b><span>Apri →</span></a>):<small>Non ci sono liste condivise con te.</small>}</div>}</div>) : <div className="settingsCard">Non hai ancora amici.</div>}{selectedFriend && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">PROFILO AMICO</div><h3>Profilo di {selectedFriend.display_name}</h3><p>Le informazioni mostrate rispettano le impostazioni privacy di questa persona.</p></div><button className="closeBtn" onClick={()=>setSelectedFriend(null)}>×</button></div>
             {friendProfileDetails && <div className="settingsCard friendPublicProfile">
               <div className="avatar">{friendProfileDetails.avatar_url?<img src={friendProfileDetails.avatar_url} alt="Foto profilo"/>:selectedFriend.display_name.charAt(0).toUpperCase()}</div>
               <div><b>{[friendProfileDetails.first_name,friendProfileDetails.last_name].filter(Boolean).join(" ") || selectedFriend.display_name}</b>
