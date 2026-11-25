@@ -43,7 +43,7 @@ begin
     select coalesce(jsonb_agg(jsonb_build_object(
       'user_id', p.id,
       'display_name', p.display_name,
-      'avatar_url', p.avatar_url
+      'avatar_url', case when public.can_view_profile_avatar(p.id) then p.avatar_url else null end
     ) order by p.display_name), '[]'::jsonb)
     into v_friends
     from public.friendships f
@@ -67,7 +67,7 @@ begin
   return jsonb_build_object(
     'user_id', v_profile.id,
     'display_name', v_profile.display_name,
-    'avatar_url', case when coalesce(v_profile.profile_details_visible, true) then v_profile.avatar_url else null end,
+    'avatar_url', case when public.can_view_profile_avatar(v_profile.id) then v_profile.avatar_url else null end,
     'first_name', case when coalesce(v_profile.profile_details_visible, true) then v_profile.first_name else null end,
     'last_name', case when coalesce(v_profile.profile_details_visible, true) then v_profile.last_name else null end,
     'city', case when coalesce(v_profile.profile_details_visible, true) then v_profile.city else null end,
