@@ -251,7 +251,7 @@ export default function Home() {
       } catch {}
     }
     if(avatarValue && !avatarValue.startsWith("http")) {
-      const {data:avatarSigned}=await supabase.storage.from("profile-images").createSignedUrl(avatarValue,3600);
+      const {data:avatarSigned}=await supabase.storage.from("profile-images").createSignedUrl(avatarValue,600);
       setProfileAvatarUrl(avatarSigned?.signedUrl||"");
     } else setProfileAvatarUrl(avatarValue);
 
@@ -588,7 +588,7 @@ export default function Home() {
     const {error:updateError}=await supabase.from("profiles").update({avatar_url:path}).eq("id",profileUserId);
     if(updateError)setError("Foto caricata ma non salvata: "+updateError.message);
     else {
-      const {data:signed}=await supabase.storage.from("profile-images").createSignedUrl(path,3600);
+      const {data:signed}=await supabase.storage.from("profile-images").createSignedUrl(path,600);
       setProfileAvatarUrl(signed?.signedUrl||"");
     }
     setUploadingAvatar(false);
