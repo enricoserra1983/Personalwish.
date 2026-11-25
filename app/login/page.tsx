@@ -152,7 +152,7 @@ export default function LoginPage() {
           {!isForgot && (
             <label>
               Password
-              <div className="passwordInputWrap"><input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === "signup" ? "Almeno 8 caratteri" : "La tua password"} required minLength={mode === "signup" ? 8 : 6} autoComplete={mode === "signup" ? "new-password" : "current-password"} name={mode === "signup" ? "new-password" : "current-password"} /><button type="button" className="passwordVisibilityButton" onClick={()=>setShowPassword(value=>!value)} aria-label={showPassword ? "Nascondi password" : "Mostra password"} aria-pressed={showPassword}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>
+              <div className="passwordInputWrap"><input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === "signup" ? "Almeno 8 caratteri" : "La tua password"} required minLength={mode === "signup" ? 8 : 6} autoComplete={mode === "signup" ? "new-password" : "current-password"} name={mode === "signup" ? "new-password" : "current-password"} /><button type="button" className="passwordVisibilityButton" onClick={()=>setShowPassword(value=>!value)} aria-label={showPassword ? "Nascondi password" : "Mostra password"} aria-pressed={showPassword}>{showPassword ? <Eye size={18}/> : <EyeOff size={18}/>}</button></div>
             </label>
           )}
 
