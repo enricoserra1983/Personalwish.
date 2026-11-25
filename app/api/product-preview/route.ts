@@ -298,7 +298,7 @@ export async function POST(request: NextRequest) {
       }
       throw error;
     }
-    const isZalando = /(^|\\.)zalando\\./i.test(finalUrl.hostname);
+    const isZalando = /(^|\.)zalando\./i.test(finalUrl.hostname);
     if (!response.ok) {
       if (isZalandoInput) {
         const fallbackTitle = zalandoTitleFromUrl(input);
