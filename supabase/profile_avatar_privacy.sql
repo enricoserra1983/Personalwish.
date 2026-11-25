@@ -1,12 +1,6 @@
 -- PersonalWish: visibilità indipendente e archiviazione privata delle foto profilo.
--- Preparazione migration: NON eseguire finché non è pronta anche la migrazione
--- delle foto esistenti e l'aggiornamento del client.
---
--- I valori ammessi sono:
--- all                 = tutti, anche utenti non autenticati
--- friends             = solo amici diretti
--- friends_of_friends  = amici diretti e persone con almeno un amico in comune
--- none                = solo il proprietario
+-- Eseguire solo dopo aver verificato il rilascio del client aggiornato.
+-- Valori: all, friends, friends_of_friends, none.
 
 alter table public.profiles
   add column if not exists profile_avatar_visibility text not null default 'all';
@@ -18,8 +12,7 @@ alter table public.profiles
   add constraint profiles_profile_avatar_visibility_check
   check (profile_avatar_visibility in ('all','friends','friends_of_friends','none'));
 
--- Bucket separato: wishlist-images resta pubblico per le immagini dei desideri
--- e delle liste; le nuove foto profilo vengono salvate qui.
+-- Le immagini delle wishlist restano nel bucket pubblico wishlist-images.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'profile-images',
@@ -33,8 +26,6 @@ set public = false,
     file_size_limit = 5242880,
     allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif'];
 
--- Funzione unica usata sia dalle policy Storage sia dalle RPC del profilo.
--- Il parametro è l'ID del proprietario della foto, non il percorso del file.
 create or replace function public.can_view_profile_avatar(p_profile_id uuid)
 returns boolean
 language plpgsql
@@ -83,7 +74,8 @@ begin
 
   if v_visibility = 'friends_of_friends' then
     if exists (
-      select 1 from public.friendships f
+      select 1
+      from public.friendships f
       where (f.user_low = v_viewer and f.user_high = p_profile_id)
          or (f.user_high = v_viewer and f.user_low = p_profile_id)
     ) then
@@ -95,36 +87,14 @@ begin
       from public.friendships viewer_edge
       join public.friendships owner_edge
         on (
-          case
-            when owner_edge.user_low = p_profile_id then owner_edge.user_high
-            else owner_edge.user_low
-          end
+          case when owner_edge.user_low = p_profile_id
+            then owner_edge.user_high else owner_edge.user_low end
         ) = (
-          case
-            when viewer_edge.user_low = v_viewer then viewer_edge.user_high
-            else viewer_edge.user_low
-          end
+          case when viewer_edge.user_low = v_viewer
+            then viewer_edge.user_high else viewer_edge.user_low end
         )
-      where (
-        viewer_edge.user_low = v_viewer
-        or viewer_edge.user_high = v_viewer
-      )
-      and (
-        owner_edge.user_low = p_profile_id
-        or owner_edge.user_high = p_profile_id
-      )
-      and (
-        case
-          when viewer_edge.user_low = v_viewer then viewer_edge.user_high
-          else viewer_edge.user_low
-        end
-      ) <> p_profile_id
-      and (
-        case
-          when viewer_edge.user_low = v_viewer then viewer_edge.user_high
-          else viewer_edge.user_low
-        end
-      ) <> v_viewer
+      where (viewer_edge.user_low = v_viewer or viewer_edge.user_high = v_viewer)
+        and (owner_edge.user_low = p_profile_id or owner_edge.user_high = p_profile_id)
     );
   end if;
 
@@ -135,8 +105,7 @@ $$;
 revoke all on function public.can_view_profile_avatar(uuid) from public;
 grant execute on function public.can_view_profile_avatar(uuid) to anon, authenticated;
 
--- Ogni file deve essere collocato in una cartella il cui primo livello è
--- l'UUID del proprietario: <user-uuid>/profile/<filename>.
+-- La cartella principale del file deve essere l'UUID del proprietario.
 drop policy if exists "Profile images visibility follows profile privacy" on storage.objects;
 create policy "Profile images visibility follows profile privacy"
 on storage.objects for select
@@ -145,40 +114,7 @@ using (
   bucket_id = 'profile-images'
   and public.can_view_profile_avatar(
     case
-      when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
-);
-
-drop policy if exists "Users upload their own profile images" on storage.objects;
-create policy "Users upload their own profile images"
-on storage.objects for insert
-to authenticated
-with check (
-  bucket_id = 'profile-images'
-  and (storage.foldername(name))[1] = auth.uid()::text
-);
-
-drop policy if exists "Users update their own profile images" on storage.objects;
-create policy "Users update their own profile images"
-on storage.objects for update
-to authenticated
-using (
-  bucket_id = 'profile-images'
-  and (storage.foldername(name))[1] = auth.uid()::text
-)
-with check (
-  bucket_id = 'profile-images'
-  and (storage.foldername(name))[1] = auth.uid()::text
-);
-
-drop policy if exists "Users delete their own profile images" on storage.objects;
-create policy "Users delete their own profile images"
-on storage.objects for delete
-to authenticated
-using (
-  bucket_id = 'profile-images'
-  and (storage.foldername(name))[1] = auth.uid()::text
-);
-
+      when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
       then (storage.foldername(name))[1]::uuid
       else null
     end
@@ -216,8 +152,7 @@ using (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
-
--- Aggiorna anche la RPC del profilo: restituisce il percorso avatar solo se autorizzato.
+-- RPC del profilo: restituisce il percorso avatar solo quando il viewer è autorizzato.
 create or replace function public.get_friend_profile(p_friend_id uuid)
 returns jsonb
 language plpgsql
@@ -257,7 +192,11 @@ begin
     select coalesce(jsonb_agg(jsonb_build_object(
       'user_id', p.id,
       'display_name', p.display_name,
-      'avatar_url', case when public.can_view_profile_avatar(p.id) then p.avatar_url else null end
+      'avatar_url', case
+        when public.can_view_profile_avatar(p.id)
+         and p.avatar_url is not null
+         and p.avatar_url not like 'http%'
+        then p.avatar_url else null end
     ) order by p.display_name), '[]'::jsonb)
     into v_friends
     from public.friendships f
@@ -281,7 +220,11 @@ begin
   return jsonb_build_object(
     'user_id', v_profile.id,
     'display_name', v_profile.display_name,
-    'avatar_url', case when public.can_view_profile_avatar(v_profile.id) then v_profile.avatar_url else null end,
+    'avatar_url', case
+      when public.can_view_profile_avatar(v_profile.id)
+       and v_profile.avatar_url is not null
+       and v_profile.avatar_url not like 'http%'
+      then v_profile.avatar_url else null end,
     'first_name', case when coalesce(v_profile.profile_details_visible, true) then v_profile.first_name else null end,
     'last_name', case when coalesce(v_profile.profile_details_visible, true) then v_profile.last_name else null end,
     'city', case when coalesce(v_profile.profile_details_visible, true) then v_profile.city else null end,
