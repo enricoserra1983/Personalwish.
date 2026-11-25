@@ -133,22 +133,15 @@ function isPublicIp(address: string) {
   if (version === 6) {
     const normalized = address.toLowerCase();
     if (normalized.startsWith("::ffff:")) return false;
-    const halves = normalized.split("::");
-    const left = halves[0] ? halves[0].split(":") : [];
-    const right = halves[1] ? halves[1].split(":") : [];
-    const missing = 8 - left.length - right.length;
-    const groups = [...left, ...Array(Math.max(0, missing)).fill("0"), ...right];
-    if (groups.length !== 8) return false;
-    const value = groups.reduce((acc, group) => (acc << 16n) | BigInt(parseInt(group || "0", 16)), 0n);
-    const prefix = value >> 125n;
-    const inGlobalUnicast = prefix === 1n;
-    const inRange = (base: bigint, bits: bigint) => (value >> (128n - bits)) === (base >> (128n - bits));
-    const special =
-      inRange(0x20010db8000000000000000000000000n, 32n) ||
-      inRange(0x20010000000000000000000000000000n, 23n) ||
-      inRange(0x20020000000000000000000000000000n, 16n) ||
-      inRange(0x3fff0000000000000000000000000000n, 20n);
-    return inGlobalUnicast && !special;
+    const groups = normalized.split(":");
+    const first = parseInt(groups[0] || "0", 16);
+    const second = parseInt(groups[1] || "0", 16);
+    const inGlobalUnicast = first >= 0x2000 && first <= 0x3fff;
+    const documentation = first === 0x2001 && second === 0x0db8;
+    const protocolAssignments = first === 0x2001 && second <= 0x01ff;
+    const sixToFour = first === 0x2002;
+    const documentationRange = first === 0x3fff;
+    return inGlobalUnicast && !documentation && !protocolAssignments && !sixToFour && !documentationRange;
   }
   return false;
 }
