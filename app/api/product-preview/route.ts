@@ -282,11 +282,12 @@ export async function POST(request: NextRequest) {
 
     const isZalandoInput = input.hostname.toLowerCase() === "zalando.it" || input.hostname.toLowerCase().endsWith(".zalando.it");
     const isAmazon = input.hostname.toLowerCase().includes("amazon.");
+    const isDecathlon = input.hostname.toLowerCase() === "decathlon.it" || input.hostname.toLowerCase().endsWith(".decathlon.it");
     let response: Response;
     let finalUrl: URL;
     try {
       ({ response, finalUrl } = await fetchExternalPage(input));
-      if (isAmazon && [403, 429, 503].includes(response.status)) {
+      if ((isAmazon || isDecathlon) && [403, 429, 503].includes(response.status)) {
         ({ response, finalUrl } = await fetchExternalPage(input, true));
       }
     } catch (error) {
@@ -348,6 +349,24 @@ export async function POST(request: NextRequest) {
     const amazonTitle = amazon ? html.match(/id=["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]*>/g, " ").trim() || "" : "";
     let title = amazonTitle || jsonLd.title || metaValue(html, "og:title") || metaValue(html, "twitter:title") || decode(titleTag.replace(/<[^>]*>/g, " ").trim());
     if (isZalando && (!title || /^(zalando|zalando\.it)$/i.test(title.trim()))) title = zalandoTitleFromUrl(finalUrl);
+    if (isDecathlon && (!title || /^(decathlon|decathlon\.it)$/i.test(title.trim()))) {
+      const retryResult = await fetchExternalPage(input, true);
+      if (retryResult.response.ok) {
+        const retryType = retryResult.response.headers.get("content-type") || "";
+        if (retryType.toLowerCase().includes("text/html") || retryType.toLowerCase().includes("application/xhtml+xml")) {
+          const retryHtml = await readLimitedText(retryResult.response, 2500000);
+          const retryJsonLd = readJsonLd(retryHtml);
+          const retryTitleTag = retryHtml.match(/<title[^>]*>([\\s\\S]*?)<[/]title>/i)?.[1] || "";
+          const retryTitle = retryJsonLd.title || metaValue(retryHtml, "og:title") || metaValue(retryHtml, "twitter:title") || decode(retryTitleTag.replace(/<[^>]*>/g, " ").trim());
+          if (retryTitle && !/^(decathlon|decathlon\\.it)$/i.test(retryTitle.trim())) {
+            html = retryHtml;
+            response = retryResult.response;
+            finalUrl = retryResult.finalUrl;
+            title = retryTitle;
+          }
+        }
+      }
+    }
     if (amazon && (!title || /captcha|robot check|sorry|sign.?in/i.test(title))) {
       const segments=finalUrl.pathname.split("/").filter(Boolean);
       const dpIndex=segments.findIndex(segment=>segment.toLowerCase()==="dp");
