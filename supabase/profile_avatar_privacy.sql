@@ -126,7 +126,7 @@ begin
         end
       ) <> v_viewer
     );
-  end if;;
+  end if;
 
   return false;
 end;
@@ -144,7 +144,44 @@ to anon, authenticated
 using (
   bucket_id = 'profile-images'
   and public.can_view_profile_avatar(
-    nullif((storage.foldername(name))[1], '')::uuid
+    case
+      when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
+);
+
+drop policy if exists "Users upload their own profile images" on storage.objects;
+create policy "Users upload their own profile images"
+on storage.objects for insert
+to authenticated
+with check (
+  bucket_id = 'profile-images'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "Users update their own profile images" on storage.objects;
+create policy "Users update their own profile images"
+on storage.objects for update
+to authenticated
+using (
+  bucket_id = 'profile-images'
+  and (storage.foldername(name))[1] = auth.uid()::text
+)
+with check (
+  bucket_id = 'profile-images'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "Users delete their own profile images" on storage.objects;
+create policy "Users delete their own profile images"
+on storage.objects for delete
+to authenticated
+using (
+  bucket_id = 'profile-images'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+      then (storage.foldername(name))[1]::uuid
+      else null
+    end
   )
 );
 
