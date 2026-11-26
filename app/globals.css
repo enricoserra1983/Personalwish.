@@ -1652,3 +1652,40 @@ button,input,select,textarea{font-family:inherit}
  .ownerCompactActions .ownerCompactEdit{width:100px!important;min-width:100px!important;height:35px!important;min-height:35px!important}
  .ownerCompactActions .ownerCompactDelete{width:36px!important;min-width:36px!important;height:35px!important;min-height:35px!important}
 }
+
+
+/* Header liste condivise: ritorno alla rete a sinistra, marchio a destra */
+.sharedHeaderFriendList{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;
+}
+.sharedHeaderFriendList .sharedBackToFriends{
+ display:inline-flex!important;align-items:center!important;gap:7px!important;
+ min-width:0;color:#1769e0!important;text-decoration:none!important;
+ font-size:13px!important;font-weight:700!important;white-space:nowrap!important;
+}
+.sharedHeaderFriendList .sharedBrand{
+ display:inline-flex!important;align-items:center!important;justify-content:flex-end!important;
+ gap:9px!important;margin-left:auto!important;
+ color:#172033!important;text-decoration:none!important;
+ font:800 19px Manrope,sans-serif!important;white-space:nowrap!important;
+}
+.sharedHeaderFriendList .sharedBrand>span{
+ display:grid!important;place-items:center!important;width:38px!important;height:38px!important;
+ border-radius:8px!important;background:#1769e0!important;color:#fff!important;
+}
+.sharedHeaderFriendList .sharedBrand b{font-weight:800!important}
+.sharedParticipantProfile{
+ display:inline-flex!important;align-items:center!important;gap:8px!important;
+ margin:5px 7px 5px 0!important;padding:8px 11px!important;
+ border-radius:8px!important;background:#edf4ff!important;
+ color:#1769e0!important;text-decoration:none!important;font-weight:700!important;
+}
+.sharedParticipantProfile span{font-size:10px!important;font-weight:600!important;color:#718096!important}
+.sharedParticipantProfile:focus-visible,.sharedBackToFriends:focus-visible{outline:2px solid #1769e0;outline-offset:3px}
+@media(max-width:420px){
+ .sharedHeaderFriendList .sharedBackToFriends{font-size:12px!important;gap:5px!important}
+ .sharedHeaderFriendList .sharedBrand{font-size:16px!important;gap:6px!important}
+ .sharedHeaderFriendList .sharedBrand>span{width:34px!important;height:34px!important}
+ .sharedParticipantProfile{padding:7px 9px!important}
+}
