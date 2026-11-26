@@ -66,6 +66,12 @@ export default function NotificationsPage() {
 
   async function openNotification(item: Notification) {
     if (!item.read_at) await markRead(item.id);
+    if (item.wishlist_id && (item.type === "item_reserved" || item.type === "item_purchased")) {
+      // Queste notifiche sono rivolte al proprietario: apri la sua dashboard
+      // e seleziona la lista in modalità proprietario.
+      router.push("/?wishlist=" + encodeURIComponent(item.wishlist_id));
+      return;
+    }
     if (item.wishlist_id) {
       const { data } = await createClient().from("wishlists").select("share_token").eq("id", item.wishlist_id).maybeSingle();
       if (data?.share_token) { router.push("/lista/" + data.share_token); return; }
