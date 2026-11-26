@@ -86,6 +86,33 @@ export default function SharedWishlistPage() {
     if (params.token) load();
   }, [params.token]);
 
+  async function cancelReservation(itemId: string) {
+    if (!userId || !reservedByMe.includes(itemId)) return;
+    setReservingId(itemId);
+    setReservationMessage("");
+    const supabase = createClient();
+    const { error: cancelError } = await supabase
+      .from("reservations")
+      .delete()
+      .eq("item_id", itemId)
+      .eq("user_id", userId)
+      .in("status", ["reserved", "purchased"]);
+    if (cancelError) {
+      setReservationMessage("Non è stato possibile annullare la prenotazione. Riprova.");
+    } else {
+      setReservedByMe(current => current.filter(id => id !== itemId));
+      setPurchasedByMe(current => current.filter(id => id !== itemId));
+      setReservedItems(current => current.filter(id => id !== itemId));
+      setList(current => current ? {
+        ...current,
+        items: current.items.map(item => item.id === itemId ? { ...item, reserved: false, purchased: false, reserved_by: null } : item),
+      } : current);
+      setDetailItem(current => current?.id === itemId ? null : current);
+      setReservationMessage("Prenotazione annullata: il desiderio è nuovamente disponibile.");
+    }
+    setReservingId(null);
+  }
+
   async function togglePurchased(itemId: string) {
     if (!userId || !reservedByMe.includes(itemId)) return;
     const isPurchased = purchasedByMe.includes(itemId);
@@ -98,9 +125,9 @@ export default function SharedWishlistPage() {
       p_purchased: !isPurchased,
     });
     if (toggleError || data !== true) {
-      setReservationMessage("Non è stato possibile aggiornare lo stato del regalo. Riprova.");
+      setReservationMessage(toggleError?.message || "Non è stato possibile aggiornare lo stato del regalo. Riprova.");
     } else if (!isPurchased) {
-      setPurchasedByMe(current => [...current, itemId]);
+      setPurchasedByMe(current => current.includes(itemId) ? current : [...current, itemId]);
       setList(current => current ? {
         ...current,
         items: current.items.map(item => item.id === itemId ? { ...item, purchased: true, reserved: true } : item),
@@ -187,7 +214,9 @@ export default function SharedWishlistPage() {
                       <div className="reservationAction">
                         {reservedByMe.includes(item.id) ? (
                           <div style={{display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
-                            <span className="reservedByMe"><CheckCircle2 size={16}/> Prenotato da te</span>
+                            <button type="button" className="reservedByMe" onClick={() => cancelReservation(item.id)} disabled={reservingId !== null} title="Tocca per annullare la prenotazione" style={{border:0,background:"transparent",cursor:"pointer",font:"inherit",padding:0,opacity:reservingId === item.id ? 0.65 : 1}}>
+                              {reservingId === item.id ? "Annullamento..." : <><CheckCircle2 size={16}/> Prenotato da te</>}
+                            </button>
                             <button type="button" onClick={() => togglePurchased(item.id)} disabled={reservingId !== null} aria-pressed={purchasedByMe.includes(item.id)} style={{minHeight:32,minWidth:104,padding:"6px 11px",borderRadius:7,border:"1px solid",borderColor:purchasedByMe.includes(item.id)?"#dc3545":"#d7dce3",background:purchasedByMe.includes(item.id)?"#dc3545":"#f1f3f5",color:purchasedByMe.includes(item.id)?"#fff":"#687386",fontSize:12,fontWeight:700,cursor:"pointer",opacity:reservingId === item.id ? 0.65 : 1}}>
                               {reservingId === item.id ? "Attendi..." : "Acquistato"}
                             </button>
@@ -223,7 +252,7 @@ export default function SharedWishlistPage() {
                     </button>
                     {reservedByMe.includes(item.id) ? (
                       <div style={{display:"flex",alignItems:"center",gap:5,flex:"0 0 auto",flexWrap:"wrap",justifyContent:"flex-end"}}>
-                        <span className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,fontSize:11,fontWeight:700,color:"#287a58",textAlign:"center"}}><CheckCircle2 size={14}/> Prenotato da te</span>
+                        <button type="button" onClick={() => cancelReservation(item.id)} disabled={reservingId !== null} title="Tocca per annullare la prenotazione" className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,fontSize:11,fontWeight:700,color:"#287a58",textAlign:"center",padding:0,border:0,background:"transparent",cursor:"pointer",opacity:reservingId === item.id ? 0.65 : 1}}>{reservingId === item.id ? "Annullamento..." : <><CheckCircle2 size={14}/> Prenotato da te</>}</button>
                         <button type="button" onClick={() => togglePurchased(item.id)} disabled={reservingId !== null} aria-pressed={purchasedByMe.includes(item.id)} style={{minHeight:30,minWidth:88,padding:"5px 8px",borderRadius:6,border:"1px solid",borderColor:purchasedByMe.includes(item.id)?"#dc3545":"#d7dce3",background:purchasedByMe.includes(item.id)?"#dc3545":"#f1f3f5",color:purchasedByMe.includes(item.id)?"#fff":"#687386",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",opacity:reservingId === item.id ? 0.65 : 1}}>
                           {reservingId === item.id ? "Attendi..." : "Acquistato"}
                         </button>
@@ -257,7 +286,9 @@ export default function SharedWishlistPage() {
                   <div className="reservationAction">
                     {reservedByMe.includes(detailItem.id) ? (
                       <div style={{display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
-                        <span className="reservedByMe"><CheckCircle2 size={16}/> Prenotato da te</span>
+                        <button type="button" className="reservedByMe" onClick={() => cancelReservation(detailItem.id)} disabled={reservingId !== null} title="Tocca per annullare la prenotazione" style={{border:0,background:"transparent",cursor:"pointer",font:"inherit",padding:0,opacity:reservingId === detailItem.id ? 0.65 : 1}}>
+                          {reservingId === detailItem.id ? "Annullamento..." : <><CheckCircle2 size={16}/> Prenotato da te</>}
+                        </button>
                         <button type="button" onClick={() => togglePurchased(detailItem.id)} disabled={reservingId !== null} aria-pressed={purchasedByMe.includes(detailItem.id)} style={{minHeight:32,minWidth:104,padding:"6px 11px",borderRadius:7,border:"1px solid",borderColor:purchasedByMe.includes(detailItem.id)?"#dc3545":"#d7dce3",background:purchasedByMe.includes(detailItem.id)?"#dc3545":"#f1f3f5",color:purchasedByMe.includes(detailItem.id)?"#fff":"#687386",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                           {reservingId === detailItem.id ? "Attendi..." : "Acquistato"}
                         </button>
