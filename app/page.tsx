@@ -264,7 +264,16 @@ export default function Home() {
     if (listError) throw listError;
     const rows = (data || []) as unknown as Wishlist[];
     setWishlists(rows);
-    setActiveId(current => rows.some(row => row.id === current) ? current : rows[0]?.id || "");
+    const requestedWishlistId = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("wishlist")
+      : null;
+    setActiveId(current => {
+      if (requestedWishlistId && rows.some(row => row.id === requestedWishlistId)) return requestedWishlistId;
+      return rows.some(row => row.id === current) ? current : rows[0]?.id || "";
+    });
+    if (requestedWishlistId && rows.some(row => row.id === requestedWishlistId)) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
     setLoading(false);
   }, [router]);
 
