@@ -1,6 +1,6 @@
--- MyPersonalWish: enforce notification preferences at database level.
--- If the owner disabled list activity notifications, no list activity
--- notification is inserted (participant joins, reservations, purchases, updates).
+-- MyPersonalWish: enforce both profile and per-wishlist notification preferences.
+-- Reservation/purchase notices are suppressed when the wishlist owner has
+-- disabled "Il creatore vede quali prodotti sono prenotati".
 
 create or replace function public.apply_notification_preferences()
 returns trigger
@@ -12,6 +12,7 @@ as $$
 declare
   v_friend boolean;
   v_activity boolean;
+  v_owner_sees_reservations boolean;
 begin
   select
     coalesce(p.notify_friend_requests, true),
@@ -20,7 +21,7 @@ begin
   from public.profiles p
   where p.id = new.user_id;
 
-  -- A missing profile must fail closed for notifications.
+  -- If the recipient profile is missing, do not create the notification.
   if not found then
     return null;
   end if;
@@ -33,6 +34,20 @@ begin
   if new.type in ('list_participant','item_reserved','item_purchased','wishlist_updated')
      and not v_activity then
     return null;
+  end if;
+
+  -- Per-list consent: the owner must explicitly allow visibility of
+  -- reserved products to receive reservation/purchase activity notices.
+  if new.type in ('item_reserved','item_purchased') then
+    select coalesce(w.owner_sees_reservations, false)
+      into v_owner_sees_reservations
+    from public.wishlists w
+    where w.id = new.wishlist_id
+      and w.owner_id = new.user_id;
+
+    if not found or not v_owner_sees_reservations then
+      return null;
+    end if;
   end if;
 
   return new;
