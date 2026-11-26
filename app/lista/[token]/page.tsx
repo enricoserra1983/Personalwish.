@@ -91,14 +91,13 @@ export default function SharedWishlistPage() {
     setReservingId(itemId);
     setReservationMessage("");
     const supabase = createClient();
-    const { error: cancelError } = await supabase
-      .from("reservations")
-      .delete()
-      .eq("item_id", itemId)
-      .eq("user_id", userId)
-      .in("status", ["reserved", "purchased"]);
-    if (cancelError) {
-      setReservationMessage("Non è stato possibile annullare la prenotazione. Riprova.");
+    const { data: cancelled, error: cancelError } = await supabase.rpc("set_my_reservation_purchased", {
+      p_share_token: params.token,
+      p_item_id: itemId,
+      p_purchased: false,
+    });
+    if (cancelError || cancelled !== true) {
+      setReservationMessage(cancelError?.message || "Non è stato possibile annullare la prenotazione. Riprova.");
     } else {
       setReservedByMe(current => current.filter(id => id !== itemId));
       setPurchasedByMe(current => current.filter(id => id !== itemId));
