@@ -275,7 +275,10 @@ export default function Home() {
         console.error("Errore recupero prenotazioni lista", reservationError);
         return list;
       }
-      const byItem = new Map((reservationRows || []).map((row: { item_id: string; status: "reserved" | "purchased"; buyer_name: string | null }) => [row.item_id, row]));
+      const byItem = new Map<string, { status: "reserved" | "purchased"; buyer_name: string | null }>(
+        ((reservationRows || []) as { item_id: string; status: "reserved" | "purchased"; buyer_name: string | null }[])
+          .map(row => [row.item_id, { status: row.status, buyer_name: row.buyer_name }])
+      );
       return {
         ...list,
         wishlist_items: list.wishlist_items.map(item => {
