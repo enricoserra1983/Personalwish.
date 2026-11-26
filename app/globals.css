@@ -1684,3 +1684,20 @@ button,input,select,textarea{font-family:inherit}
 }
 .sharedParticipantName:focus-visible{outline:2px solid #1769e0;outline-offset:3px}
 
+
+
+/* MyPersonalWish brand identity */
+.brand{gap:11px}
+.brandLogo{display:block;width:39px;height:39px;flex:0 0 39px;object-fit:contain}
+.brandAccent{background:linear-gradient(100deg,#a31ce0 0%,#ef1680 65%,#ff8b24 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+.mobileBrand img{width:27px;height:27px;object-fit:contain}
+.authBrand{display:inline-flex;align-items:center;gap:10px}
+.authBrand img{width:42px;height:42px;object-fit:contain}
+.authBrand>span{font-weight:800;letter-spacing:-.5px}
+.notificationsBrand img{width:35px;height:35px;object-fit:contain}
+.notificationsBrand{gap:9px}
+.sharedHeaderFriendList .sharedBrand{gap:7px!important}
+.sharedHeaderFriendList .sharedBrand img{width:37px;height:37px;object-fit:contain}
+.sharedHeaderFriendList .sharedBrand>span{display:none!important}
+.sharedHeaderFriendList .sharedBrand b{font-size:17px!important;letter-spacing:-.5px}
+@media(max-width:650px){.brandLogo{width:34px;height:34px;flex-basis:34px}.authBrand img{width:38px;height:38px}}
