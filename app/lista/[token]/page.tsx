@@ -193,7 +193,7 @@ export default function SharedWishlistPage() {
                             </button>
                           </div>
                         ) : reservedItems.includes(item.id) ? (
-                          <span className="reservedByMe"><CheckCircle2 size={16}/> {item.purchased ? "Acquistato" : (item.reserved_by ? `Già prenotato da ${item.reserved_by}` : "Già prenotato")}</span>
+                          <span className="reservedByMe" style={item.purchased ? {color:"#dc3545"} : undefined}><CheckCircle2 size={16}/> {item.purchased ? "Acquistato" : (item.reserved_by ? `Già prenotato da ${item.reserved_by}` : "Già prenotato")}</span>
                         ) : (
                           <span className="reservedByMe"><CheckCircle2 size={16}/> {item.reserved_by ? `Già prenotato da ${item.reserved_by}` : "Già prenotato"}</span>
                         ) : userId ? (
@@ -265,7 +265,7 @@ export default function SharedWishlistPage() {
                         </button>
                       </div>
                     ) : reservedItems.includes(detailItem.id) ? (
-                      <span className="reservedByMe"><CheckCircle2 size={16}/> {detailItem.purchased ? "Acquistato" : (detailItem.reserved_by ? `Già prenotato da ${detailItem.reserved_by}` : "Già prenotato")}</span>
+                      <span className="reservedByMe" style={detailItem.purchased ? {color:"#dc3545"} : undefined}><CheckCircle2 size={16}/> {detailItem.purchased ? "Acquistato" : (detailItem.reserved_by ? `Già prenotato da ${detailItem.reserved_by}` : "Già prenotato")}</span>
                     ) : (
                       <span className="reservedByMe"><CheckCircle2 size={16}/> {detailItem.reserved_by ? `Già prenotato da ${detailItem.reserved_by}` : "Già prenotato"}</span>
                     ) : userId ? (
