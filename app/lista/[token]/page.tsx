@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Gift, ExternalLink, LoaderCircle, Heart, LockKeyhole, CheckCircle2, LayoutGrid, List, X, ChevronDown } from "lucide-react";
+import { Gift, ExternalLink, LoaderCircle, Heart, LockKeyhole, CheckCircle2, LayoutGrid, List, X, ChevronDown, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type SharedItem = {
@@ -108,9 +108,9 @@ export default function SharedWishlistPage() {
 
   return (
     <main className="sharedPage">
-      <header className="sharedHeader">
-        <Link href="/" className="sharedBrand"><span><Gift size={20}/></span> PersonalWish</Link>
-        <Link href={userId ? "/" : `/login?next=${encodeURIComponent(`/lista/${params.token}`)}`} className="sharedLogin">{userId ? "Il mio account" : "Accedi"}</Link>
+      <header className="sharedHeader sharedHeaderFriendList">
+        <Link href="/?section=friends" className="sharedBackToFriends"><ArrowLeft size={18}/> <span>Torna agli amici</span></Link>
+        <Link href="/" className="sharedBrand" aria-label="PersonalWish"><span><Gift size={20}/></span><b>PersonalWish</b></Link>
       </header>
       {loading ? (
         <div className="sharedState"><LoaderCircle className="sharedSpinner" size={25}/> Caricamento della lista...</div>
@@ -130,7 +130,7 @@ export default function SharedWishlistPage() {
               </div>
             )}
           </div>
-          {list.participants && list.participants.length > 0 && <section className={`sharedParticipants ${participantsOpen ? "isOpen" : ""}`}><button type="button" className="sharedParticipantsToggle" onClick={() => setParticipantsOpen(open => !open)} aria-expanded={participantsOpen}><span><b>Amici che partecipano</b><small>{list.participants.length} {list.participants.length === 1 ? "partecipante" : "partecipanti"}</small></span><ChevronDown size={18} aria-hidden="true"/></button>{participantsOpen && <div className="sharedParticipantsNames">{list.participants.map(person => <span key={person.user_id}>{person.display_name}</span>)}</div>}</section>}
+          {list.participants && list.participants.length > 0 && <section className={`sharedParticipants ${participantsOpen ? "isOpen" : ""}`}><button type="button" className="sharedParticipantsToggle" onClick={() => setParticipantsOpen(open => !open)} aria-expanded={participantsOpen}><span><b>Amici che partecipano</b><small>{list.participants.length} {list.participants.length === 1 ? "partecipante" : "partecipanti"}</small></span><ChevronDown size={18} aria-hidden="true"/></button>{participantsOpen && <div className="sharedParticipantsNames">{list.participants.map(person => <Link key={person.user_id} href={`/amico/${person.user_id}`} className="sharedParticipantProfile" title={`Apri il profilo di ${person.display_name}`}>{person.display_name}<span>Apri profilo →</span></Link>)}</div>}</section>}
           {!userId && <div className="sharedSignupNotice"><div><b>Vuoi partecipare anche tu?</b><span>Registrati gratuitamente per vedere chi partecipa e prenotare un desiderio.</span></div><Link href={`/login?next=${encodeURIComponent(`/lista/${params.token}`)}`}>Crea account</Link></div>}
           {reservationMessage && <p className="reservationNotice" role="status">{reservationMessage}</p>}
           {list.items.length ? (
