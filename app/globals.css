@@ -1349,3 +1349,83 @@ button,input,select,textarea{font-family:inherit}
  .friendProfileHero{grid-template-columns:62px 1fr;padding:18px 14px;text-align:left}
  .friendProfileHeroAvatar{width:62px;height:62px}
 }
+
+
+/* Desideri — schede prodotto compatte, leggibili e allineate */
+.wishGrid{align-items:start;grid-auto-rows:auto;gap:16px}
+.wishCard{
+  display:flex;flex-direction:column;align-self:start;min-width:0;height:auto;
+  border:1px solid #e0e6ee;border-radius:7px;overflow:hidden;background:#fff;
+}
+.wishImage{
+  height:auto;aspect-ratio:1.12;min-height:0;width:100%;
+  display:block;position:relative;overflow:hidden;background:#edf2f8;
+}
+.wishCard .wishImage img{
+  display:block;width:100%;height:100%;object-fit:contain;
+  border-radius:0;background:#fff;
+}
+.wishImage .wishDragHandle{
+  position:absolute;z-index:2;top:8px;right:8px;
+  display:grid;place-items:center;width:34px;height:34px;
+  border:1px solid #e1e7ef;border-radius:5px;
+  background:rgba(255,255,255,.94);color:#42536a;
+}
+.wishImage .wishDragHandle svg{width:17px;height:17px}
+.wishImage>span:not(.wishDragHandle){
+  display:grid;place-items:center;width:100%;height:100%;
+  font-size:46px;filter:none;
+}
+.wishInfo{
+  display:flex;flex-direction:column;flex:1;min-width:0;
+  padding:12px 12px 13px;gap:0;
+}
+.wishTitle{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;
+  overflow:hidden;min-height:0;font:700 14px/1.35 Manrope,sans-serif;
+  color:#172033;overflow-wrap:anywhere;
+}
+.wishInfo p{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;
+  overflow:hidden;margin:7px 0 8px;color:#718096;
+  font-size:12px;line-height:1.45;overflow-wrap:anywhere;
+}
+.wishProductLink{
+  align-self:flex-start;margin:4px 0 10px;font-size:12px;
+  color:#1769e0;text-decoration:none;font-weight:700;
+}
+.wishFoot{
+  display:flex;flex-direction:column;align-items:stretch;gap:10px;
+  margin-top:auto;padding-top:10px;border-top:1px solid #edf0f4;
+}
+.wishFoot>b{font-size:12px;line-height:1.35;color:#172033}
+.wishFoot>div{
+  display:grid;grid-template-columns:minmax(0,1fr) 40px;
+  gap:7px;width:100%;
+}
+.wishFoot>div .outline{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  min-width:0;min-height:36px;padding:7px 8px;border-radius:5px;
+  background:#edf4ff;color:#145bc4;font-size:11px;
+}
+.wishFoot>div .outline:last-child{padding:7px;width:40px}
+@media(min-width:900px){
+ .wishGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+ .wishImage{aspect-ratio:1.3}
+ .wishTitle{-webkit-line-clamp:2}
+}
+@media(max-width:650px){
+ .wishGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .wishCard{border-radius:6px}
+ .wishImage{aspect-ratio:1.02}
+ .wishInfo{padding:10px;min-height:0}
+ .wishTitle{font-size:13px;line-height:1.35;-webkit-line-clamp:3}
+ .wishInfo p{font-size:11px;line-height:1.4;-webkit-line-clamp:3;margin:6px 0}
+ .wishProductLink{font-size:11px;margin:5px 0 8px}
+ .wishFoot{gap:8px;padding-top:8px}
+ .wishFoot>b{font-size:11px}
+ .wishFoot>div{grid-template-columns:minmax(0,1fr) 34px;gap:5px}
+ .wishFoot>div .outline{min-height:34px;padding:6px 5px;font-size:10px}
+ .wishFoot>div .outline:last-child{width:34px;padding:6px}
+ .wishImage .wishDragHandle{top:6px;right:6px;width:29px;height:29px}
+}
