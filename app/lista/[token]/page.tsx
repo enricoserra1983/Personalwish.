@@ -58,9 +58,10 @@ export default function SharedWishlistPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const [{ data, error: rpcError }, { data: authData }] = await Promise.all([
+      const [{ data, error: rpcError }, { data: authData }, { data: ownerLookup }] = await Promise.all([
         supabase.rpc("get_shared_wishlist", { p_share_token: params.token }),
         supabase.auth.getUser(),
+        supabase.from("wishlists").select("id,owner_id").eq("share_token", params.token).maybeSingle(),
       ]);
       const currentUserId = authData.user?.id ?? null;
       setUserId(currentUserId);
@@ -72,7 +73,7 @@ export default function SharedWishlistPage() {
         const wishlist = data as SharedWishlist;
         // Il proprietario non deve mai usare la vista condivisa/partecipante
         // della propria lista: lo riportiamo alla dashboard proprietario.
-        if (currentUserId && wishlist.owner_id === currentUserId) {
+        if (currentUserId && (wishlist.owner_id === currentUserId || ownerLookup?.owner_id === currentUserId)) {
           router.replace("/?wishlist=" + encodeURIComponent(wishlist.id));
           setLoading(false);
           return;
