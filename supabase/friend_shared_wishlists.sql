@@ -1,11 +1,11 @@
 -- Elenca solo le liste di un amico effettivamente visibili all'utente autenticato.
 create or replace function public.get_friend_shared_wishlists(p_friend_id uuid)
-returns table(id uuid,title text,description text,share_token text,created_at timestamptz)
+returns table(id uuid,title text,description text,share_token text,created_at timestamptz,image_url text)
 language sql stable security definer
 set search_path=public
 set row_security=off
 as $$
-  select w.id,w.title,w.description,w.share_token,w.created_at
+  select w.id,w.title,w.description,w.share_token,w.created_at,w.image_url
   from public.wishlists w
   where w.owner_id=p_friend_id
     and (
