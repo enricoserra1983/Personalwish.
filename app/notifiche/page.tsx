@@ -77,7 +77,7 @@ export default function NotificationsPage() {
 
   return <main className="notificationsPage">
     <header className="notificationsHeader">
-      <a href="/" className="notificationsBrand"><Gift size={21}/> PersonalWish</a>
+      <a href="/" className="notificationsBrand"><img src="/mypersonalwish-logo.svg" alt="" /> <span>MyPersonal<span className="brandAccent">Wish</span></span></a>
       <a href="/" className="notificationsBack">Torna alle liste</a>
     </header>
     <section className="notificationsContent">
