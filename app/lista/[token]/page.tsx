@@ -166,13 +166,31 @@ export default function SharedWishlistPage() {
                 ))}
               </div>
             ) : (
-              <div className="sharedCompactList">
+              <div className="sharedCompactList" style={{display:"flex",flexDirection:"column",gap:9}}>
                 {list.items.map(item => (
-                  <button type="button" className={`sharedCompactRow ${reservedItems.includes(item.id) ? "isReserved" : ""}`} key={item.id} onClick={() => setDetailItem(item)}>
-                    {item.image_url ? <img src={item.image_url} alt="" /> : <span className="sharedCompactPlaceholder"><Gift size={19}/></span>}
-                    <span className="sharedCompactInfo"><b>{item.title}</b><small>{item.price == null ? "Prezzo non indicato" : new Intl.NumberFormat("it-IT", { style: "currency", currency: item.currency || "EUR" }).format(item.price)}</small></span>
-                    {reservedItems.includes(item.id) ? <span className="compactReservedLabel"><CheckCircle2 size={13}/> {item.reserved_by ? `Da ${item.reserved_by}` : "Già prenotato"}</span> : <span className="sharedCompactOpen">Dettagli <ExternalLink size={13}/></span>}
-                  </button>
+                  <div className={`sharedCompactRow ${reservedItems.includes(item.id) ? "isReserved" : ""}`} key={item.id} style={{display:"flex",alignItems:"center",gap:12,minWidth:0,padding:"10px 12px",background:"#fff",border:"1px solid #e0e6ee",borderRadius:7}}>
+                    {item.image_url ? (
+                      <img src={item.image_url} alt="" style={{display:"block",width:58,height:58,flex:"0 0 58px",objectFit:"contain",background:"#f4f7fb",borderRadius:5}}/>
+                    ) : (
+                      <span className="sharedCompactPlaceholder" style={{display:"grid",placeItems:"center",width:58,height:58,flex:"0 0 58px",background:"#edf3fb",borderRadius:5,color:"#1769e0"}}><Gift size={22}/></span>
+                    )}
+                    <span className="sharedCompactInfo" style={{display:"block",flex:"1 1 auto",minWidth:0}}>
+                      <b style={{display:"block",fontSize:14,lineHeight:1.35,fontWeight:700,color:"#172033",overflowWrap:"anywhere"}}>{item.title}</b>
+                    </span>
+                    {reservedByMe.includes(item.id) ? (
+                      <span className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,flex:"0 0 auto",fontSize:11,fontWeight:700,color:"#287a58",textAlign:"center"}}><CheckCircle2 size={14}/> Prenotato da te</span>
+                    ) : reservedItems.includes(item.id) ? (
+                      <span className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,flex:"0 0 auto",maxWidth:118,fontSize:11,fontWeight:700,color:"#687386",textAlign:"center"}}><CheckCircle2 size={14}/> {item.reserved_by ? `Da ${item.reserved_by}` : "Già prenotato"}</span>
+                    ) : userId ? (
+                      <button type="button" onClick={() => reserveItem(item.id)} disabled={reservingId !== null} className="reserveButton" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6,flex:"0 0 auto",minWidth:88,minHeight:38,padding:"8px 12px",border:0,borderRadius:5,background:"#1769e0",color:"#fff",fontSize:12,fontWeight:700,whiteSpace:"nowrap",opacity:reservingId !== null && reservingId !== item.id ? .65 : 1}}>
+                        {reservingId === item.id ? <><LoaderCircle size={14} className="sharedSpinner"/> Attendi</> : "Prenota"}
+                      </button>
+                    ) : (
+                      <Link className="reserveButton" href={`/login?next=${encodeURIComponent(`/lista/${params.token}`)}`} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,flex:"0 0 auto",minHeight:38,padding:"8px 10px",borderRadius:5,background:"#1769e0",color:"#fff",fontSize:11,fontWeight:700,textDecoration:"none",whiteSpace:"nowrap"}}>
+                        <LockKeyhole size={14}/> Prenota
+                      </Link>
+                    )}
+                  </div>
                 ))}
               </div>
             )
