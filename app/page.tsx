@@ -417,7 +417,7 @@ export default function Home() {
   }
 
   function inviteMessage() {
-    return "Ti invito su PersonalWish! Crea e condividi le tue liste dei desideri con amici e familiari: " + getInviteUrl();
+    return "Ti invito su MyPersonalWish! Crea e condividi le tue liste dei desideri con amici e familiari: " + getInviteUrl();
   }
 
   async function copyInviteLink() {
@@ -439,7 +439,7 @@ export default function Home() {
 
   async function shareInviteNative() {
     if (navigator.share) {
-      try { await navigator.share({ title: "Invito a PersonalWish", text: inviteMessage(), url: getInviteUrl() }); }
+      try { await navigator.share({ title: "Invito a MyPersonalWish", text: inviteMessage(), url: getInviteUrl() }); }
       catch (err) { if (!(err instanceof Error && err.name === "AbortError")) setError("Condivisione non disponibile."); }
     } else {
       await copyInviteLink();
@@ -448,7 +448,7 @@ export default function Home() {
   }
 
   function shareInviteEmail() {
-    window.location.href = "mailto:?subject=" + encodeURIComponent("Ti invito su PersonalWish") + "&body=" + encodeURIComponent(inviteMessage());
+    window.location.href = "mailto:?subject=" + encodeURIComponent("Ti invito su MyPersonalWish") + "&body=" + encodeURIComponent(inviteMessage());
   }
 
   async function searchFriends() {
@@ -613,7 +613,7 @@ export default function Home() {
     const file=new File([lines.join("\n")],(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-")+".txt",{type:"text/plain;charset=utf-8"});
     try {
       if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))) {
-        await navigator.share({files:[file],title:activeList.title||"Lista PersonalWish"});
+        await navigator.share({files:[file],title:activeList.title||"Lista MyPersonalWish"});
         return;
       }
     } catch(err) {
@@ -663,7 +663,7 @@ export default function Home() {
     pdf+=`trailer\n<< /Size ${objects.length+1} /Root ${catalogId} 0 R >>\nstartxref\n${xref}\n%%EOF`;
     const file=new File([new TextEncoder().encode(pdf)],(activeList.title||"lista").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-")+".pdf",{type:"application/pdf"});
     try{
-      if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:activeList.title||"Lista PersonalWish"});return;}
+      if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:activeList.title||"Lista MyPersonalWish"});return;}
     }catch(err){if(err instanceof Error&&err.name==="AbortError")return;setError("Condivisione non disponibile: avvio il download del PDF.");}
     const url=URL.createObjectURL(file);const link=document.createElement("a");link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -729,7 +729,7 @@ export default function Home() {
     router.refresh();
   }
   async function deleteMyAccount() {
-    const confirmed = window.confirm("Vuoi eliminare definitivamente il tuo account PersonalWish? Verranno cancellati anche profilo, liste e dati collegati. Questa operazione non può essere annullata.");
+    const confirmed = window.confirm("Vuoi eliminare definitivamente il tuo account MyPersonalWish? Verranno cancellati anche profilo, liste e dati collegati. Questa operazione non può essere annullata.");
     if (!confirmed) return;
     setDeletingAccount(true);
     setError("");
@@ -935,9 +935,9 @@ export default function Home() {
 
   async function shareToInstagram() {
     const url = getShareUrl();
-    const text = `Guarda la mia lista "${activeList?.title}" su PersonalWish`;
+    const text = `Guarda la mia lista "${activeList?.title}" su MyPersonalWish`;
     if (navigator.share) {
-      try { await navigator.share({ title: activeList?.title || "PersonalWish", text, url }); }
+      try { await navigator.share({ title: activeList?.title || "MyPersonalWish", text, url }); }
       catch (err) { if (!(err instanceof Error && err.name === "AbortError")) setError("Condivisione non disponibile."); }
     } else {
       await copyShareLink();
@@ -947,7 +947,7 @@ export default function Home() {
 
   function shareToWhatsApp() {
     const url = getShareUrl();
-    const text = `Guarda la mia lista "${activeList?.title}" su PersonalWish: ${url}`;
+    const text = `Guarda la mia lista "${activeList?.title}" su MyPersonalWish: ${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   }
 
@@ -958,7 +958,7 @@ export default function Home() {
 
   function shareByEmail() {
     const url = getShareUrl();
-    const subject = `La mia lista ${activeList?.title} su PersonalWish`;
+    const subject = `La mia lista ${activeList?.title} su MyPersonalWish`;
     const body = `Ciao! Guarda la mia lista dei desideri: ${url}`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
@@ -967,7 +967,7 @@ export default function Home() {
     <main className="shell">
       {draggingWishId&&dragPointer&&draggedWish&&<div className="wishDragGhost" style={{left:dragPointer.x+14,top:dragPointer.y+14}}><span>{draggedWish.image_url?<img src={draggedWish.image_url} alt=""/>:"🎁"}</span><b>{draggedWish.title}</b></div>}
       <aside className="sidebar">
-        <a className="brand" href="/"><span className="brandIcon"><Gift size={21}/></span><span>Personal<span className="brandAccent">Wish</span></span></a>
+        <a className="brand" href="/"><img className="brandLogo" src="/mypersonalwish-logo.svg" alt="" /><span>MyPersonal<span className="brandAccent">Wish</span></span></a>
         <div className="workspaceLabel">IL TUO SPAZIO</div>
         <button className={`navItem ${tab === "lists" ? "active" : ""}`} onClick={() => setTab("lists")}><Heart size={18}/> Le mie liste <span className="navCount">{wishlists.length}</span></button>
         <button className={`navItem ${tab === "friends" ? "active" : ""}`} onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); }}><Users size={18}/> Amici</button>
@@ -978,7 +978,7 @@ export default function Home() {
       </aside>
 
       <section className="content">
-        <header className="topbar"><a className="mobileBrand" href="/" aria-label="Torna alla pagina iniziale"><Gift size={20}/> PersonalWish</a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : tab === "transfer" ? "Importa / Esporta" : "Impostazioni"}</div><div className="topActions"><a className="notificationQuickLink" href="/notifiche" aria-label={unreadNotificationCount > 0 ? `Apri le notifiche: ${unreadNotificationCount} non lette` : "Apri le notifiche"} title="Notifiche"><Bell size={19}/>{(unreadNotificationCount > 0 || requests.length > 0) && <span className="notificationBellDot" aria-label="Notifiche o richieste di amicizia non lette"/>}</a><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button className="accountFriendsButton" onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici{requests.length > 0 && <span className="accountFriendsBadge">{requests.length > 9 ? "9+" : requests.length}</span>}</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); loadFriends(); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button onClick={() => { setTab("transfer"); setShowAccountMenu(false); }}><ArrowDownUp size={16}/> Importa / Esporta</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
+        <header className="topbar"><a className="mobileBrand" href="/" aria-label="MyMyPersonalWish"><img src="/mypersonalwish-logo.svg" alt="" /> MyPersonal<span className="brandAccent">Wish</span></a><div className="crumb">Il tuo spazio <span>/</span> {tab === "lists" ? "Le mie liste" : tab === "friends" ? "Amici" : tab === "groups" ? "I miei gruppi" : tab === "profile" ? "Il mio profilo" : tab === "transfer" ? "Importa / Esporta" : "Impostazioni"}</div><div className="topActions"><a className="notificationQuickLink" href="/notifiche" aria-label={unreadNotificationCount > 0 ? `Apri le notifiche: ${unreadNotificationCount} non lette` : "Apri le notifiche"} title="Notifiche"><Bell size={19}/>{(unreadNotificationCount > 0 || requests.length > 0) && <span className="notificationBellDot" aria-label="Notifiche o richieste di amicizia non lette"/>}</a><div className="accountMenuWrap"><button type="button" className="avatar small accountAvatar" aria-label={requests.length && tab !== "friends" ? "Apri menu account: hai nuove richieste di amicizia" : "Apri menu account"} aria-expanded={showAccountMenu} onClick={() => setShowAccountMenu(v => !v)}>{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</button>{showAccountMenu && <div className="accountDropdown"><div className="accountDropdownUser"><b>{profileName}</b><small>{profileEmail}</small></div><button className="accountFriendsButton" onClick={() => { setTab("friends"); loadFriends(); loadFriendGroups(); setShowAccountMenu(false); }}><Users size={16}/> Amici{requests.length > 0 && <span className="accountFriendsBadge">{requests.length > 9 ? "9+" : requests.length}</span>}</button><button onClick={() => { setTab("profile"); setShowAccountMenu(false); }}><UserRound size={16}/> Il mio profilo</button><button onClick={() => { setTab("settings"); loadFriends(); setShowAccountMenu(false); }}><Settings2 size={16}/> Impostazioni</button><button onClick={() => { setTab("transfer"); setShowAccountMenu(false); }}><ArrowDownUp size={16}/> Importa / Esporta</button><button className="accountLogout" onClick={() => { setShowAccountMenu(false); signOut(); }}><LogOut size={16}/> Esci</button></div>}</div></div></header>
 
         {error && <div className="authError" role="alert">{error}</div>}
         {loading ? <div className="settingsCard"><LoaderCircle size={20}/> Caricamento delle tue liste...</div> : null}
@@ -1061,7 +1061,7 @@ export default function Home() {
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
-        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><p>Cerca utenti PersonalWish e gestisci le richieste di amicizia.</p></div></div>{showAllFriends ? <><div className="friendsPageHeading"><button type="button" className="textButton" onClick={()=>setShowAllFriends(false)}>← Torna alla tua rete</button><h2>Tutti i tuoi amici</h2></div>{friends.length ? friends.map(person=><div className="settingsCard friendProfileButton" key={person.user_id}><div className="avatar">{person.avatar_url?<img src={person.avatar_url} alt="Foto profilo"/>:person.display_name.charAt(0).toUpperCase()}</div><button type="button" className="friendNameLink" onClick={()=>openFriendProfile(person)}>{person.display_name}</button><button type="button" className="outline friendListsToggle" onClick={()=>toggleFriendLists(person)}>{expandedFriendListsId===person.user_id?"Nascondi liste":"Visualizza liste"}</button><button type="button" className="outline friendRemoveButton" onClick={()=>removeFriend(person)}><UserRoundX size={14}/> Rimuovi</button>{expandedFriendListsId===person.user_id && <div className="friendInlineLists">{loadingFriendListsId===person.user_id?<small>Caricamento liste…</small>:friendListsById[person.user_id]?.length?friendListsById[person.user_id].map(list=><a className="friendInlineList" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><b>{list.title}</b><span>Apri →</span></a>):<small>Non ci sono liste condivise con te.</small>}</div>}</div>) : <div className="settingsCard">Non hai ancora amici.</div>}{selectedFriend && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">PROFILO AMICO</div><h3>Profilo di {selectedFriend.display_name}</h3><p>Le informazioni mostrate rispettano le impostazioni privacy di questa persona.</p></div><button className="closeBtn" onClick={()=>setSelectedFriend(null)}>×</button></div>
+        {tab === "friends" && <><div className="welcome"><div><div className="eyebrow">LA TUA RETE</div><p>Cerca utenti MyPersonalWish e gestisci le richieste di amicizia.</p></div></div>{showAllFriends ? <><div className="friendsPageHeading"><button type="button" className="textButton" onClick={()=>setShowAllFriends(false)}>← Torna alla tua rete</button><h2>Tutti i tuoi amici</h2></div>{friends.length ? friends.map(person=><div className="settingsCard friendProfileButton" key={person.user_id}><div className="avatar">{person.avatar_url?<img src={person.avatar_url} alt="Foto profilo"/>:person.display_name.charAt(0).toUpperCase()}</div><button type="button" className="friendNameLink" onClick={()=>openFriendProfile(person)}>{person.display_name}</button><button type="button" className="outline friendListsToggle" onClick={()=>toggleFriendLists(person)}>{expandedFriendListsId===person.user_id?"Nascondi liste":"Visualizza liste"}</button><button type="button" className="outline friendRemoveButton" onClick={()=>removeFriend(person)}><UserRoundX size={14}/> Rimuovi</button>{expandedFriendListsId===person.user_id && <div className="friendInlineLists">{loadingFriendListsId===person.user_id?<small>Caricamento liste…</small>:friendListsById[person.user_id]?.length?friendListsById[person.user_id].map(list=><a className="friendInlineList" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><b>{list.title}</b><span>Apri →</span></a>):<small>Non ci sono liste condivise con te.</small>}</div>}</div>) : <div className="settingsCard">Non hai ancora amici.</div>}{selectedFriend && <section className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">PROFILO AMICO</div><h3>Profilo di {selectedFriend.display_name}</h3><p>Le informazioni mostrate rispettano le impostazioni privacy di questa persona.</p></div><button className="closeBtn" onClick={()=>setSelectedFriend(null)}>×</button></div>
             {friendProfileDetails && <div className="settingsCard friendPublicProfile">
               <div className="avatar">{friendProfileDetails.avatar_url?<img src={friendProfileDetails.avatar_url} alt="Foto profilo"/>:selectedFriend.display_name.charAt(0).toUpperCase()}</div>
               <div><b>{[friendProfileDetails.first_name,friendProfileDetails.last_name].filter(Boolean).join(" ") || selectedFriend.display_name}</b>
@@ -1101,11 +1101,11 @@ export default function Home() {
               </button>)}</div> : <p>Non ci sono amici visibili in questa rete.</p>}
             </div>}
             <h4>Le sue liste</h4>
-            {friendListsLoading ? <div className="settingsCard"><LoaderCircle size={18}/> Caricamento delle liste...</div> : friendWishlists.length ? <div className="friendWishlistGrid">{friendWishlists.map(list=><a className="friendWishlistCard" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><div><b>{list.title}</b><small>{list.description || "Lista dei desideri"}</small></div><strong>Apri →</strong></a>)}</div> : <div className="settingsCard">Al momento {selectedFriend.display_name} non ha liste condivise con te.</div>}</section>}<div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Nome utente esatto o email completa..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<3}>Cerca</button></div>{friendResults.map(person=>{const alreadyFriend=friends.some(friend=>friend.user_id===person.user_id);return <div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><div style={{flex:1}}><b>{person.display_name}</b><small className="friendSearchUsername">Nome utente</small></div>{alreadyFriend ? <span className="friendAlreadyLabel">Siete già amici</span> : <button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button>}</div>})}<h3>Invita un amico</h3><p>Condividi il link di PersonalWish tramite l’app che preferisci.</p><div className="addRow"><button onClick={()=>{setInviteCopied(false);setShowInviteMenu(true);}}> <Link2 size={17}/> Invita un amico</button></div><h3>Le mie cerchie</h3><p>Crea gruppi personali come Famiglia, Colleghi o Amici stretti.</p><div className="addRow"><input value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="Nome della nuova cerchia..." /><button onClick={createFriendGroup} disabled={!newGroupName.trim()}><Plus size={16}/> Crea gruppo</button></div>{friendGroups.map(group=><div className="settingsCard" key={group.group_id}><div style={{flex:1}}><b>{group.group_name}</b><p>{group.member_count} amici</p></div><button className="outline" onClick={()=>openFriendGroup(group.group_id)}>Gestisci</button><button className="outline" onClick={()=>deleteFriendGroup(group.group_id,group.group_name)} aria-label={"Elimina gruppo "+group.group_name}><Trash2 size={15}/> Elimina</button></div>)}{activeGroup && <section className="privacyPanel"><div className="privacyHead"><div><h3>Componenti del gruppo</h3><p>Seleziona gli amici da inserire in questa cerchia.</p></div><button className="closeBtn" onClick={()=>setActiveGroup("")}>×</button></div>{friends.map(person=><label className="groupFriendRow" key={person.user_id}><input type="checkbox" checked={groupMembers.some(m=>m.user_id===person.user_id)} onChange={e=>toggleGroupMember(person.user_id,e.target.checked)}/>{person.display_name}</label>)}<div className="addRow"><button type="button" onClick={confirmGroupMembers} disabled={savingGroupMembers}>{savingGroupMembers ? "Salvataggio..." : "Conferma"}</button></div></section>}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}</>}
+            {friendListsLoading ? <div className="settingsCard"><LoaderCircle size={18}/> Caricamento delle liste...</div> : friendWishlists.length ? <div className="friendWishlistGrid">{friendWishlists.map(list=><a className="friendWishlistCard" key={list.id} href={"/lista/"+list.share_token}><span>🎁</span><div><b>{list.title}</b><small>{list.description || "Lista dei desideri"}</small></div><strong>Apri →</strong></a>)}</div> : <div className="settingsCard">Al momento {selectedFriend.display_name} non ha liste condivise con te.</div>}</section>}<div className="addRow"><input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder="Nome utente esatto o email completa..." /><button onClick={searchFriends} disabled={friendSearch.trim().length<3}>Cerca</button></div>{friendResults.map(person=>{const alreadyFriend=friends.some(friend=>friend.user_id===person.user_id);return <div className="settingsCard" key={person.user_id}><div className="avatar">{person.display_name.charAt(0).toUpperCase()}</div><div style={{flex:1}}><b>{person.display_name}</b><small className="friendSearchUsername">Nome utente</small></div>{alreadyFriend ? <span className="friendAlreadyLabel">Siete già amici</span> : <button className="outline" onClick={()=>sendFriendRequest(person.user_id)}>Aggiungi amico</button>}</div>})}<h3>Invita un amico</h3><p>Condividi il link di MyPersonalWish tramite l’app che preferisci.</p><div className="addRow"><button onClick={()=>{setInviteCopied(false);setShowInviteMenu(true);}}> <Link2 size={17}/> Invita un amico</button></div><h3>Le mie cerchie</h3><p>Crea gruppi personali come Famiglia, Colleghi o Amici stretti.</p><div className="addRow"><input value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="Nome della nuova cerchia..." /><button onClick={createFriendGroup} disabled={!newGroupName.trim()}><Plus size={16}/> Crea gruppo</button></div>{friendGroups.map(group=><div className="settingsCard" key={group.group_id}><div style={{flex:1}}><b>{group.group_name}</b><p>{group.member_count} amici</p></div><button className="outline" onClick={()=>openFriendGroup(group.group_id)}>Gestisci</button><button className="outline" onClick={()=>deleteFriendGroup(group.group_id,group.group_name)} aria-label={"Elimina gruppo "+group.group_name}><Trash2 size={15}/> Elimina</button></div>)}{activeGroup && <section className="privacyPanel"><div className="privacyHead"><div><h3>Componenti del gruppo</h3><p>Seleziona gli amici da inserire in questa cerchia.</p></div><button className="closeBtn" onClick={()=>setActiveGroup("")}>×</button></div>{friends.map(person=><label className="groupFriendRow" key={person.user_id}><input type="checkbox" checked={groupMembers.some(m=>m.user_id===person.user_id)} onChange={e=>toggleGroupMember(person.user_id,e.target.checked)}/>{person.display_name}</label>)}<div className="addRow"><button type="button" onClick={confirmGroupMembers} disabled={savingGroupMembers}>{savingGroupMembers ? "Salvataggio..." : "Conferma"}</button></div></section>}<h3>Richieste ricevute</h3>{requests.length ? requests.map(req=><div className="settingsCard" key={req.id}><div><b>{req.requester_name}</b><p>{req.wishlist_title ? "Richiesta di amicizia e accesso a: "+req.wishlist_title : "Richiesta di amicizia"}</p></div><button className="outline" onClick={()=>answerFriendRequest(req.id,true)}>Accetta</button><button className="outline" onClick={()=>answerFriendRequest(req.id,false)}>Rifiuta</button></div>) : <div className="settingsCard">Non hai richieste in sospeso.</div>}</>}
 
         {tab === "groups" && <><div className="welcome"><div><div className="eyebrow">CONDIVISIONE</div><h1>I tuoi gruppi.</h1><p>La gestione dei gruppi sarà collegata al database nel prossimo passaggio.</p></div></div><div className="settingsCard">Non ci sono ancora gruppi collegati al tuo account.</div></>}
 
-        {tab === "profile" && <><div className="welcome"><div><h1>Il mio profilo.</h1><p>Personalizza le informazioni che condividi su PersonalWish.</p></div></div>
+        {tab === "profile" && <><div className="welcome"><div><h1>Il mio profilo.</h1><p>Personalizza le informazioni che condividi su MyPersonalWish.</p></div></div>
           <section className="profileEditor">
             <div className="profilePhotoArea"><div className="avatar profileAvatarLarge">{profileAvatarUrl?<img src={profileAvatarUrl} alt="Foto profilo"/>:profileName.charAt(0).toUpperCase()}</div><div><b>La tua foto profilo</b><p>Questa immagine ti rappresenterà nelle chat e tra gli amici.</p><button type="button" className="outline" onClick={()=>avatarInputRef.current?.click()} disabled={uploadingAvatar}>{uploadingAvatar?"Caricamento...":"Scegli una foto"}</button><input ref={avatarInputRef} type="file" accept="image/*" hidden onChange={e=>{uploadProfileAvatar(e.target.files?.[0]||null);e.currentTarget.value="";}}/></div></div>
             <div className="profileFormGrid"><label>Nome<input value={firstName} onChange={e=>setFirstName(e.target.value)} maxLength={60} placeholder="Il tuo nome"/></label><label>Cognome<input value={lastName} onChange={e=>setLastName(e.target.value)} maxLength={60} placeholder="Il tuo cognome"/></label><label>Città<input value={city} onChange={e=>setCity(e.target.value)} maxLength={80} placeholder="La tua città"/></label><label>Data di nascita<input type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label><div className="profileEmailField"><span>Email</span><b>{profileEmail}</b></div></div>
@@ -1168,7 +1168,7 @@ export default function Home() {
           </section>
           <section className="settingsPrivacySection">
             <h3><Bell size={18}/> Notifiche</h3>
-            <p className="settingsPrivacyIntro">Scegli quali notifiche ricevere nel centro notifiche di PersonalWish.</p>
+            <p className="settingsPrivacyIntro">Scegli quali notifiche ricevere nel centro notifiche di MyPersonalWish.</p>
             <div className="settingsPrivacyRow"><div><b>Richieste e amicizie</b><small>Nuove richieste di amicizia e conferme.</small></div><PrivacyToggle label={notifyFriendRequests?"Attive":"Disattive"} value={notifyFriendRequests} onClick={()=>setNotifyFriendRequests(v=>!v)}/></div>
             <div className="settingsPrivacyRow"><div><b>Attività delle liste</b><small>Partecipanti, prenotazioni e acquisti nelle tue liste.</small></div><PrivacyToggle label={notifyListActivity?"Attive":"Disattive"} value={notifyListActivity} onClick={()=>setNotifyListActivity(v=>!v)}/></div>
             <div className="addRow settingsPrivacySave"><button type="button" onClick={savePrivacySettings} disabled={savingPrivacySettings}>{savingPrivacySettings?"Salvataggio...":"Salva preferenze"}</button></div>
@@ -1183,7 +1183,7 @@ export default function Home() {
             <button className="shareClose" aria-label="Chiudi" onClick={() => setShowInviteMenu(false)}>×</button>
             <div className="shareDialogIcon"><Users size={21}/></div>
             <h3 id="inviteDialogTitle">Invita un amico</h3>
-            <p>Invia il link per far conoscere PersonalWish.</p>
+            <p>Invia il link per far conoscere MyPersonalWish.</p>
             <div className="shareOptions">
               <button onClick={shareInviteWhatsApp}><span className="shareAppIcon whatsapp">W</span><b>WhatsApp</b></button>
               <button onClick={shareInviteFacebook}><span className="shareAppIcon facebook">f</span><b>Facebook</b></button>
@@ -1192,7 +1192,7 @@ export default function Home() {
               <button onClick={shareInviteEmail}><span className="shareAppIcon email">✉</span><b>Email</b></button>
               <button onClick={copyInviteLink}><span className="shareAppIcon copy"><Link2 size={19}/></span><b>{inviteCopied ? "Copiato!" : "Copia link"}</b></button>
             </div>
-            <div className="shareLinkPreview"><span>{typeof window !== "undefined" ? window.location.origin + "/login" : "Link PersonalWish"}</span><button onClick={copyInviteLink}>{inviteCopied ? "Copiato" : "Copia"}</button></div>
+            <div className="shareLinkPreview"><span>{typeof window !== "undefined" ? window.location.origin + "/login" : "Link MyPersonalWish"}</span><button onClick={copyInviteLink}>{inviteCopied ? "Copiato" : "Copia"}</button></div>
             <small className="shareHint">Per Messenger e Instagram si apre il menu di condivisione del telefono, dove puoi scegliere l’app o la chat.</small>
           </section>
         </div>}
@@ -1205,7 +1205,7 @@ export default function Home() {
             <div className="shareOptions">
               <button onClick={shareToWhatsApp}><span className="shareAppIcon whatsapp">W</span><b>WhatsApp</b></button>
               <button onClick={shareToFacebook}><span className="shareAppIcon facebook">f</span><b>Facebook</b></button>
-              <button onClick={async () => { const url = getShareUrl(); const text = `Guarda la mia lista "${activeList.title}" su PersonalWish: ${url}`; if (navigator.share) { try { await navigator.share({ title: activeList.title, text, url }); } catch (err) { if (!(err instanceof Error && err.name === "AbortError")) setError("Condivisione non disponibile."); } } else { await copyShareLink(); setError("Link copiato: apri Messenger e incollalo nella conversazione."); } }}><span className="shareAppIcon messenger"><span>ϟ</span></span><b>Messenger</b></button>
+              <button onClick={async () => { const url = getShareUrl(); const text = `Guarda la mia lista "${activeList.title}" su MyPersonalWish: ${url}`; if (navigator.share) { try { await navigator.share({ title: activeList.title, text, url }); } catch (err) { if (!(err instanceof Error && err.name === "AbortError")) setError("Condivisione non disponibile."); } } else { await copyShareLink(); setError("Link copiato: apri Messenger e incollalo nella conversazione."); } }}><span className="shareAppIcon messenger"><span>ϟ</span></span><b>Messenger</b></button>
               <button onClick={shareToInstagram}><span className="shareAppIcon instagram">◎</span><b>Instagram</b></button>
               <button onClick={shareByEmail}><span className="shareAppIcon email">✉</span><b>Email</b></button>
               <button onClick={copyShareLink}><span className="shareAppIcon copy"><Link2 size={19}/></span><b>{copied ? "Copiato!" : "Copia link"}</b></button>
@@ -1216,7 +1216,7 @@ export default function Home() {
           </section>
         </div>}
 
-        <footer>PersonalWish <span>·</span> I tuoi desideri, condivisi a modo tuo.</footer>
+        <footer>MyPersonalWish <span>·</span> I tuoi desideri, condivisi a modo tuo.</footer>
       </section>
     </main>
   );
