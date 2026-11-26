@@ -174,9 +174,10 @@ export default function SharedWishlistPage() {
                     ) : (
                       <span className="sharedCompactPlaceholder" style={{display:"grid",placeItems:"center",width:58,height:58,flex:"0 0 58px",background:"#edf3fb",borderRadius:5,color:"#1769e0"}}><Gift size={22}/></span>
                     )}
-                    <span className="sharedCompactInfo" style={{display:"block",flex:"1 1 auto",minWidth:0}}>
-                      <b style={{display:"block",fontSize:14,lineHeight:1.35,fontWeight:700,color:"#172033",overflowWrap:"anywhere"}}>{item.title}</b>
-                    </span>
+                    <button type="button" className="sharedCompactInfo" onClick={() => setDetailItem(item)} aria-label={`Apri i dettagli di ${item.title}`} style={{display:"block",flex:"1 1 auto",minWidth:0,padding:0,border:0,background:"transparent",textAlign:"left",cursor:"pointer"}}>
+                      <b style={{display:"-webkit-box",WebkitBoxOrient:"vertical",WebkitLineClamp:3,overflow:"hidden",fontSize:14,lineHeight:1.35,fontWeight:700,color:"#172033",overflowWrap:"anywhere"}}>{item.title}</b>
+                      <small style={{display:"block",marginTop:3,fontSize:11,fontWeight:600,color:"#1769e0"}}>Visualizza dettagli</small>
+                    </button>
                     {reservedByMe.includes(item.id) ? (
                       <span className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,flex:"0 0 auto",fontSize:11,fontWeight:700,color:"#287a58",textAlign:"center"}}><CheckCircle2 size={14}/> Prenotato da te</span>
                     ) : reservedItems.includes(item.id) ? (
