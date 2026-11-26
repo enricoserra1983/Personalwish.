@@ -1043,7 +1043,6 @@ export default function Home() {
                   <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
                     <span className="ownerCompactName">{wish.title}</span>
                   </button>
-                  <button type="button" className="ownerCompactOpen" onClick={() => setDetailWish(wish)}>Dettagli</button>
                   <button type="button" className="outline" onClick={() => openWishEditor(wish)}>Modifica</button>
                   <button type="button" className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button>
                 </div>)}</div>
