@@ -1872,3 +1872,9 @@ button,input,select,textarea{font-family:inherit}
  .notificationDate{margin:8px 36px 0 44px!important}
  .notificationActions{margin-left:44px!important}
 }
+
+
+/* Owner wishlist reservation and purchase indicators */
+.ownerReservationStatus{display:inline-flex;align-items:center;gap:4px;width:max-content;max-width:100%;margin:6px 0 2px;padding:5px 9px;border-radius:999px;background:#edf7f1;color:#24734f;font-size:12px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.ownerReservationStatus.purchased{background:#fff0ed;color:#b84e43}
+.ownerCompactRow .ownerReservationStatus{display:block;margin:4px 0 0;width:max-content;font-size:11px}
