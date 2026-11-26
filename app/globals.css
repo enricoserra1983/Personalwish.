@@ -1242,3 +1242,110 @@ button,input,select,textarea{font-family:inherit}
  .wishInfo{padding:11px}
  .authCard{border-radius:7px}
 }
+
+
+/* PERSONALWISH — layout editoriale: immagini in primo piano, testi sotto, niente card annidate */
+.wishlistCarousel{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));
+  gap:18px 16px;overflow:visible;padding:4px 0 18px;margin:18px 0 22px;
+}
+.wishlistCard{
+  min-width:0;width:100%;padding:0!important;gap:8px;overflow:visible;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;color:var(--ink);scroll-snap-align:unset;
+}
+.wishlistCard.active{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important}
+.wishlistCardImage{
+  display:block;width:100%;height:auto;aspect-ratio:1.12;object-fit:cover;
+  border-radius:5px!important;background:#eaf0f7;
+}
+.wishlistCardPhoto{object-position:center}
+.wishlistCardTitle{font:700 14px Manrope,sans-serif;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3}
+.wishlistCardCount{font-size:12px;color:#718096}
+.wishlistCard.active .wishlistCardTitle{color:#145bc4}
+.wishlistAddCard{
+  min-height:0;justify-content:flex-start;align-items:flex-start;text-align:left;
+}
+.wishlistAddCard .wishlistAddIcon{
+  width:100%;aspect-ratio:1.12;height:auto;display:grid;place-items:center;
+  border:1px dashed #b9c9dc;border-radius:5px;background:#edf3fa;color:#1769e0;
+}
+.wishlistAddCard .wishlistCardTitle{color:#1769e0}
+.wishlistAddCard .wishlistCardCount{color:#718096}
+.listHero{
+  display:grid;grid-template-columns:minmax(0,1fr) 150px;align-items:center;
+  min-height:0;margin:12px 0 25px;padding:8px 0 18px;
+  border:0;border-bottom:1px solid #e0e6ee;border-radius:0;
+  background:transparent;overflow:visible;box-shadow:none;
+}
+.heroCopy{padding:8px 0;min-width:0}
+.heroCopy h2{font-size:27px;margin:10px 0 5px}
+.heroCopy p{font-size:13px;line-height:1.5;max-width:440px}
+.heroMeta{gap:14px;flex-wrap:wrap;margin-top:13px}
+.heroArt{grid-column:2;grid-row:1;width:100%;height:auto;min-height:120px;margin:0;overflow:hidden;border-radius:5px;background:#eaf1fa}
+.listCoverImage{width:100%;height:100%;min-height:120px;max-height:150px;object-fit:cover;border-radius:5px}
+.listCoverFallback{display:block;object-position:center}
+.orb,.floating{display:none}
+.listSettingsButton{top:8px;right:8px;border-radius:5px}
+.shareButton{margin-top:14px}
+.sectionHead{margin:25px 0 14px}
+.wishCard,.groupCard,.settingsCard,.privacyPanel{box-shadow:none}
+.profileFormGrid input,.profileFormGrid select,.profileFormGrid textarea,
+.settingsCard input,.settingsCard select,.settingsCard textarea,
+.profileForm input,.profileForm select,.profileForm textarea{
+  border-radius:5px!important;border-color:#dce3ec!important;background:#fff;
+}
+.birthdayPrivacy,.profileEmailField,.settingsPrivacyRow{
+  border-radius:6px!important;background:#f0f4f9!important;
+}
+.notificationsPage{background:#f5f7fa;color:#172033}
+.notificationsHeader{border-color:#e2e7ee}
+.notificationsBrand,.notificationsBack{color:#1769e0}
+.notificationsContent{margin-top:34px}
+.notificationsTitleRow h1{color:#172033;font-family:Manrope,sans-serif;letter-spacing:-.8px}
+.notificationsTitleRow p{color:#718096}
+.notificationCard{
+  border:1px solid #e0e6ee;border-radius:6px;background:#fff;
+  box-shadow:none;padding:17px;
+}
+.notificationCard.unread{background:#edf4ff;border-color:#c9dcf6}
+.notificationIcon{border-radius:5px;background:#eaf2ff;color:#1769e0}
+.notificationText b{color:#172033}
+.notificationText>span{color:#586579}
+.notificationText small{color:#8190a3}
+.notificationsReadAll{border-radius:5px;background:#1769e0}
+.friendProfilePage{background:#f5f7fa}
+.friendProfileHero,.friendProfileContent{border-radius:6px;box-shadow:none}
+.friendProfileHero{display:grid;grid-template-columns:76px 1fr;column-gap:16px;align-items:center;text-align:left}
+.friendProfileHeroAvatar{grid-row:1/4;margin:0;width:76px;height:76px}
+.friendProfileHero p{justify-content:flex-start}
+.friendProfileLists{gap:18px}
+.friendWishlistCard{border:0!important;border-radius:0!important;background:transparent!important;padding:0!important}
+.sharedContent{padding-top:40px}
+.sharedItem{border-radius:6px;box-shadow:none}
+.sharedItemImage,.sharedItemPlaceholder{border-radius:0}
+.sharedItemBody{padding:14px}
+.authShell{background:#f5f7fa}
+.authCard{border-radius:7px;box-shadow:0 8px 28px rgba(20,33,58,.07)}
+.authForm input{border-radius:5px}
+@media(max-width:650px){
+ .wishlistCarousel{grid-template-columns:repeat(2,minmax(0,1fr));gap:19px 15px;margin:15px 0 21px;padding:2px 0 12px}
+ .wishlistCardImage{aspect-ratio:1.08}
+ .wishlistCardTitle{font-size:14px}
+ .wishlistCardCount{font-size:11px}
+ .listHero{grid-template-columns:minmax(0,1fr) 108px;gap:10px;margin:8px 0 22px;padding:5px 0 15px}
+ .heroCopy{padding:7px 0}
+ .heroCopy h2{font-size:22px;margin:8px 0 5px}
+ .heroCopy p{font-size:12px;line-height:1.45}
+ .heroMeta{font-size:10px;gap:9px}
+ .heroArt{min-height:100px}
+ .listCoverImage{min-height:100px;max-height:115px}
+ .listSettingsButton{top:5px;right:5px;width:36px;height:36px}
+ .notificationsContent{width:calc(100% - 28px);margin:26px auto;padding-bottom:35px}
+ .notificationsTitleRow{align-items:flex-start;flex-direction:column;gap:13px;margin-bottom:19px}
+ .notificationsTitleRow h1{font-size:29px}
+ .notificationCard{gap:11px;padding:14px;border-radius:6px}
+ .notificationIcon{width:38px;height:38px;flex-basis:38px}
+ .friendProfileHero{grid-template-columns:62px 1fr;padding:18px 14px;text-align:left}
+ .friendProfileHeroAvatar{width:62px;height:62px}
+}
