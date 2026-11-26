@@ -935,7 +935,7 @@ export default function Home() {
     setSavingWishImage(false);
   }
 
-  function openWishEditor(wish?:WishItem) {
+  async function openWishEditor(wish?:WishItem) {
     if(wish) {
       setEditingWishId(wish.id);setNewWish(wish.title);setWishDescription(wish.description||"");
       setWishUrl(wish.product_url||"");setWishImage(wish.image_url||"");
