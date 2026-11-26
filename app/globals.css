@@ -1181,7 +1181,7 @@ button,input,select,textarea{font-family:inherit}
 .addRow input:focus{border-color:#1769e0}
 .addRow button{background:#eaf2ff;color:#145bc4}
 .wishGrid,.groupGrid{gap:16px}
-.wishCard,.groupCard,.settingsCard,.privacyPanel{border:1px solid #e0e6ee;border-radius:7px;box-shadow:0 2px 8px rgba(24,39, sixty,0.035)}
+.wishCard,.groupCard,.settingsCard,.privacyPanel{border:1px solid #e0e6ee;border-radius:7px;box-shadow:0 2px 8px rgba(24,39,60,.035)}
 .wishImage{height:150px}
 .wishInfo{padding:15px}
 .wishTitle{color:#172033;font-size:13px}
