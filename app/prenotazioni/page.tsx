@@ -9,7 +9,7 @@ import { ArrowLeft, Gift, CheckCircle2, ShoppingBag, LoaderCircle, ExternalLink,
 type ReservationRow = { id: string; item_id: string; status: "reserved" | "purchased"; created_at: string };
 type WishItem = { id: string; title: string; description: string | null; image_url: string | null; product_url: string | null; price: number | null; currency: string | null; wishlist_id: string };
 type WishlistRow = { id: string; title: string; share_token: string; owner_id: string };
-type ProfileRow = { id: string; display_name: string | null; first_name: string | null; last_name: string | null };
+type ProfileRow = { id: string; display_name: string | null };
 type Entry = { reservation: ReservationRow; item: WishItem; wishlist: WishlistRow; ownerName: string };
 
 export default function MyReservationsPage() {
@@ -55,7 +55,7 @@ export default function MyReservationsPage() {
       const ownerIds = [...new Set(listRows.map(list => list.owner_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id,display_name,first_name,last_name")
+        .select("id,display_name")
         .in("id", ownerIds);
       const profileRows = (profiles || []) as ProfileRow[];
       const itemMap = new Map(itemRows.map(item => [item.id, item]));
@@ -66,7 +66,7 @@ export default function MyReservationsPage() {
         const wishlist = item ? listMap.get(item.wishlist_id) : undefined;
         if (!item || !wishlist) return [];
         const owner = profileMap.get(wishlist.owner_id);
-        const ownerName = [owner?.first_name, owner?.last_name].filter(Boolean).join(" ") || owner?.display_name || "un utente";
+        const ownerName = owner?.display_name?.trim() || "Nome non disponibile";
         return [{ reservation, item, wishlist, ownerName }];
       });
       if (alive) { setEntries(result); setLoading(false); }
