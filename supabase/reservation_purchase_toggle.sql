@@ -35,6 +35,24 @@ begin
     raise exception 'Il proprietario non può prenotare i propri desideri';
   end if;
 
+  -- Per le liste private, ricontrolla che l'utente conservi l'accesso.
+  if exists (
+    select 1 from public.wishlists w
+    where w.id = v_wishlist_id and not w.is_public
+  ) and not exists (
+    select 1 from public.wishlist_members m
+    where m.wishlist_id = v_wishlist_id and m.user_id = auth.uid()
+  ) and not exists (
+    select 1
+    from public.wishlists w
+    join public.friendships f
+      on (f.user_low = auth.uid() and f.user_high = w.owner_id)
+      or (f.user_high = auth.uid() and f.user_low = w.owner_id)
+    where w.id = v_wishlist_id and w.private_access_mode = 'all_friends'
+  ) then
+    raise exception 'Non hai più accesso a questa lista';
+  end if;
+
   if p_purchased then
     update public.reservations
        set status = 'purchased', updated_at = now()
