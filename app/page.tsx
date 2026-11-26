@@ -987,7 +987,7 @@ export default function Home() {
           <div className="welcome"><div><div className="eyebrow">LA TUA WISHLIST</div><h1>I desideri prendono forma.</h1><p>Crea le tue liste e condividile con le persone a cui tieni.</p></div></div>
           <div className="wishlistCarousel" aria-label="Le tue liste">
             {wishlists.map(list=><button type="button" key={list.id} className={`wishlistCard ${activeList?.id===list.id ? "active" : ""}`} onClick={()=>setActiveId(list.id)}>
-              {list.image_url ? <img src={list.image_url} alt="" className="wishlistCardImage"/> : <div className="wishlistCardImage wishlistCardPlaceholder">🎁</div>}
+              {list.image_url ? <img src={list.image_url} alt="" className="wishlistCardImage"/> : <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=85" alt="" className="wishlistCardImage wishlistCardPhoto"/>}
               <span className="wishlistCardTitle">{list.title}</span>
               <span className="wishlistCardCount">{list.wishlist_items?.length || 0} desideri</span>
             </button>)}
@@ -1020,7 +1020,7 @@ export default function Home() {
                 </div>
               </>}
               <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> {activeList.is_public ? "Lista pubblica" : "Lista privata"}</span></div><div className="addRow"><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div></div>
-              <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/>{activeList.image_url ? <img className="listCoverImage" src={activeList.image_url} alt={"Immagine della lista "+activeList.title}/> : <div className="giftBox">🎁</div>}<div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
+              <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/>{activeList.image_url ? <img className="listCoverImage" src={activeList.image_url} alt={"Immagine della lista "+activeList.title}/> : <img className="listCoverImage listCoverFallback" src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=85" alt=""/>}<div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
             </div>
             <div className="sectionHead"><div><h3>I tuoi desideri</h3><p>{wishes.length} desideri nella lista</p></div></div>
             {showPrivacy && <section ref={privacyPanelRef} className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">CONTROLLO ACCESSI</div><h3>Privacy di questa lista</h3><p>Scegli cosa possono vedere il creatore e gli altri partecipanti.</p></div><button className="closeBtn" onClick={() => setShowPrivacy(false)}>×</button></div>
