@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PersonalWish — I tuoi desideri, condivisi a modo tuo",
-  description: "Crea liste dei desideri e condividile con chi vuoi.",
+  title: "MyPersonalWish — Crea, condividi e realizza i tuoi desideri",
+  description: "Crea, condividi e realizza le tue liste dei desideri con amici e familiari.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
