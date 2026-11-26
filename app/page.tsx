@@ -1042,8 +1042,8 @@ export default function Home() {
                 <div className="ownerCompactList">{wishes.map(wish => <div data-wish-id={wish.id} className={`ownerCompactRow ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><button type="button" className="wishDragHandle listDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>
                   <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
                     <span className="ownerCompactName">{wish.title}</span>
-                    <b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b>
                   </button>
+                  <button type="button" className="ownerCompactOpen" onClick={() => setDetailWish(wish)}>Dettagli</button>
                   <button type="button" className="outline" onClick={() => openWishEditor(wish)}>Modifica</button>
                   <button type="button" className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button>
                 </div>)}</div>
