@@ -110,12 +110,12 @@ export default function SharedWishlistPage() {
     <main className="sharedPage">
       <header className="sharedHeader sharedHeaderFriendList">
         <Link href="/?section=friends" className="sharedBackToFriends"><ArrowLeft size={18}/> <span>Torna agli amici</span></Link>
-        <Link href="/" className="sharedBrand" aria-label="PersonalWish"><span><Gift size={20}/></span><b>PersonalWish</b></Link>
+        <Link href="/" className="sharedBrand" aria-label="MyPersonalWish"><img src="/mypersonalwish-logo.svg" alt="" /><b>MyPersonal<span className="brandAccent">Wish</span></b></Link>
       </header>
       {loading ? (
         <div className="sharedState"><LoaderCircle className="sharedSpinner" size={25}/> Caricamento della lista...</div>
       ) : error ? (
-        <div className="sharedState sharedError"><Heart size={24}/><h1>Lista non disponibile</h1><p>{error}</p><Link href="/">Vai a PersonalWish</Link></div>
+        <div className="sharedState sharedError"><Heart size={24}/><h1>Lista non disponibile</h1><p>{error}</p><Link href="/">Vai a MyPersonalWish</Link></div>
       ) : list ? (
         <section className="sharedContent">
           <div className="sharedEyebrow"><Heart size={14}/> LISTA CONDIVISA</div>
@@ -225,7 +225,7 @@ export default function SharedWishlistPage() {
               </section>
             </div>
           )}
-          <footer className="sharedFooter">Condiviso con PersonalWish · I tuoi desideri, a modo tuo.</footer>
+          <footer className="sharedFooter">Condiviso con MyPersonalWish · Crea, condividi e realizza i tuoi desideri.</footer>
         </section>
       ) : null}
     </main>
