@@ -112,6 +112,11 @@ export default function NotificationsPage() {
                 >
                   <span className="notificationIcon">{iconFor(item.type)}</span>
                   <span className="notificationText">
+                    {(item.type === "item_reserved" || item.type === "item_purchased") && (
+                      <small className={"notificationKind " + (item.type === "item_purchased" ? "purchased" : "reserved")}>
+                        {item.type === "item_purchased" ? "ACQUISTO" : "PRENOTAZIONE"}
+                      </small>
+                    )}
                     <b>{item.title}</b>
                     <span>{item.body}</span>
                     <small>
