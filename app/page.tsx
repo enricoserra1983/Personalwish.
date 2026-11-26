@@ -13,6 +13,8 @@ type WishItem = {
   image_url: string | null;
   product_url: string | null;
   position?: number | null;
+  reservation_status?: "reserved" | "purchased" | null;
+  reserved_by?: string | null;
 };
 type Wishlist = {
   id: string;
@@ -262,7 +264,30 @@ export default function Home() {
       .order("created_at", { ascending: false })
       .order("position", { referencedTable: "wishlist_items", ascending: true });
     if (listError) throw listError;
-    const rows = (data || []) as unknown as Wishlist[];
+    let rows = (data || []) as unknown as Wishlist[];
+    rows = await Promise.all(rows.map(async list => {
+      if (!list.owner_sees_reservations || !list.wishlist_items?.length) return list;
+      const { data: reservationRows, error: reservationError } = await supabase.rpc(
+        "get_owner_wishlist_reservations",
+        { p_wishlist_id: list.id }
+      );
+      if (reservationError) {
+        console.error("Errore recupero prenotazioni lista", reservationError);
+        return list;
+      }
+      const byItem = new Map((reservationRows || []).map((row: { item_id: string; status: "reserved" | "purchased"; buyer_name: string | null }) => [row.item_id, row]));
+      return {
+        ...list,
+        wishlist_items: list.wishlist_items.map(item => {
+          const reservation = byItem.get(item.id);
+          return {
+            ...item,
+            reservation_status: reservation?.status || null,
+            reserved_by: list.owner_sees_buyer ? (reservation?.buyer_name || null) : null,
+          };
+        }),
+      };
+    }));
     setWishlists(rows);
     const requestedWishlistId = typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("wishlist")
@@ -1046,11 +1071,11 @@ export default function Home() {
                 </div>
               </div>
               {displayMode === "grid" ? (
-                <div className="wishGrid">{wishes.map((wish, i) => <article data-wish-id={wish.id} className={`wishCard ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><div className={`wishImage image${i % 3}`}><button type="button" className="wishDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div><p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
+                <div className="wishGrid">{wishes.map((wish, i) => <article data-wish-id={wish.id} className={`wishCard ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><div className={`wishImage image${i % 3}`}><button type="button" className="wishDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div>{wish.reservation_status && <div className={`ownerReservationStatus ${wish.reservation_status}`}>{wish.reservation_status === "purchased" ? "Acquistato" : "Prenotato"}{activeList?.owner_sees_buyer && wish.reserved_by ? ` da ${wish.reserved_by}` : ""}</div>}<p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
               ) : (
                 <div className="ownerCompactList">{wishes.map(wish => <div data-wish-id={wish.id} className={`ownerCompactRow ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><button type="button" className="wishDragHandle listDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>
                   <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
-                    <span className="ownerCompactName">{wish.title}</span>
+                    <span className="ownerCompactName">{wish.title}</span>{wish.reservation_status && <small className={`ownerReservationStatus ${wish.reservation_status}`}>{wish.reservation_status === "purchased" ? "Acquistato" : "Prenotato"}{activeList?.owner_sees_buyer && wish.reserved_by ? ` da ${wish.reserved_by}` : ""}</small>
                   </button>
                   <div className="ownerCompactActions">
                     <button type="button" className="outline ownerCompactEdit" onClick={() => openWishEditor(wish)}>Modifica</button>
@@ -1061,7 +1086,7 @@ export default function Home() {
               {detailWish && <div className="sharedDetailOverlay" onClick={() => setDetailWish(null)}><section className="sharedDetailDialog" role="dialog" aria-modal="true" aria-label={detailWish.title} onClick={e => e.stopPropagation()}>
                 <button type="button" className="sharedDetailClose" onClick={() => setDetailWish(null)} aria-label="Chiudi"><X size={20}/></button>
                 {detailWish.image_url ? <img src={detailWish.image_url} alt={detailWish.title} className="sharedDetailImage"/> : <div className="sharedItemPlaceholder sharedDetailImage"><Gift size={38}/></div>}
-                <div className="sharedItemBody"><h2>{detailWish.title}</h2><p>{detailWish.description || "Nessuna descrizione"}</p><div className="sharedDetailPrice">{detailWish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(detailWish.price)}</div>
+                <div className="sharedItemBody"><h2>{detailWish.title}</h2>{detailWish.reservation_status && <div className={`ownerReservationStatus ${detailWish.reservation_status}`}>{detailWish.reservation_status === "purchased" ? "Acquistato" : "Prenotato"}{activeList?.owner_sees_buyer && detailWish.reserved_by ? ` da ${detailWish.reserved_by}` : ""}</div>}<p>{detailWish.description || "Nessuna descrizione"}</p><div className="sharedDetailPrice">{detailWish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(detailWish.price)}</div>
                   {detailWish.product_url && <a className="sharedDetailProductLink" href={detailWish.product_url} target="_blank" rel="noopener noreferrer">Apri prodotto ↗</a>}
                   <div className="wishEditorActions"><button type="button" onClick={() => { const wish = detailWish; setDetailWish(null); openWishEditor(wish); }}>Modifica desiderio</button><button type="button" className="outline" onClick={() => setDetailWish(null)}>Chiudi</button></div>
                 </div></section></div>}
