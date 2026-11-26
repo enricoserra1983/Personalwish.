@@ -6,11 +6,38 @@ import Link from "next/link";
 import { Gift, ExternalLink, LoaderCircle, Heart, LockKeyhole, CheckCircle2, LayoutGrid, List, X, ChevronDown, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
+function getWishlistStoragePath(value: string | null): string | null {
+  if (!value) return null;
+  const marker = "/storage/v1/object/public/wishlist-images/";
+  if (value.startsWith("http")) {
+    try {
+      const url = new URL(value);
+      const index = url.pathname.indexOf(marker);
+      return index >= 0 ? decodeURIComponent(url.pathname.slice(index + marker.length)) : null;
+    } catch { return null; }
+  }
+  if (value.startsWith("data:") || value.startsWith("blob:")) return null;
+  return value;
+}
+
+async function getWishlistImageDisplayUrl(supabase: ReturnType<typeof createClient>, value: string | null): Promise<string | null> {
+  if (!value) return null;
+  const path = getWishlistStoragePath(value);
+  if (!path) return value;
+  const { data, error } = await supabase.storage.from("wishlist-images").createSignedUrl(path, 14400);
+  if (error || !data?.signedUrl) {
+    console.error("Impossibile generare URL immagine condivisa", error);
+    return value.startsWith("http") ? value : null;
+  }
+  return data.signedUrl;
+}
+
 type SharedItem = {
   id: string;
   title: string;
   description: string | null;
   image_url: string | null;
+  display_image_url?: string | null;
   product_url: string | null;
   price: number | null;
   currency: string;
@@ -78,6 +105,10 @@ export default function SharedWishlistPage() {
           setLoading(false);
           return;
         }
+        wishlist.items = await Promise.all(wishlist.items.map(async item => ({
+          ...item,
+          display_image_url: await getWishlistImageDisplayUrl(supabase, item.image_url),
+        })));
         setList(wishlist);
         setReservedItems(wishlist.items.filter(item => item.reserved).map(item => item.id));
         if (currentUserId && wishlist.items.length) {
@@ -212,7 +243,7 @@ export default function SharedWishlistPage() {
               <div className="sharedGrid">
                 {list.items.map(item => (
                   <article className="sharedItem" key={item.id}>
-                    {item.image_url ? <img src={item.image_url} alt={item.title} className="sharedItemImage"/> : <div className="sharedItemPlaceholder"><Gift size={35}/></div>}
+                    {item.display_image_url ? <img src={item.display_image_url} alt={item.title} className="sharedItemImage"/> : <div className="sharedItemPlaceholder"><Gift size={35}/></div>}
                     <div className="sharedItemBody">
                       <h2>{item.title}</h2>
                       {item.description && <p>{item.description}</p>}
@@ -250,8 +281,8 @@ export default function SharedWishlistPage() {
               <div className="sharedCompactList" style={{display:"flex",flexDirection:"column",gap:9}}>
                 {list.items.map(item => (
                   <div className={`sharedCompactRow ${reservedItems.includes(item.id) ? "isReserved" : ""}`} key={item.id} style={{display:"flex",alignItems:"center",gap:12,minWidth:0,padding:"10px 12px",background:"#fff",border:"1px solid #e0e6ee",borderRadius:7}}>
-                    {item.image_url ? (
-                      <img src={item.image_url} alt="" style={{display:"block",width:58,height:58,flex:"0 0 58px",objectFit:"contain",background:"#f4f7fb",borderRadius:5}}/>
+                    {item.display_image_url ? (
+                      <img src={item.display_image_url || ""} alt="" style={{display:"block",width:58,height:58,flex:"0 0 58px",objectFit:"contain",background:"#f4f7fb",borderRadius:5}}/>
                     ) : (
                       <span className="sharedCompactPlaceholder" style={{display:"grid",placeItems:"center",width:58,height:58,flex:"0 0 58px",background:"#edf3fb",borderRadius:5,color:"#1769e0"}}><Gift size={22}/></span>
                     )}
@@ -286,7 +317,7 @@ export default function SharedWishlistPage() {
             <div className="sharedDetailOverlay" onClick={() => setDetailItem(null)}>
               <section className="sharedDetailDialog" role="dialog" aria-modal="true" aria-label={detailItem.title} onClick={event => event.stopPropagation()}>
                 <button type="button" className="sharedDetailClose" onClick={() => setDetailItem(null)} aria-label="Chiudi"><X size={20}/></button>
-                {detailItem.image_url ? <img src={detailItem.image_url} alt={detailItem.title} className="sharedDetailImage"/> : <div className="sharedItemPlaceholder sharedDetailImage"><Gift size={38}/></div>}
+                {detailItem.display_image_url ? <img src={detailItem.display_image_url} alt={detailItem.title} className="sharedDetailImage"/> : <div className="sharedItemPlaceholder sharedDetailImage"><Gift size={38}/></div>}
                 <div className="sharedItemBody">
                   <h2>{detailItem.title}</h2>
                   {detailItem.description && <p>{detailItem.description}</p>}
