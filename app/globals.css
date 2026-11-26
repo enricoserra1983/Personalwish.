@@ -1835,3 +1835,40 @@ button,input,select,textarea{font-family:inherit}
  .notificationDelete{width:30px;height:30px;flex-basis:30px}
  .notificationActions{margin:10px 0 0 48px}
 }
+
+
+/* Notification cards: stable mobile layout */
+.notificationsContent{width:min(760px,calc(100% - 28px));}
+.notificationsTitleRow{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+.notificationsReadAll{width:100%;min-height:46px;justify-content:center;background:#fff!important;color:#6542a8!important;border:1px solid #d9cdea!important;box-shadow:0 2px 5px rgba(40,25,70,.05)}
+.notificationsList{max-height:72vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:2px 3px 12px}
+.notificationCard{display:block!important;width:100%;height:auto!important;min-height:0!important;box-sizing:border-box;overflow:hidden;padding:13px!important;border:1px solid #e5e0ec;border-radius:16px;background:#fff}
+.notificationCard.unread{background:#f5f1fc;border-left:4px solid #8058c7;padding-left:10px!important}
+.notificationTopRow{display:grid;grid-template-columns:minmax(0,1fr) 34px;align-items:start;gap:8px;width:100%}
+.notificationOpen{display:grid!important;grid-template-columns:38px minmax(0,1fr) 9px;align-items:start;gap:10px;width:100%;min-width:0;min-height:0;height:auto!important;box-sizing:border-box;padding:0!important}
+.notificationIcon{width:38px;height:38px;flex:0 0 38px;grid-column:1;grid-row:1}
+.notificationText{display:flex;grid-column:2;grid-row:1;min-width:0;width:100%;flex-direction:column;align-items:flex-start;gap:5px;white-space:normal;overflow-wrap:anywhere}
+.notificationText b{display:block;width:100%;font-size:14px;line-height:1.35}
+.notificationText>span{display:block;width:100%;font-size:13px;line-height:1.45;white-space:normal;overflow-wrap:anywhere}
+.notificationKind{display:inline-flex;width:max-content;align-items:center}
+.notificationUnreadDot{grid-column:3;grid-row:1;margin:5px 0 0}
+.notificationDelete{grid-column:2;grid-row:1;width:32px;height:32px;justify-self:end;align-self:start;z-index:1}
+.notificationDate{display:block;margin:9px 42px 0 48px!important;font-size:11px!important;line-height:1.3;color:#8a8492}
+.notificationActions{margin:11px 0 0 48px!important}
+@media(max-width:600px){
+ .notificationsContent{width:calc(100% - 24px);margin:20px auto}
+ .notificationsTitleRow h1{font-size:29px}
+ .notificationsTitleRow p{font-size:15px;line-height:1.45}
+ .notificationsReadAll{min-height:44px;font-size:14px}
+ .notificationsList{max-height:70vh;gap:10px}
+ .notificationCard{padding:12px!important;border-radius:14px}
+ .notificationCard.unread{padding-left:9px!important}
+ .notificationTopRow{grid-template-columns:minmax(0,1fr) 30px;gap:6px}
+ .notificationOpen{grid-template-columns:36px minmax(0,1fr) 8px;gap:8px}
+ .notificationIcon{width:36px;height:36px;flex-basis:36px}
+ .notificationText b{font-size:13px}
+ .notificationText>span{font-size:12px}
+ .notificationDelete{width:29px;height:29px}
+ .notificationDate{margin:8px 36px 0 44px!important}
+ .notificationActions{margin-left:44px!important}
+}
