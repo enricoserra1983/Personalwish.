@@ -119,17 +119,17 @@ export default function NotificationsPage() {
                     )}
                     <b>{item.title}</b>
                     <span>{item.body}</span>
-                    <small>
-                      {new Date(item.created_at).toLocaleString("it-IT", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </small>
                   </span>
                   {!item.read_at && (
                     <span className="notificationUnreadDot" aria-label="Non letta" />
                   )}
                 </button>
+                <small className="notificationDate">
+                  {new Date(item.created_at).toLocaleString("it-IT", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </small>
                 <button
                   type="button"
                   className="notificationDelete"
