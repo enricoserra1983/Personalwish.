@@ -9,7 +9,7 @@ import { ArrowLeft, Gift, CheckCircle2, ShoppingBag, LoaderCircle, ExternalLink,
 type ReservationRow = { id: string; item_id: string; status: "reserved" | "purchased"; created_at: string };
 type WishItem = { id: string; title: string; description: string | null; image_url: string | null; product_url: string | null; price: number | null; currency: string | null; wishlist_id: string };
 type WishlistRow = { id: string; title: string; share_token: string; owner_id: string };
-type ProfileRow = { id: string; display_name: string | null };
+type ProfileRow = { owner_id: string; display_name: string | null };
 type Entry = { reservation: ReservationRow; item: WishItem; wishlist: WishlistRow; ownerName: string };
 
 export default function MyReservationsPage() {
@@ -52,21 +52,23 @@ export default function MyReservationsPage() {
         .in("id", wishlistIds);
       if (listsError) { if (alive) { setError("Non è stato possibile caricare le liste di origine."); setLoading(false); } return; }
       const listRows = (wishlists || []) as WishlistRow[];
-      const ownerIds = [...new Set(listRows.map(list => list.owner_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id,display_name")
-        .in("id", ownerIds);
+      // La tabella profiles è protetta da RLS: recuperiamo i soli proprietari
+      // delle liste in cui l'utente ha una propria prenotazione tramite RPC dedicata.
+      const { data: profiles, error: profilesError } = await supabase.rpc("get_my_reservation_list_owners");
+      if (profilesError) {
+        if (alive) { setError("Non è stato possibile recuperare i nomi dei proprietari delle liste."); setLoading(false); }
+        return;
+      }
       const profileRows = (profiles || []) as ProfileRow[];
       const itemMap = new Map(itemRows.map(item => [item.id, item]));
       const listMap = new Map(listRows.map(list => [list.id, list]));
-      const profileMap = new Map(profileRows.map(profile => [profile.id, profile]));
+      const profileMap = new Map(profileRows.map(profile => [profile.owner_id, profile]));
       const result: Entry[] = rows.flatMap(reservation => {
         const item = itemMap.get(reservation.item_id);
         const wishlist = item ? listMap.get(item.wishlist_id) : undefined;
         if (!item || !wishlist) return [];
         const owner = profileMap.get(wishlist.owner_id);
-        const ownerName = owner?.display_name?.trim() || "Nome non disponibile";
+        const ownerName = owner?.display_name?.trim() || "Utente";
         return [{ reservation, item, wishlist, ownerName }];
       });
       if (alive) { setEntries(result); setLoading(false); }
