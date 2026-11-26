@@ -32,6 +32,7 @@ export default function SharedWishlistPage() {
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [reservedByMe, setReservedByMe] = useState<string[]>([]);
+  const [cancellableByMe, setCancellableByMe] = useState<string[]>([]);
   const [reservedItems, setReservedItems] = useState<string[]>([]);
   const [reservingId, setReservingId] = useState<string | null>(null);
   const [reservationMessage, setReservationMessage] = useState("");
@@ -71,17 +72,41 @@ export default function SharedWishlistPage() {
         if (currentUserId && wishlist.items.length) {
           const { data: mine } = await supabase
             .from("reservations")
-            .select("item_id")
+            .select("item_id,status")
             .eq("user_id", currentUserId)
             .in("item_id", wishlist.items.map(item => item.id))
             .in("status", ["reserved", "purchased"]);
           setReservedByMe((mine || []).map(row => row.item_id));
+          setCancellableByMe((mine || []).filter(row => row.status === "reserved").map(row => row.item_id));
         }
       }
       setLoading(false);
     }
     if (params.token) load();
   }, [params.token]);
+
+  async function cancelReservation(itemId: string) {
+    if (!userId || !cancellableByMe.includes(itemId)) return;
+    setReservingId(itemId);
+    setReservationMessage("");
+    const supabase = createClient();
+    const { error: cancelError } = await supabase
+      .from("reservations")
+      .delete()
+      .eq("item_id", itemId)
+      .eq("user_id", userId)
+      .eq("status", "reserved");
+    if (cancelError) {
+      setReservationMessage("Non è stato possibile annullare la prenotazione. Riprova.");
+    } else {
+      setReservedByMe(current => current.filter(id => id !== itemId));
+      setCancellableByMe(current => current.filter(id => id !== itemId));
+      setReservedItems(current => current.filter(id => id !== itemId));
+      setReservationMessage("Prenotazione annullata. Il desiderio è nuovamente disponibile.");
+      setDetailItem(current => current?.id === itemId ? null : current);
+    }
+    setReservingId(null);
+  }
 
   async function reserveItem(itemId: string) {
     if (!userId) return;
@@ -148,7 +173,13 @@ export default function SharedWishlistPage() {
                       </div>
                       <div className="reservationAction">
                         {reservedByMe.includes(item.id) ? (
-                          <span className="reservedByMe"><CheckCircle2 size={16}/> Prenotato da te</span>
+                          cancellableByMe.includes(item.id) ? (
+                            <button type="button" className="reservedByMe" onClick={() => cancelReservation(item.id)} disabled={reservingId !== null} aria-label="Annulla la tua prenotazione" title="Tocca per annullare la prenotazione" style={{border:0,background:"transparent",cursor:"pointer",font:"inherit",opacity:reservingId === item.id ? .6 : 1}}>
+                              {reservingId === item.id ? <><LoaderCircle size={15} className="sharedSpinner"/> Annullamento...</> : <><CheckCircle2 size={16}/> Prenotato da te</>}
+                            </button>
+                          ) : (
+                            <span className="reservedByMe"><CheckCircle2 size={16}/> Acquistato da te</span>
+                          )
                         ) : reservedItems.includes(item.id) ? (
                           <span className="reservedByMe"><CheckCircle2 size={16}/> {item.reserved_by ? `Già prenotato da ${item.reserved_by}` : "Già prenotato"}</span>
                         ) : userId ? (
@@ -179,7 +210,13 @@ export default function SharedWishlistPage() {
                       <small style={{display:"block",marginTop:3,fontSize:11,fontWeight:600,color:"#1769e0"}}>Visualizza dettagli</small>
                     </button>
                     {reservedByMe.includes(item.id) ? (
-                      <span className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,flex:"0 0 auto",fontSize:11,fontWeight:700,color:"#287a58",textAlign:"center"}}><CheckCircle2 size={14}/> Prenotato da te</span>
+                      cancellableByMe.includes(item.id) ? (
+                        <button type="button" className="compactReservedLabel" onClick={() => cancelReservation(item.id)} disabled={reservingId !== null} title="Tocca per annullare la prenotazione" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,flex:"0 0 auto",fontSize:11,fontWeight:700,color:"#287a58",textAlign:"center",padding:0,border:0,background:"transparent",cursor:"pointer",opacity:reservingId === item.id ? .6 : 1}}>
+                          {reservingId === item.id ? "Annullamento..." : <><CheckCircle2 size={14}/> Prenotato da te</>}
+                        </button>
+                      ) : (
+                        <span className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,flex:"0 0 auto",fontSize:11,fontWeight:700,color:"#287a58",textAlign:"center"}}><CheckCircle2 size={14}/> Acquistato da te</span>
+                      )
                     ) : reservedItems.includes(item.id) ? (
                       <span className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,flex:"0 0 auto",maxWidth:118,fontSize:11,fontWeight:700,color:"#687386",textAlign:"center"}}><CheckCircle2 size={14}/> {item.reserved_by ? `Da ${item.reserved_by}` : "Già prenotato"}</span>
                     ) : userId ? (
@@ -208,7 +245,13 @@ export default function SharedWishlistPage() {
                   {detailItem.product_url && <a className="sharedDetailProductLink" href={detailItem.product_url} target="_blank" rel="noreferrer">Apri il prodotto <ExternalLink size={15}/></a>}
                   <div className="reservationAction">
                     {reservedByMe.includes(detailItem.id) ? (
-                      <span className="reservedByMe"><CheckCircle2 size={16}/> Prenotato da te</span>
+                      cancellableByMe.includes(detailItem.id) ? (
+                        <button type="button" className="reservedByMe" onClick={() => cancelReservation(detailItem.id)} disabled={reservingId !== null} title="Tocca per annullare la prenotazione" style={{border:0,background:"transparent",cursor:"pointer",font:"inherit",opacity:reservingId === detailItem.id ? .6 : 1}}>
+                          {reservingId === detailItem.id ? <><LoaderCircle size={15} className="sharedSpinner"/> Annullamento...</> : <><CheckCircle2 size={16}/> Prenotato da te</>}
+                        </button>
+                      ) : (
+                        <span className="reservedByMe"><CheckCircle2 size={16}/> Acquistato da te</span>
+                      )
                     ) : reservedItems.includes(detailItem.id) ? (
                       <span className="reservedByMe"><CheckCircle2 size={16}/> {detailItem.reserved_by ? `Già prenotato da ${detailItem.reserved_by}` : "Già prenotato"}</span>
                     ) : userId ? (
