@@ -83,48 +83,77 @@ export default function SharedWishlistPage() {
   }
 
   useEffect(() => {
+    let active = true;
     async function load() {
       const supabase = createClient();
-      const [{ data, error: rpcError }, { data: authData }, { data: ownerLookup }] = await Promise.all([
-        supabase.rpc("get_shared_wishlist", { p_share_token: params.token }),
-        supabase.auth.getUser(),
-        supabase.from("wishlists").select("id,owner_id").eq("share_token", params.token).maybeSingle(),
-      ]);
-      const currentUserId = authData.user?.id ?? null;
-      setUserId(currentUserId);
-      if (rpcError) {
-        setError("Non è stato possibile aprire questa lista. Riprova più tardi.");
-      } else if (!data) {
-        setError("Questa lista non esiste o il link non è valido.");
-      } else {
-        const wishlist = data as SharedWishlist;
-        // Il proprietario non deve mai usare la vista condivisa/partecipante
-        // della propria lista: lo riportiamo alla dashboard proprietario.
-        if (currentUserId && (wishlist.owner_id === currentUserId || ownerLookup?.owner_id === currentUserId)) {
-          router.replace("/?wishlist=" + encodeURIComponent(wishlist.id));
-          setLoading(false);
+      try {
+        const [{ data, error: rpcError }, { data: authData }] = await Promise.all([
+          supabase.rpc("get_shared_wishlist", { p_share_token: params.token }),
+          supabase.auth.getUser(),
+        ]);
+        if (!active) return;
+        const currentUserId = authData.user?.id ?? null;
+        setUserId(currentUserId);
+        if (rpcError) {
+          console.error("Errore get_shared_wishlist:", rpcError);
+          setError("Non è stato possibile aprire questa lista. Riprova più tardi.");
           return;
         }
+        if (!data) {
+          setError("Questa lista non esiste o il link non è valido.");
+          return;
+        }
+
+        // Le liste private non accessibili restituiscono access_required.
+        // Va gestito prima di leggere items, altrimenti la pagina resta in caricamento.
+        if (data.access_required === true) {
+          setError("Questa lista è privata. Devi accedere con un account autorizzato per visualizzarla.");
+          return;
+        }
+
+        const wishlist = data as SharedWishlist;
+        if (!Array.isArray(wishlist.items)) {
+          console.error("Risposta get_shared_wishlist non valida:", data);
+          setError("Non è stato possibile caricare il contenuto della lista.");
+          return;
+        }
+
+        // Il proprietario non deve mai usare la vista condivisa/partecipante
+        // della propria lista: lo riportiamo alla dashboard proprietario.
+        if (currentUserId && wishlist.owner_id === currentUserId) {
+          router.replace("/?wishlist=" + encodeURIComponent(wishlist.id));
+          return;
+        }
+
         wishlist.items = await Promise.all(wishlist.items.map(async item => ({
           ...item,
           display_image_url: await getWishlistImageDisplayUrl(supabase, item.image_url),
         })));
+        if (!active) return;
         setList(wishlist);
         setReservedItems(wishlist.items.filter(item => item.reserved).map(item => item.id));
         if (currentUserId && wishlist.items.length) {
-          const { data: mine } = await supabase
+          const { data: mine, error: mineError } = await supabase
             .from("reservations")
             .select("item_id,status")
             .eq("user_id", currentUserId)
             .in("item_id", wishlist.items.map(item => item.id))
             .in("status", ["reserved", "purchased"]);
-          setReservedByMe((mine || []).map(row => row.item_id));
-          setPurchasedByMe((mine || []).filter(row => row.status === "purchased").map(row => row.item_id));
+          if (mineError) console.error("Errore lettura prenotazioni personali:", mineError);
+          if (active) {
+            setReservedByMe((mine || []).map(row => row.item_id));
+            setPurchasedByMe((mine || []).filter(row => row.status === "purchased").map(row => row.item_id));
+          }
         }
+      } catch (loadError) {
+        console.error("Errore caricamento lista condivisa:", loadError);
+        if (active) setError("Si è verificato un problema durante il caricamento della lista. Riprova.");
+      } finally {
+        if (active) setLoading(false);
       }
-      setLoading(false);
     }
     if (params.token) load();
+    return () => { active = false; };
   }, [params.token, router]);
 
   async function cancelReservation(itemId: string) {
