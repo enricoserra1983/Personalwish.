@@ -1075,8 +1075,9 @@ export default function Home() {
               ) : (
                 <div className="ownerCompactList">{wishes.map(wish => <div data-wish-id={wish.id} className={`ownerCompactRow ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><button type="button" className="wishDragHandle listDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>
                   <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
-                    <span className="ownerCompactName">{wish.title}</span>{wish.reservation_status && <small className={`ownerReservationStatus ${wish.reservation_status}`}>{wish.reservation_status === "purchased" ? "Acquistato" : "Prenotato"}{activeList?.owner_sees_buyer && wish.reserved_by ? ` da ${wish.reserved_by}` : ""}</small>
+                    <span className="ownerCompactName">{wish.title}</span>
                   </button>
+                  {wish.reservation_status && <small className={`ownerReservationStatus ${wish.reservation_status}`}>{wish.reservation_status === "purchased" ? "Acquistato" : "Prenotato"}{activeList?.owner_sees_buyer && wish.reserved_by ? ` da ${wish.reserved_by}` : ""}</small>}
                   <div className="ownerCompactActions">
                     <button type="button" className="outline ownerCompactEdit" onClick={() => openWishEditor(wish)}>Modifica</button>
                     <button type="button" className="outline ownerCompactDelete" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button>
