@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Gift, ExternalLink, LoaderCircle, Heart, LockKeyhole, CheckCircle2, LayoutGrid, List, X, ChevronDown, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -24,10 +24,12 @@ type SharedWishlist = {
   description: string | null;
   items: SharedItem[];
   participants?: { user_id: string; display_name: string }[];
+  owner_id?: string;
 };
 
 export default function SharedWishlistPage() {
   const params = useParams<{ token: string }>();
+  const router = useRouter();
   const [list, setList] = useState<SharedWishlist | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -68,6 +70,13 @@ export default function SharedWishlistPage() {
         setError("Questa lista non esiste o il link non è valido.");
       } else {
         const wishlist = data as SharedWishlist;
+        // Il proprietario non deve mai usare la vista condivisa/partecipante
+        // della propria lista: lo riportiamo alla dashboard proprietario.
+        if (currentUserId && wishlist.owner_id === currentUserId) {
+          router.replace("/?wishlist=" + encodeURIComponent(wishlist.id));
+          setLoading(false);
+          return;
+        }
         setList(wishlist);
         setReservedItems(wishlist.items.filter(item => item.reserved).map(item => item.id));
         if (currentUserId && wishlist.items.length) {
@@ -84,7 +93,7 @@ export default function SharedWishlistPage() {
       setLoading(false);
     }
     if (params.token) load();
-  }, [params.token]);
+  }, [params.token, router]);
 
   async function cancelReservation(itemId: string) {
     if (!userId || !reservedByMe.includes(itemId)) return;
