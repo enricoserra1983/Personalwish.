@@ -1778,3 +1778,24 @@ button,input,select,textarea{font-family:inherit}
  .wishlistCarousel .wishlistAddCard{min-height:100%;justify-content:flex-start;padding-top:0!important}
  .wishlistCarousel .wishlistAddCard .wishlistAddIcon{width:100%;aspect-ratio:1.08;display:grid;place-items:center;border:1px dashed #cbd6e3;border-radius:6px;background:#edf4fb}
 }
+
+/* Compact settings menu on phones */
+@media(max-width:650px){
+ .settingsPrivacySection{margin:10px 0!important;padding:12px!important;border-radius:12px!important}
+ .settingsPrivacySection h3{font-size:13px!important;gap:7px!important;margin-bottom:4px!important}
+ .settingsPrivacySection h3 svg{width:17px;height:17px}
+ .settingsPrivacyIntro{font-size:10px!important;line-height:1.35!important;margin-bottom:8px!important}
+ .settingsPrivacyRow{gap:8px!important;padding:9px 0!important;align-items:center!important}
+ .settingsPrivacyRow>div{flex:1 1 0!important;min-width:0!important}
+ .settingsPrivacyRow b{font-size:11px!important;line-height:1.25!important}
+ .settingsPrivacyRow small{font-size:9px!important;line-height:1.35!important;margin-top:3px!important}
+ .settingsPrivacyRow>.toggleRow{width:96px!important;min-width:96px!important;max-width:96px!important;flex:0 0 96px!important;padding:5px 6px!important;gap:5px!important}
+ .settingsPrivacyRow>.toggleRow>span:first-child{font-size:8px!important}
+ .settingsPrivacyRow>.toggleRow .switch{width:29px!important;height:17px!important;flex-basis:29px!important}
+ .settingsPrivacyRow>.toggleRow .switch i{width:13px!important;height:13px!important}
+ .settingsPrivacyRow>.toggleRow .switch.on i{transform:translateX(12px)!important}
+ .birthdayPrivacy{gap:10px!important;margin-top:14px!important;padding:12px!important;border-radius:10px!important}
+ .birthdayPrivacy b{font-size:12px!important}
+ .birthdayPrivacy p{font-size:10px!important;line-height:1.35!important}
+ .settingsPrivacyRow select,.settingsPrivacyRow .friendNetworkSelectButton{font-size:11px!important;min-height:40px!important;padding:8px 10px!important}
+}
