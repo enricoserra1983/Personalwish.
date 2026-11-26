@@ -1553,3 +1553,43 @@ button,input,select,textarea{font-family:inherit}
   .sharedCompactInfo b{font-size:12px!important}
   .sharedCompactRow .compactReservedLabel{max-width:90px!important;font-size:9px!important}
 }
+
+
+/* FIX MOBILE — lista personale: tutte le azioni sulla stessa riga */
+.ownerCompactList{display:flex;flex-direction:column;gap:9px}
+.ownerCompactRow{
+ display:grid!important;
+ grid-template-columns:42px minmax(0,1fr) auto auto 38px!important;
+ align-items:center!important;gap:8px!important;
+ min-width:0;width:100%;padding:9px 10px!important;
+}
+.ownerCompactRow>*{min-width:0;white-space:nowrap}
+.ownerCompactRow .ownerCompactMain{overflow:hidden;justify-content:flex-start}
+.ownerCompactRow .ownerCompactName{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.ownerCompactRow .ownerCompactOpen{min-width:78px;min-height:38px;padding:7px 10px;font-size:12px}
+.ownerCompactRow>.outline{
+ display:inline-flex!important;align-items:center;justify-content:center;
+ min-width:0;min-height:38px;padding:7px 9px!important;
+ white-space:nowrap;font-size:12px;
+}
+.ownerCompactRow>.outline:last-child{width:38px;height:38px;padding:7px!important}
+@media(max-width:420px){
+ .ownerCompactRow{grid-template-columns:34px minmax(0,1fr) auto auto 34px!important;gap:5px!important;padding:8px!important}
+ .ownerCompactRow .listDragHandle{width:34px;height:38px;flex-basis:34px}
+ .ownerCompactRow .ownerCompactOpen{min-width:66px;padding:6px 7px;font-size:11px}
+ .ownerCompactRow>.outline{padding:6px 6px!important;font-size:11px}
+ .ownerCompactRow>.outline:last-child{width:34px;height:36px}
+ .ownerCompactRow .ownerCompactName{font-size:12px}
+}
+/* FIX MOBILE — lista condivisa: titolo apribile e pulsante prenota contenuto */
+.sharedCompactList{display:flex;flex-direction:column;gap:9px}
+.sharedCompactRow{width:100%;max-width:100%;overflow:hidden}
+.sharedCompactRow .sharedCompactInfo{appearance:none;-webkit-appearance:none;min-width:0;overflow:hidden}
+.sharedCompactRow .sharedCompactInfo b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.sharedCompactRow .reserveButton{min-width:76px!important;max-width:92px;min-height:38px;padding:7px 9px!important;font-size:11px!important;white-space:nowrap}
+@media(max-width:420px){
+ .sharedCompactRow{gap:8px!important;padding:8px!important}
+ .sharedCompactRow img,.sharedCompactRow .sharedCompactPlaceholder{width:50px!important;height:50px!important;flex-basis:50px!important}
+ .sharedCompactRow .sharedCompactInfo b{font-size:12px!important;-webkit-line-clamp:3}
+ .sharedCompactRow .reserveButton{min-width:70px!important;max-width:78px;font-size:10px!important}
+}
