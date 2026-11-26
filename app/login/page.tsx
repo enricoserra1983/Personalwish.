@@ -119,7 +119,7 @@ export default function LoginPage() {
     <main className="authShell">
       <section className="authCard">
         <Link href="/" className="authBrand">
-          <span><Gift size={22} /></span> PersonalWish
+          <img src="/mypersonalwish-logo.svg" alt="" /> <span>MyPersonal<span className="brandAccent">Wish</span></span>
         </Link>
         <div className="eyebrow">I TUOI DESIDERI, CONDIVISI A MODO TUO</div>
         <h1>{isForgot ? "Recupera la password" : mode === "signup" ? "Crea il tuo account" : "Bentornato"}</h1>
