@@ -1134,3 +1134,111 @@
   object-fit:cover!important;object-position:center!important;
   border:0!important;border-radius:50%!important;margin:0!important;padding:0!important;
 }
+
+
+/* PERSONALWISH — refresh visivo moderno, geometrie nette e blu elettrico */
+:root{
+  --ink:#172033;
+  --muted:#687386;
+  --purple:#1769e0;
+  --lav:#eaf2ff;
+  --line:#e3e8ef;
+  --bg:#f5f7fa;
+}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',Arial,sans-serif}
+button,input,select,textarea{font-family:inherit}
+.shell{grid-template-columns:252px minmax(0,1fr)}
+.sidebar{background:#fff;border-right:1px solid #e2e7ee;padding:28px 17px}
+.brand{color:#14213a;padding-bottom:42px;letter-spacing:-.7px}
+.brandIcon{background:#1769e0;color:#fff;border-radius:8px}
+.brandAccent{color:#1769e0}
+.workspaceLabel,.eyebrow{color:#8290a3;letter-spacing:1.35px}
+.navItem{border-radius:6px;color:#586579;font-weight:500}
+.navItem.active{background:#eaf2ff;color:#145bc4;font-weight:700}
+.navCount{background:#f0f3f7;color:#526176;border-radius:4px}
+.content{max-width:1320px;padding:0 48px 30px}
+.topbar{height:72px;border-color:#e3e8ef}
+.crumb{color:#778397}
+.topActions{gap:14px}
+.demoPill{border-radius:4px;background:#edf3fb;color:#53647b}
+.demoPill span{background:#1769e0}
+.welcome{padding:38px 0 24px}
+.welcome h1{font-family:Manrope,sans-serif;font-size:31px;letter-spacing:-1.15px;color:#14213a}
+.welcome p,.sectionHead p{color:#718096}
+.primary{background:#1769e0;border-radius:5px;box-shadow:none;padding:13px 18px}
+.primary:hover,.authSubmit:hover{background:#0f56bd}
+.listHero{border-radius:7px;background:linear-gradient(105deg,#eaf2ff,#f4f7fc 70%,#e2edfc);border:1px solid #dce8f8}
+.heroCopy{padding:28px 32px}
+.listTag{border-radius:3px;background:#fff;color:#145bc4;letter-spacing:1px}
+.heroCopy h2{font-family:Manrope,sans-serif;color:#14213a}
+.heroCopy p,.heroMeta{color:#66758a}
+.shareButton{border-radius:4px;border-color:#cbdcf3;color:#145bc4}
+.sectionHead{margin:30px 0 15px}
+.sectionHead h3,.privacyHead h3{font-family:Manrope,sans-serif;color:#172033}
+.textButton{color:#1769e0}
+.addRow input,.addRow button{border-radius:5px}
+.addRow input{border-color:#dce3ec}
+.addRow input:focus{border-color:#1769e0}
+.addRow button{background:#eaf2ff;color:#145bc4}
+.wishGrid,.groupGrid{gap:16px}
+.wishCard,.groupCard,.settingsCard,.privacyPanel{border:1px solid #e0e6ee;border-radius:7px;box-shadow:0 2px 8px rgba(24,39, sixty,0.035)}
+.wishImage{height:150px}
+.wishInfo{padding:15px}
+.wishTitle{color:#172033;font-size:13px}
+.wishInfo p{color:#718096}
+.heartBtn{border-radius:5px;color:#526176}
+.reserve,.reserved{border-radius:4px}
+.reserve{background:#1769e0}
+.reserved{background:#edf1f6;color:#637086}
+.privacyPanel{padding:22px;background:#fff}
+.privacyGroup{border-color:#e7ebf1}
+.toggleRow{color:#4f5d70}
+.switch{border-radius:4px;background:#d7dee8}
+.switch i{border-radius:3px}
+.switch.on{background:#1769e0}
+.privacyNote{border-radius:5px;background:#f0f5fc;color:#53647b}
+.groupCard,.settingsCard{border-radius:7px}
+.groupCard h3{font-family:Manrope,sans-serif}
+.outline{border-radius:4px;background:#eaf2ff;color:#145bc4}
+.avatar{background:#e4efff;color:#145bc4}
+.accountDropdown{border-radius:7px;border-color:#e0e6ee;box-shadow:0 12px 30px rgba(20,33,58,.14)}
+.accountDropdown button:hover{background:#f1f5fa}
+.wishlistSelect{border-radius:5px;border-color:#dce3ec;box-shadow:none}
+.wishlistSelect:focus{border-color:#1769e0;box-shadow:0 0 0 3px #1769e01a}
+.authShell{background:#f5f7fa}
+.authCard{border-color:#e0e6ee;border-radius:8px;box-shadow:0 8px 28px rgba(20,33,58,.07)}
+.authBrand{color:#172033}
+.authBrand span{border-radius:6px;background:#1769e0;color:#fff}
+.authTabs{border-radius:5px;background:#eff2f6}
+.authTabs button{border-radius:3px}
+.authTabs button.selected{color:#145bc4}
+.authForm input{border-radius:5px;border-color:#dce3ec}
+.authSubmit{border-radius:5px;background:#1769e0}
+.sharedPage,.friendProfilePage{background:#f5f7fa}
+.sharedHeader{border-color:#e2e7ee}
+.sharedBrand{color:#172033}
+.sharedBrand span{border-radius:6px;background:#1769e0;color:#fff}
+.sharedLogin{color:#1769e0}
+.sharedEyebrow{border-radius:3px;background:#eaf2ff;color:#145bc4}
+.sharedItem,.sharedEmpty,.sharedState,.friendProfileHero,.friendProfileContent{border-radius:7px;border-color:#e0e6ee;box-shadow:0 2px 8px rgba(24,39,60,.035)}
+.sharedItemBody h2,.friendProfileHero h1,.friendProfileSectionTitle h2{color:#172033}
+.sharedItemBottom a,.friendProfileSectionTitle,.friendProfileNetworkPerson>span:last-child{color:#1769e0}
+.friendProfileHeroAvatar{background:#e4efff;color:#145bc4}
+.friendProfileNetworkPerson,.friendInlineList{border-radius:5px;border-color:#e0e6ee}
+.friendProfileNetworkPanel{border-radius:6px;border-color:#e0e6ee}
+.listSettingsMenu,.shareDialog{border-radius:7px;border-color:#e0e6ee}
+.listSettingsMenuItem:active,.listSettingsMenuItem:hover{background:#eff5ff;color:#145bc4}
+.productLinkHelpText{border-radius:5px;background:#eff5ff}
+@media(max-width:900px){.content{padding:0 28px 22px}}
+@media(max-width:650px){
+ .content{padding:0 16px 22px}
+ .welcome{padding:28px 0 19px}
+ .welcome h1{font-size:25px}
+ .listHero{border-radius:6px}
+ .heroCopy{padding:21px 18px}
+ .wishGrid{gap:10px}
+ .wishImage{height:120px}
+ .wishCard{border-radius:6px}
+ .wishInfo{padding:11px}
+ .authCard{border-radius:7px}
+}
