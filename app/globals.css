@@ -1799,3 +1799,39 @@ button,input,select,textarea{font-family:inherit}
  .birthdayPrivacy p{font-size:10px!important;line-height:1.35!important}
  .settingsPrivacyRow select,.settingsPrivacyRow .friendNetworkSelectButton{font-size:11px!important;min-height:40px!important;padding:8px 10px!important}
 }
+
+
+/* Notification center refinement */
+.notificationsContent{width:min(760px,calc(100% - 28px));margin:30px auto;padding-bottom:48px}
+.notificationsTitleRow{align-items:flex-start;margin-bottom:20px}
+.notificationsTitleRow h1{letter-spacing:-.035em}
+.notificationsList{gap:12px;max-height:min(72vh,760px);padding:2px 5px 8px 1px}
+.notificationCard{padding:15px 16px;border-radius:17px;box-shadow:0 2px 9px rgba(42,32,60,.035);transition:border-color .15s,background .15s}
+.notificationCard.unread{border-left:3px solid #8058c7;padding-left:14px}
+.notificationTopRow{align-items:center;gap:10px}
+.notificationOpen{align-items:flex-start;gap:12px;min-height:44px}
+.notificationIcon{width:42px;height:42px;flex-basis:42px;border-radius:14px}
+.notificationText{gap:4px;padding-top:1px}
+.notificationText b{font-size:14px;line-height:1.35}
+.notificationText>span{font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.notificationText small:not(.notificationKind){font-size:11px;margin-top:5px}
+.notificationKind{display:inline-flex;width:max-content;align-items:center;padding:3px 7px;border-radius:999px;font-size:9px!important;font-weight:800;letter-spacing:.055em}
+.notificationKind.reserved{background:#edf4ff;color:#2767bd}
+.notificationKind.purchased{background:#fff0ed;color:#bd594b}
+.notificationDelete{width:32px;height:32px;flex-basis:32px;border:1px solid #eee9f2}
+.notificationActions{margin:11px 0 0 54px}
+.notificationActions button{min-width:88px;min-height:36px}
+@media(max-width:600px){
+ .notificationsContent{width:calc(100% - 24px);margin:22px auto}
+ .notificationsTitleRow{gap:13px}
+ .notificationsTitleRow h1{font-size:30px}
+ .notificationsList{max-height:72vh;gap:10px;padding-right:2px}
+ .notificationCard{padding:12px;border-radius:14px}
+ .notificationCard.unread{padding-left:10px}
+ .notificationOpen{gap:10px}
+ .notificationIcon{width:38px;height:38px;flex-basis:38px;border-radius:12px}
+ .notificationText b{font-size:13px}
+ .notificationText>span{font-size:12px}
+ .notificationDelete{width:30px;height:30px;flex-basis:30px}
+ .notificationActions{margin:10px 0 0 48px}
+}
