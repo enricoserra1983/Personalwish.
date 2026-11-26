@@ -1,5 +1,7 @@
 -- Elenca solo le liste di un amico effettivamente visibili all'utente autenticato.
-create or replace function public.get_friend_shared_wishlists(p_friend_id uuid)
+-- La funzione viene ricreata perché aggiungiamo image_url al tipo di ritorno.
+drop function if exists public.get_friend_shared_wishlists(uuid);
+create function public.get_friend_shared_wishlists(p_friend_id uuid)
 returns table(id uuid,title text,description text,share_token text,created_at timestamptz,image_url text)
 language sql stable security definer
 set search_path=public
