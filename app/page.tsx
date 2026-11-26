@@ -11,6 +11,7 @@ type WishItem = {
   description: string | null;
   price: number | null;
   image_url: string | null;
+  display_image_url?: string | null;
   product_url: string | null;
   position?: number | null;
   reservation_status?: "reserved" | "purchased" | null;
@@ -24,6 +25,7 @@ type Wishlist = {
   description: string | null;
   share_token: string;
   image_url: string | null;
+  display_image_url?: string | null;
   owner_sees_participants: boolean;
   participants_see_participants: boolean;
   owner_sees_reservations: boolean;
@@ -32,6 +34,32 @@ type Wishlist = {
   participants_see_buyer: boolean;
   wishlist_items: WishItem[];
 };
+function getWishlistStoragePath(value: string | null): string | null {
+  if (!value) return null;
+  const marker = "/storage/v1/object/public/wishlist-images/";
+  if (value.startsWith("http")) {
+    try {
+      const url = new URL(value);
+      const index = url.pathname.indexOf(marker);
+      return index >= 0 ? decodeURIComponent(url.pathname.slice(index + marker.length)) : null;
+    } catch { return null; }
+  }
+  if (value.startsWith("data:") || value.startsWith("blob:")) return null;
+  return value;
+}
+
+async function getWishlistImageDisplayUrl(supabase: ReturnType<typeof createClient>, value: string | null): Promise<string | null> {
+  if (!value) return null;
+  const path = getWishlistStoragePath(value);
+  if (!path) return value;
+  const { data, error } = await supabase.storage.from("wishlist-images").createSignedUrl(path, 14400);
+  if (error || !data?.signedUrl) {
+    console.error("Impossibile generare URL immagine lista", error);
+    return value.startsWith("http") ? value : null;
+  }
+  return data.signedUrl;
+}
+
 type PrivacyKey =
   | "owner_sees_participants"
   | "participants_see_participants"
@@ -123,6 +151,7 @@ export default function Home() {
   const [wishDescription,setWishDescription] = useState("");
   const [wishUrl,setWishUrl] = useState("");
   const [wishImage,setWishImage] = useState("");
+  const [wishImagePreview,setWishImagePreview] = useState("");
   const [wishPrice,setWishPrice] = useState("");
   const [editingWishId,setEditingWishId] = useState<string|null>(null);
   const [fetchingProduct,setFetchingProduct] = useState(false);
@@ -291,6 +320,14 @@ export default function Home() {
         }),
       };
     }));
+    rows = await Promise.all(rows.map(async list => ({
+      ...list,
+      display_image_url: await getWishlistImageDisplayUrl(supabase, list.image_url),
+      wishlist_items: await Promise.all((list.wishlist_items || []).map(async item => ({
+        ...item,
+        display_image_url: await getWishlistImageDisplayUrl(supabase, item.image_url),
+      }))),
+    })));
     setWishlists(rows);
     const requestedWishlistId = typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("wishlist")
@@ -821,8 +858,7 @@ export default function Home() {
     const path=`${profileUserId}/${activeList.id}/cover-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
     const {error:uploadError}=await supabase.storage.from("wishlist-images").upload(path,file,{upsert:true,contentType:file.type});
     if(uploadError){setError("Caricamento immagine non riuscito: "+uploadError.message);setUploadingListImage(false);return;}
-    const {data}=supabase.storage.from("wishlist-images").getPublicUrl(path);
-    const {error:updateError}=await supabase.from("wishlists").update({image_url:data.publicUrl}).eq("id",activeList.id);
+    const {error:updateError}=await supabase.from("wishlists").update({image_url:path}).eq("id",activeList.id);
     if(updateError) setError("Immagine caricata ma non salvata nella lista: "+updateError.message);
     else {setShowEditMenu(false);await loadData();}
     setUploadingListImage(false);
@@ -844,7 +880,7 @@ export default function Home() {
   }
 
   function resetWishEditor() {
-    setNewWish("");setWishDescription("");setWishUrl("");setWishImage("");setWishPrice("");
+    setNewWish("");setWishDescription("");setWishUrl("");setWishImage("");setWishImagePreview("");setWishPrice("");
     setEditingWishId(null);setShowWishEditor(false);
   }
 
@@ -866,7 +902,7 @@ export default function Home() {
           if(!response.ok)throw new Error(data.error||"Il negozio non ha restituito i dati del prodotto.");
           if(!data.title)throw new Error("Nome non disponibile.");
           setNewWish(data.title);
-          if(data.image)setWishImage(data.image);
+          if(data.image){setWishImage(data.image);setWishImagePreview(data.image);}
           if(data.description)setWishDescription(data.description);
           if(isAmazon&&!data.image)setError("Nome recuperato. Amazon non ha fornito la foto: puoi aggiungerla dalla galleria.");
           lastError=null;
@@ -891,7 +927,11 @@ export default function Home() {
     const supabase=createClient();
     const {error}=await supabase.storage.from("wishlist-images").upload(path,file,{upsert:true,contentType:file.type});
     if(error) setError("Caricamento immagine non riuscito: "+error.message);
-    else setWishImage(supabase.storage.from("wishlist-images").getPublicUrl(path).data.publicUrl);
+    else {
+      setWishImage(path);
+      const {data: signed}=await supabase.storage.from("wishlist-images").createSignedUrl(path,14400);
+      setWishImagePreview(signed?.signedUrl || "");
+    }
     setSavingWishImage(false);
   }
 
@@ -899,6 +939,7 @@ export default function Home() {
     if(wish) {
       setEditingWishId(wish.id);setNewWish(wish.title);setWishDescription(wish.description||"");
       setWishUrl(wish.product_url||"");setWishImage(wish.image_url||"");
+      setWishImagePreview(await getWishlistImageDisplayUrl(createClient(), wish.image_url)||"");
       setWishPrice(wish.price==null?"":String(wish.price));
     } else resetWishEditor();
     setShowWishEditor(true);
@@ -1002,7 +1043,7 @@ export default function Home() {
 
   return (
     <main className="shell">
-      {draggingWishId&&dragPointer&&draggedWish&&<div className="wishDragGhost" style={{left:dragPointer.x+14,top:dragPointer.y+14}}><span>{draggedWish.image_url?<img src={draggedWish.image_url} alt=""/>:"🎁"}</span><b>{draggedWish.title}</b></div>}
+      {draggingWishId&&dragPointer&&draggedWish&&<div className="wishDragGhost" style={{left:dragPointer.x+14,top:dragPointer.y+14}}><span>{draggedWish.display_image_url?<img src={draggedWish.display_image_url} alt=""/>:"🎁"}</span><b>{draggedWish.title}</b></div>}
       <aside className="sidebar">
         <a className="brand" href="/"><img className="brandLogo" src="/mypersonalwish-logo.svg" alt="" /><span>MyPersonal<span className="brandAccent">Wish</span></span></a>
         <div className="workspaceLabel">IL TUO SPAZIO</div>
@@ -1024,7 +1065,7 @@ export default function Home() {
           <div className="welcome"><div><div className="eyebrow">LA TUA WISHLIST</div><h1>I desideri prendono forma.</h1><p>Crea le tue liste e condividile con le persone a cui tieni.</p></div></div>
           <div className="wishlistCarousel" aria-label="Le tue liste">
             {wishlists.map(list=><button type="button" key={list.id} className={`wishlistCard ${activeList?.id===list.id ? "active" : ""}`} onClick={()=>setActiveId(list.id)}>
-              {list.image_url ? <img src={list.image_url} alt="" className="wishlistCardImage"/> : <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=85" alt="" className="wishlistCardImage wishlistCardPhoto"/>}
+              {list.display_image_url ? <img src={list.display_image_url} alt="" className="wishlistCardImage"/> : <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=85" alt="" className="wishlistCardImage wishlistCardPhoto"/>}
               <span className="wishlistCardTitle">{list.title}</span>
               <span className="wishlistCardCount">{list.wishlist_items?.length || 0} desideri</span>
             </button>)}
@@ -1057,7 +1098,7 @@ export default function Home() {
                 </div>
               </>}
               <div className="heroCopy"><div className="listTag"><Sparkles size={13}/> LISTA PERSONALE</div><h2>{activeList.title}</h2><p>{activeList.description || "Una raccolta di cose che mi piacerebbe ricevere."}</p><div className="heroMeta"><span><Gift size={15}/> {wishes.length} desideri</span><span><Users size={15}/> {activeList.is_public ? "Lista pubblica" : "Lista privata"}</span></div><div className="addRow"><button className="shareButton" onClick={() => setShowShareMenu(true)}><Link2 size={16}/> Condividi lista</button></div></div>
-              <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/>{activeList.image_url ? <img className="listCoverImage" src={activeList.image_url} alt={"Immagine della lista "+activeList.title}/> : <img className="listCoverImage listCoverFallback" src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=85" alt=""/>}<div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
+              <div className="heroArt"><div className="orb orbOne"/><div className="orb orbTwo"/>{activeList.display_image_url ? <img className="listCoverImage" src={activeList.display_image_url} alt={"Immagine della lista "+activeList.title}/> : <img className="listCoverImage listCoverFallback" src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=85" alt=""/>}<div className="floating f1">💝</div><div className="floating f2">✨</div><div className="floating f3">🎀</div></div>
             </div>
             <div className="sectionHead"><div><h3>I tuoi desideri</h3><p>{wishes.length} desideri nella lista</p></div></div>
             {showPrivacy && <section ref={privacyPanelRef} className="privacyPanel"><div className="privacyHead"><div><div className="eyebrow">CONTROLLO ACCESSI</div><h3>Privacy di questa lista</h3><p>Scegli cosa possono vedere il creatore e gli altri partecipanti.</p></div><button className="closeBtn" onClick={() => setShowPrivacy(false)}>×</button></div>
@@ -1074,7 +1115,7 @@ export default function Home() {
                 </div>
               </div>
               {displayMode === "grid" ? (
-                <div className="wishGrid">{wishes.map((wish, i) => <article data-wish-id={wish.id} className={`wishCard ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><div className={`wishImage image${i % 3}`}><button type="button" className="wishDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>{wish.image_url ? <img src={wish.image_url} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div>{wish.reservation_status && <div className={`ownerReservationStatus ${wish.reservation_status}`}>{wish.reservation_status === "purchased" ? "Acquistato" : "Prenotato"}{activeList?.owner_sees_buyer && wish.reserved_by ? ` da ${wish.reserved_by}` : ""}</div>}<p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
+                <div className="wishGrid">{wishes.map((wish, i) => <article data-wish-id={wish.id} className={`wishCard ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><div className={`wishImage image${i % 3}`}><button type="button" className="wishDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>{wish.image_url ? <img src={wish.display_image_url || ""} alt={wish.title}/> : <span>🎁</span>}</div><div className="wishInfo"><div className="wishTitle">{wish.title}</div>{wish.reservation_status && <div className={`ownerReservationStatus ${wish.reservation_status}`}>{wish.reservation_status === "purchased" ? "Acquistato" : "Prenotato"}{activeList?.owner_sees_buyer && wish.reserved_by ? ` da ${wish.reserved_by}` : ""}</div>}<p>{wish.description || "Nessuna descrizione"}</p>{wish.product_url && <a href={wish.product_url} target="_blank" rel="noopener noreferrer" className="wishProductLink">Apri prodotto ↗</a>}<div className="wishFoot"><b>{wish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(wish.price)}</b><div><button className="outline" onClick={() => openWishEditor(wish)}>Modifica</button><button className="outline" onClick={() => deleteWish(wish.id)} aria-label="Elimina desiderio"><Trash2 size={15}/></button></div></div></div></article>)}</div>
               ) : (
                 <div className="ownerCompactList">{wishes.map(wish => <div data-wish-id={wish.id} className={`ownerCompactRow ${draggingWishId===wish.id?"wishDragging":""} ${dragOverWishId===wish.id&&draggingWishId!==wish.id?"wishDropTarget":""}`} key={wish.id}><button type="button" className="wishDragHandle listDragHandle" title="Trascina per riordinare" aria-label={`Trascina ${wish.title}`} onPointerDown={e=>{e.preventDefault();dragTargetRef.current=wish.id;setDraggingWishId(wish.id);}}><GripVertical size={19}/></button>
                   <button type="button" className="ownerCompactMain" onClick={() => setDetailWish(wish)}>
@@ -1089,13 +1130,13 @@ export default function Home() {
               )}
               {detailWish && <div className="sharedDetailOverlay" onClick={() => setDetailWish(null)}><section className="sharedDetailDialog" role="dialog" aria-modal="true" aria-label={detailWish.title} onClick={e => e.stopPropagation()}>
                 <button type="button" className="sharedDetailClose" onClick={() => setDetailWish(null)} aria-label="Chiudi"><X size={20}/></button>
-                {detailWish.image_url ? <img src={detailWish.image_url} alt={detailWish.title} className="sharedDetailImage"/> : <div className="sharedItemPlaceholder sharedDetailImage"><Gift size={38}/></div>}
+                {detailWish.display_image_url ? <img src={detailWish.display_image_url} alt={detailWish.title} className="sharedDetailImage"/> : <div className="sharedItemPlaceholder sharedDetailImage"><Gift size={38}/></div>}
                 <div className="sharedItemBody"><h2>{detailWish.title}</h2>{detailWish.reservation_status && <div className={`ownerReservationStatus ${detailWish.reservation_status}`}>{detailWish.reservation_status === "purchased" ? "Acquistato" : "Prenotato"}{activeList?.owner_sees_buyer && detailWish.reserved_by ? ` da ${detailWish.reserved_by}` : ""}</div>}<p>{detailWish.description || "Nessuna descrizione"}</p><div className="sharedDetailPrice">{detailWish.price == null ? "Prezzo da definire" : new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(detailWish.price)}</div>
                   {detailWish.product_url && <a className="sharedDetailProductLink" href={detailWish.product_url} target="_blank" rel="noopener noreferrer">Apri prodotto ↗</a>}
                   <div className="wishEditorActions"><button type="button" onClick={() => { const wish = detailWish; setDetailWish(null); openWishEditor(wish); }}>Modifica desiderio</button><button type="button" className="outline" onClick={() => setDetailWish(null)}>Chiudi</button></div>
                 </div></section></div>}
             </> : <div className="settingsCard">Non hai ancora aggiunto desideri a questa lista.</div>}
-            {showWishEditor && <div className="shareOverlay wishOverlay" role="presentation" onClick={resetWishEditor}><section className="shareDialog wishEditorDialog" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><button className="shareClose" aria-label="Chiudi" onClick={resetWishEditor}>×</button><div className="wishEditorHeading"><div className="shareDialogIcon"><Gift size={22}/></div><h3>{editingWishId?"Modifica desiderio":"Aggiungi un desiderio"}</h3><p>Inserisci il nome oppure incolla un link per provare a recuperare i dettagli</p></div><div className="wishLinkBox"><div className="wishFieldLabel">Link del prodotto <button type="button" className="productLinkHelpButton" aria-label="Informazioni sul recupero del prodotto" aria-expanded={showProductLinkHelp} onClick={()=>setShowProductLinkHelp(value=>!value)}><CircleHelp size={15}/></button></div>{showProductLinkHelp&&<p className="productLinkHelpText" role="note">Se dopo 2 o 3 tentativi il prodotto non viene caricato automaticamente, puoi inserirne manualmente il nome e gli altri dettagli.</p>}<div className="wishLinkRow"><input value={wishUrl} onChange={e=>setWishUrl(e.target.value)} placeholder="Incolla qui il link del prodotto"/><button type="button" onClick={fetchProductDetails} disabled={fetchingProduct||!wishUrl.trim()}>{fetchingProduct?"Sto cercando...":"Recupera"}</button></div><p className="wishHint">{fetchingProduct?"Ricerca in corso: non premere di nuovo. Se serve, riproveremo automaticamente.":"Proveremo a recuperare nome, immagine e descrizione."}</p></div><div className="wishField"><div className="wishFieldLabel">Nome del desiderio <span>*</span></div><input value={newWish} onChange={e=>setNewWish(e.target.value)} placeholder="Es. Cuffie wireless"/></div><div className="wishField"><div className="wishFieldLabel">Descrizione</div><textarea value={wishDescription} onChange={e=>setWishDescription(e.target.value)} placeholder="Aggiungi qualche dettaglio..." rows={3}/></div><div className="wishField"><div className="wishFieldLabel">Prezzo <span className="wishOptional">facoltativo</span></div><input value={wishPrice} onChange={e=>setWishPrice(e.target.value)} inputMode="decimal" placeholder="Es. 49,90 €"/></div><div className="wishField"><div className="wishFieldLabel">Immagine <span className="wishOptional">facoltativa</span></div><button type="button" className="wishImagePick" onClick={()=>wishImageInputRef.current?.click()} disabled={savingWishImage}><span>＋</span>{savingWishImage?"Caricamento...":wishImage?"Cambia immagine":"Scegli dalla galleria"}</button><input ref={wishImageInputRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>uploadWishImage(e.target.files?.[0]||null)}/>{wishImage && <img src={wishImage} alt="Anteprima desiderio" className="wishEditorPreview"/>}</div><div className="wishEditorActions"><button type="button" onClick={addWish} disabled={busy||!newWish.trim()}>{busy?"Salvataggio...":editingWishId?"Salva modifiche":"Salva desiderio"}</button><button type="button" className="outline" onClick={resetWishEditor}>Annulla</button></div></section></div>}
+            {showWishEditor && <div className="shareOverlay wishOverlay" role="presentation" onClick={resetWishEditor}><section className="shareDialog wishEditorDialog" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><button className="shareClose" aria-label="Chiudi" onClick={resetWishEditor}>×</button><div className="wishEditorHeading"><div className="shareDialogIcon"><Gift size={22}/></div><h3>{editingWishId?"Modifica desiderio":"Aggiungi un desiderio"}</h3><p>Inserisci il nome oppure incolla un link per provare a recuperare i dettagli</p></div><div className="wishLinkBox"><div className="wishFieldLabel">Link del prodotto <button type="button" className="productLinkHelpButton" aria-label="Informazioni sul recupero del prodotto" aria-expanded={showProductLinkHelp} onClick={()=>setShowProductLinkHelp(value=>!value)}><CircleHelp size={15}/></button></div>{showProductLinkHelp&&<p className="productLinkHelpText" role="note">Se dopo 2 o 3 tentativi il prodotto non viene caricato automaticamente, puoi inserirne manualmente il nome e gli altri dettagli.</p>}<div className="wishLinkRow"><input value={wishUrl} onChange={e=>setWishUrl(e.target.value)} placeholder="Incolla qui il link del prodotto"/><button type="button" onClick={fetchProductDetails} disabled={fetchingProduct||!wishUrl.trim()}>{fetchingProduct?"Sto cercando...":"Recupera"}</button></div><p className="wishHint">{fetchingProduct?"Ricerca in corso: non premere di nuovo. Se serve, riproveremo automaticamente.":"Proveremo a recuperare nome, immagine e descrizione."}</p></div><div className="wishField"><div className="wishFieldLabel">Nome del desiderio <span>*</span></div><input value={newWish} onChange={e=>setNewWish(e.target.value)} placeholder="Es. Cuffie wireless"/></div><div className="wishField"><div className="wishFieldLabel">Descrizione</div><textarea value={wishDescription} onChange={e=>setWishDescription(e.target.value)} placeholder="Aggiungi qualche dettaglio..." rows={3}/></div><div className="wishField"><div className="wishFieldLabel">Prezzo <span className="wishOptional">facoltativo</span></div><input value={wishPrice} onChange={e=>setWishPrice(e.target.value)} inputMode="decimal" placeholder="Es. 49,90 €"/></div><div className="wishField"><div className="wishFieldLabel">Immagine <span className="wishOptional">facoltativa</span></div><button type="button" className="wishImagePick" onClick={()=>wishImageInputRef.current?.click()} disabled={savingWishImage}><span>＋</span>{savingWishImage?"Caricamento...":wishImage?"Cambia immagine":"Scegli dalla galleria"}</button><input ref={wishImageInputRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>uploadWishImage(e.target.files?.[0]||null)}/>{wishImagePreview && <img src={wishImagePreview} alt="Anteprima desiderio" className="wishEditorPreview"/>}</div><div className="wishEditorActions"><button type="button" onClick={addWish} disabled={busy||!newWish.trim()}>{busy?"Salvataggio...":editingWishId?"Salva modifiche":"Salva desiderio"}</button><button type="button" className="outline" onClick={resetWishEditor}>Annulla</button></div></section></div>}
           </> : <div className="settingsCard">Non hai ancora creato una lista. Usa il campo qui sopra per crearne una.</div>}
         </>}
 
