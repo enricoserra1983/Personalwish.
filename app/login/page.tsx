@@ -152,7 +152,7 @@ export default function LoginPage() {
                 <input value={name} onChange={e => setName(e.target.value)} placeholder="Mario Rossi" required autoComplete="off" name="personalwish-display-name" />
               </label>
               <label>
-                Data di nascita (richiesta per verificare la maggiore età)
+                Data di nascita
                 <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} required max={new Date().toISOString().slice(0,10)} autoComplete="bday" />
               </label>
               <p className="authFoot">La registrazione è riservata a chi ha compiuto 18 anni. La data viene usata per il controllo dell’età e rimossa dai metadati dell’account.</p>
