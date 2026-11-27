@@ -2009,3 +2009,54 @@ button,a,[role="button"],summary,select{ -webkit-tap-highlight-color:transparent
 button:focus:not(:focus-visible),a:focus:not(:focus-visible),[role="button"]:focus:not(:focus-visible){
  outline:none!important;box-shadow:none!important;
 }
+
+
+/* La riga compatta mantiene le stesse proporzioni anche dopo la prenotazione.
+   La colonna delle azioni ha larghezza fissa: non comprime il titolo del prodotto. */
+.sharedCompactRow{
+  grid-template-columns:50px minmax(0,1fr) 88px!important;
+}
+.sharedCompactRow .compactReservationControls{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  gap:5px!important;
+  width:88px!important;
+  min-width:0!important;
+  max-width:88px!important;
+  flex:none!important;
+}
+.sharedCompactRow .compactReservationControls .compactReservedLabel{
+  display:flex!important;
+  justify-content:center!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  padding:3px 2px!important;
+  font-size:9px!important;
+  line-height:1.15!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+.sharedCompactRow .compactReservationControls button[aria-pressed]{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  min-height:30px!important;
+  padding:5px 3px!important;
+  font-size:10px!important;
+  white-space:nowrap!important;
+}
+@media(max-width:420px){
+  .sharedCompactRow{grid-template-columns:50px minmax(0,1fr) 76px!important}
+  .sharedCompactRow .compactReservationControls{
+    width:76px!important;max-width:76px!important
+  }
+  .sharedCompactRow .compactReservationControls .compactReservedLabel{
+    font-size:8px!important
+  }
+  .sharedCompactRow .compactReservationControls button[aria-pressed]{
+    font-size:9px!important
+  }
+}
