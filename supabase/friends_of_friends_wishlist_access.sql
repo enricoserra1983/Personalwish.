@@ -118,7 +118,7 @@ begin
    else coalesce(v_w.participants_see_participants,true) end;
  v_can_see_reservations := case when auth.uid()=v_w.owner_id
    then coalesce(v_w.owner_sees_reservations,true)
-   else coalesce(v_w.participants_see_participants,true) end;
+   else coalesce(v_w.participants_see_reservations,true) end;
  v_can_see_buyer := case when auth.uid()=v_w.owner_id
    then coalesce(v_w.owner_sees_buyer,true)
    else coalesce(v_w.participants_see_buyer,true) end;
