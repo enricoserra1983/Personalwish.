@@ -121,7 +121,6 @@ export default function LoginPage() {
         <Link href="/" className="authBrand">
           <img src="/mypersonalwish-logo-horizontal.png" alt="MyPersonalWish" />
         </Link>
-        <div className="eyebrow">I TUOI DESIDERI, CONDIVISI A MODO TUO</div>
         <h1>{isForgot ? "Recupera la password" : mode === "signup" ? "Crea il tuo account" : "Bentornato"}</h1>
         <p className="authIntro">
           {isForgot
