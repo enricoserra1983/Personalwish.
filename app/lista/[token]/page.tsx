@@ -244,7 +244,7 @@ export default function SharedWishlistPage() {
     <main className="sharedPage">
       <header className="sharedHeader sharedHeaderFriendList">
         <Link href="/?section=friends" className="sharedBackToFriends"><ArrowLeft size={18}/> <span>Torna agli amici</span></Link>
-        <Link href="/" className="sharedBrand" aria-label="MyPersonalWish"><img src="/mypersonalwish-logo.svg" alt="" /><b>MyPersonal<span className="brandAccent">Wish</span></b></Link>
+        <Link href="/" className="sharedBrand" aria-label="MyPersonalWish"><img src="/mypersonalwish-logo-horizontal.png" alt="MyPersonalWish" /></Link>
       </header>
       {loading ? (
         <div className="sharedState"><LoaderCircle className="sharedSpinner" size={25}/> Caricamento della lista...</div>
