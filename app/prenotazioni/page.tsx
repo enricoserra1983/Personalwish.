@@ -86,7 +86,7 @@ export default function MyReservationsPage() {
       <div style={{maxWidth:900,margin:"0 auto"}}>
         <header style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:26}}>
           <Link href="/" style={{display:"inline-flex",alignItems:"center",gap:8,color:"#42516a",textDecoration:"none",fontSize:14,fontWeight:650}}><ArrowLeft size={18}/> Torna a MyPersonalWish</Link>
-          <Link href="/" aria-label="MyPersonalWish" style={{display:"inline-flex",alignItems:"center",gap:7,color:"#18243a",textDecoration:"none",fontWeight:800}}><img src="/mypersonalwish-logo.svg" alt="" style={{width:29,height:29}}/> MyPersonal<span style={{color:"#6b54d8",marginLeft:-7}}>Wish</span></Link>
+          <Link href="/" aria-label="MyPersonalWish" className="accountPageBrand"><img src="/mypersonalwish-logo-horizontal.png" alt="MyPersonalWish"/></Link>
         </header>
         <div style={{marginBottom:22}}>
           <div style={{fontSize:11,fontWeight:800,letterSpacing:".12em",color:"#6b54d8",marginBottom:7}}>IL TUO ACCOUNT</div>
@@ -100,10 +100,10 @@ export default function MyReservationsPage() {
         {loading ? <div style={{padding:40,textAlign:"center",color:"#687386"}}><LoaderCircle size={22} className="sharedSpinner"/> <p>Caricamento delle tue prenotazioni...</p></div>
         : error ? <div role="alert" style={{padding:18,background:"#fff",borderRadius:12,color:"#b42318"}}>{error}</div>
         : visible.length ? <div style={{display:"grid",gap:11}}>
-          {visible.map(entry=><button type="button" key={entry.reservation.id} onClick={()=>setSelected(entry)} style={{display:"flex",alignItems:"center",gap:13,width:"100%",padding:12,border:"1px solid #e1e7ef",borderRadius:13,background:"#fff",textAlign:"left",cursor:"pointer",color:"#172033"}}>
-            {entry.item.image_url ? <img src={entry.item.image_url} alt="" style={{width:72,height:72,flex:"0 0 72px",objectFit:"contain",background:"#f4f6fa",borderRadius:9}}/> : <span style={{width:72,height:72,flex:"0 0 72px",display:"grid",placeItems:"center",background:"#f0f3f9",borderRadius:9,color:"#1769e0"}}><Gift size={27}/></span>}
+          {visible.map(entry=><button type="button" key={entry.reservation.id} onClick={()=>setSelected(entry)} className="reservationProductCard">
+            {entry.item.image_url ? <img className="reservationProductImage" src={entry.item.image_url} alt=""/> : <span className="reservationProductPlaceholder"><Gift size={27}/></span>}
             <span style={{display:"block",flex:1,minWidth:0}}>
-              <b style={{display:"block",fontSize:15,lineHeight:1.35,overflowWrap:"anywhere"}}>{entry.item.title}</b>
+              <b className="reservationProductTitle">{entry.item.title}</b>
               <small style={{display:"block",marginTop:5,color:"#657187",fontSize:12}}>Prenotato dalla lista <strong>{entry.wishlist.title}</strong> di {entry.ownerName}</small>
               <small style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:6,fontSize:11,fontWeight:750,color:entry.reservation.status==="purchased"?"#dc3545":"#287a58"}}>{entry.reservation.status==="purchased"?<ShoppingBag size={13}/>:<CheckCircle2 size={13}/>} {entry.reservation.status==="purchased"?"Acquistato":"Prenotato"}</small>
             </span>
