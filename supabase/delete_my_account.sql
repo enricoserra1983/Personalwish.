@@ -14,9 +14,9 @@ begin
     raise exception 'Devi aver effettuato l''accesso per eliminare l''account.';
   end if;
 
-  -- Rimuove le immagini caricate dall'utente nel bucket privato/pubblico dell'app.
+  -- Rimuove le immagini delle liste e le foto profilo caricate dall'utente.
   delete from storage.objects
-  where bucket_id = 'wishlist-images'
+  where bucket_id in ('wishlist-images', 'profile-images')
     and name like v_user_id::text || '/%';
 
   -- La cancellazione dell'utente Auth attiva le FK ON DELETE CASCADE
