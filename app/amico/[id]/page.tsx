@@ -60,7 +60,7 @@ export default function FriendProfilePage(){
 
   const fullName=[profile.first_name,profile.last_name].filter(Boolean).join(" ")||profile.display_name;
   return <main className="friendProfilePage">
-    <header className="friendProfileTop"><button className="textButton" onClick={()=>router.push("/?section=friends")}><ArrowLeft size={17}/> Torna indietro</button><a className="friendProfileBrand" href="/" aria-label="MyPersonalWish"><img src="/mypersonalwish-logo.svg" alt="" /><b>MyPersonal<span className="brandAccent">Wish</span></b></a></header>
+    <header className="friendProfileTop"><button className="textButton" onClick={()=>router.push("/?section=friends")}><ArrowLeft size={17}/> Torna indietro</button><a className="friendProfileBrand" href="/" aria-label="MyPersonalWish"><img src="/mypersonalwish-logo-horizontal.png" alt="MyPersonalWish" /></a></header>
     <section className="friendProfileHero">
       <div className="friendProfileHeroAvatar">{profile.avatar_url?<img src={profile.avatar_url} alt="Foto profilo"/>:profile.display_name.charAt(0).toUpperCase()}</div>
       <div className="eyebrow">PROFILO PERSONALWISH</div>
