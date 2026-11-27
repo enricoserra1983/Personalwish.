@@ -1925,3 +1925,27 @@ button,input,select,textarea{font-family:inherit}
  .reservationProductTitle{font-size:16px;line-height:1.3;-webkit-line-clamp:3}
  .friendWishlistCard b{font-size:14px!important}
 }
+
+
+/* Dimensioni definitive del marchio: leggibile su mobile, mai fuori scala */
+@media(max-width:650px){
+  .mobileBrand{display:flex!important;align-items:center!important;flex:0 1 auto!important;min-width:0!important;max-width:220px!important;width:auto!important}
+  .mobileBrand img{display:block!important;width:190px!important;max-width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important}
+  .brandLogo{width:205px!important;max-width:100%!important;height:auto!important;max-height:none!important;flex:0 1 auto!important}
+  .friendProfileTop{justify-content:space-between!important;gap:8px!important}
+  .friendProfileBrand{display:flex!important;flex:0 1 205px!important;width:205px!important;max-width:48%!important;min-width:0!important}
+  .friendProfileBrand img{display:block!important;width:100%!important;height:auto!important;max-height:none!important;flex:0 1 auto!important;object-fit:contain!important}
+  .accountPageBrand{display:flex!important;flex:0 1 205px!important;width:205px!important;max-width:48%!important;min-width:0!important}
+  .accountPageBrand img{display:block!important;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important}
+  .authBrand{display:flex!important;width:100%!important;max-width:360px!important;height:auto!important;min-height:0!important}
+  .authBrand>img{display:block!important;width:100%!important;max-width:360px!important;height:auto!important;max-height:none!important;flex:0 1 auto!important}
+}
+@media(min-width:651px){
+  .brandLogo{width:210px!important;height:auto!important;max-height:none!important;flex:0 1 auto!important}
+  .authBrand{width:100%!important;max-width:420px!important}
+  .authBrand>img{width:100%!important;max-width:420px!important;height:auto!important;max-height:none!important;flex:0 1 auto!important}
+  .friendProfileBrand{width:240px!important;max-width:38%!important}
+  .friendProfileBrand img{width:100%!important;height:auto!important;max-height:none!important}
+  .accountPageBrand{width:240px!important;max-width:38%!important}
+  .accountPageBrand img{width:100%!important;height:auto!important;max-height:none!important}
+}
