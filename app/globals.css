@@ -1890,9 +1890,9 @@ button,input,select,textarea{font-family:inherit}
 @media(max-width:520px){.friendSearchActions{width:100%;justify-content:flex-start}.friendSearchActions button{flex:1}.friendSearchLists{grid-column:1/-1}}
 
 
-/* Logo ufficiale MyPersonalWish: immagine originale completa */
-.brand{gap:0;min-height:66px}
-.brandLogo{width:190px;height:auto;max-height:66px;flex:0 1 auto;object-fit:contain;object-position:left center}
-.mobileBrand{min-width:0}
-.mobileBrand img{width:158px;height:auto;max-height:46px;object-fit:contain}
-@media(max-width:650px){.brandLogo{width:175px;height:auto;flex-basis:auto}.mobileBrand img{width:148px;height:auto;max-height:42px}}
+/* Logo orizzontale MyPersonalWish: marchio completo, senza riquadro */
+.brand{gap:0;min-height:66px;padding:0 12px 32px}
+.brandLogo{display:block;width:190px;height:auto;max-height:62px;flex:0 1 auto;object-fit:contain;object-position:left center}
+.mobileBrand{min-width:0;display:none}
+.mobileBrand img{display:block;width:148px;height:auto;max-height:48px;object-fit:contain}
+@media(max-width:650px){.brandLogo{width:175px;height:auto;max-height:57px;flex-basis:auto}.mobileBrand img{width:148px;height:auto;max-height:48px}}
