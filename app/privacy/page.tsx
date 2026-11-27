@@ -12,7 +12,6 @@ const sections = [
       <>
         <p>Il titolare del trattamento è <strong>Enrico Serra</strong>, ideatore e gestore di MyPersonalWish.</p>
         <p>Per richieste relative ai dati personali: <a href="mailto:mypersonalwish.privacy@gmail.com">mypersonalwish.privacy@gmail.com</a>.</p>
-        <p>Il recapito postale del titolare deve essere aggiunto prima della pubblicazione definitiva.</p>
       </>
     ),
   },
@@ -116,7 +115,7 @@ export default function PrivacyPage() {
         <p className="privacyLead">Questa pagina descrive in modo semplice quali dati possono essere trattati quando utilizzi MyPersonalWish e per quali finalità.</p>
         <div className="privacyDraftNotice">
           <strong>Bozza da completare prima della pubblicazione definitiva</strong>
-          <span>Questa prima versione è stata predisposta sulla base delle funzioni attualmente presenti nell’app. Devono ancora essere verificati il recapito postale del titolare, i tempi di conservazione, i dettagli contrattuali e la localizzazione dei fornitori e gli eventuali trasferimenti internazionali.</span>
+          <span>Questa prima versione è stata predisposta sulla base delle funzioni attualmente presenti nell’app. Devono ancora essere verificati i tempi di conservazione, i dettagli contrattuali e la localizzazione dei fornitori e gli eventuali trasferimenti internazionali.</span>
         </div>
         {sections.map((section) => (
           <section className="privacyDocumentSection" key={section.title}>
