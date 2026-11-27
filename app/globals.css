@@ -1966,3 +1966,38 @@ button,input,select,textarea{font-family:inherit}
  .sharedHeaderFriendList .sharedBrand{flex-basis:45%!important;width:45%!important;max-width:230px!important}
  .sharedHeaderFriendList .sharedBrand img{max-height:46px!important}
 }
+
+
+/* Palette blu uniforme per i menu a tendina della privacy */
+.friendNetworkSelectMenu button.selected,
+.settingsPrivacyRow .friendNetworkSelectMenu button.selected,
+.profileAvatarSelectMenu button.selected{
+  background:#eaf2ff!important;
+  color:#145bc4!important;
+  font-weight:650!important;
+}
+.friendNetworkSelectCheck,.profileAvatarSelectCheck{color:#1769e0!important}
+.friendNetworkSelectMenu button:active,
+.profileAvatarSelectMenu button:active{
+  background:#eaf2ff!important;
+  color:#145bc4!important;
+}
+
+/* La selezione di una lista non deve produrre alcun effetto luminoso */
+.wishlistCarousel>.wishlistCard,
+.wishlistCarousel>.wishlistCard.active,
+.wishlistCarousel>.wishlistCard:focus,
+.wishlistCarousel>.wishlistCard:focus-visible,
+.wishlistCarousel>.wishlistCard:active{
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.wishlistCarousel>.wishlistCard.active{padding:0!important}
+.wishlistCarousel .wishlistCardTitle,
+.wishlistCarousel .wishlistCard.active .wishlistCardTitle{
+  color:#172033!important;
+}
+.wishlistCarousel>.wishlistCard:focus-visible{outline:none!important}
