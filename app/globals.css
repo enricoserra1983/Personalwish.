@@ -1893,6 +1893,6 @@ button,input,select,textarea{font-family:inherit}
 /* Logo orizzontale MyPersonalWish: marchio completo, senza riquadro */
 .brand{gap:0;min-height:66px;padding:0 12px 32px}
 .brandLogo{display:block;width:190px;height:auto;max-height:62px;flex:0 1 auto;object-fit:contain;object-position:left center}
-.mobileBrand{min-width:0;display:none}
+.mobileBrand{min-width:0}
 .mobileBrand img{display:block;width:148px;height:auto;max-height:48px;object-fit:contain}
 @media(max-width:650px){.brandLogo{width:175px;height:auto;max-height:57px;flex-basis:auto}.mobileBrand img{width:148px;height:auto;max-height:48px}}
