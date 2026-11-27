@@ -2060,3 +2060,23 @@ button:focus:not(:focus-visible),a:focus:not(:focus-visible),[role="button"]:foc
     font-size:9px!important
   }
 }
+
+/* Pagina informativa privacy */
+.privacyPage{min-height:100vh;background:#f5f7fa;padding:24px 18px 64px;color:#172033}
+.privacyPageHeader{width:min(900px,100%);margin:0 auto 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.privacyBack{color:#1769d2;text-decoration:none;font-size:13px;font-weight:650}
+.privacyPageHeader img{width:210px;max-width:48%;height:auto;object-fit:contain}
+.privacyDocument{width:min(900px,100%);margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:clamp(22px,5vw,48px);box-shadow:0 8px 28px rgba(20,33,58,.045)}
+.privacyEyebrow{font-size:10px;letter-spacing:1.6px;font-weight:800;color:#1769d2;margin:0 0 10px}
+.privacyDocument h1{font-size:clamp(28px,5vw,38px);letter-spacing:-1.2px;margin:0 0 12px}
+.privacyLead{font-size:15px;line-height:1.65;color:#657187;margin:0 0 24px}
+.privacyDraftNotice{display:flex;flex-direction:column;gap:7px;padding:15px 17px;background:#fff8e8;border:1px solid #f1d79b;border-radius:12px;color:#75551c;font-size:13px;line-height:1.55;margin-bottom:28px}
+.privacyDocumentSection{padding:22px 0;border-top:1px solid #edf0f4}
+.privacyDocumentSection h2{font-size:18px;letter-spacing:-.25px;margin:0 0 12px;color:#172033}
+.privacyDocumentSection p,.privacyDocumentSection li{font-size:14px;line-height:1.75;color:#4c586b}
+.privacyDocumentSection p{margin:8px 0}
+.privacyDocumentSection ul{padding-left:22px}
+.privacyDocument a{color:#1769d2;text-decoration:underline;text-underline-offset:2px}
+.privacyLastUpdate{margin:20px 0 5px;color:#7a8495;font-size:12px}
+.privacyContact{margin:0;color:#4c586b;font-size:13px}
+@media(max-width:600px){.privacyPage{padding:16px 12px 36px}.privacyPageHeader{margin-bottom:16px}.privacyPageHeader img{width:155px}.privacyDocument{border-radius:14px;padding:22px 18px}.privacyDocumentSection{padding:18px 0}.privacyDocumentSection h2{font-size:17px}}
