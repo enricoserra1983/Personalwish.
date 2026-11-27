@@ -96,7 +96,7 @@ const sections = [
     title: "10. Minori",
     body: (
       <>
-        <p>Il servizio non è progettato per raccogliere consapevolmente dati di minori senza le condizioni e le autorizzazioni richieste dalla normativa applicabile. Le modalità di accesso dei minori devono essere definite prima del lancio pubblico.</p>
+        <p>La creazione di un account MyPersonalWish è riservata alle persone che hanno compiuto 18 anni. In fase di registrazione viene richiesta la data di nascita esclusivamente per verificare il requisito di età; la procedura tecnica di controllo è progettata per rimuovere tale dato dai metadati dell’account dopo la verifica e non salvarlo nel profilo. Le liste accessibili tramite link potrebbero comunque essere visualizzate da persone non registrate: chi condivide un link deve prestare attenzione ai contenuti e alle informazioni personali eventualmente inserite.</p>
       </>
     ),
   },
@@ -115,7 +115,7 @@ export default function PrivacyPage() {
         <p className="privacyLead">Questa pagina descrive in modo semplice quali dati possono essere trattati quando utilizzi MyPersonalWish e per quali finalità.</p>
         <div className="privacyDraftNotice">
           <strong>Bozza da completare prima della pubblicazione definitiva</strong>
-          <span>Questa prima versione è stata predisposta sulla base delle funzioni attualmente presenti nell’app. Devono ancora essere verificati i tempi di conservazione, i dettagli contrattuali e la localizzazione dei fornitori e gli eventuali trasferimenti internazionali.</span>
+          <span>Questa prima versione è stata predisposta sulla base delle funzioni attualmente presenti nell’app. Devono ancora essere verificati i tempi di conservazione, i dettagli contrattuali e la localizzazione dei fornitori e gli eventuali trasferimenti internazionali. Il controllo dell’età richiede inoltre l’attivazione della relativa procedura SQL nel progetto Supabase.</span>
         </div>
         {sections.map((section) => (
           <section className="privacyDocumentSection" key={section.title}>
