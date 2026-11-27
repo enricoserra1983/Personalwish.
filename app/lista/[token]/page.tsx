@@ -320,7 +320,7 @@ export default function SharedWishlistPage() {
                       <small style={{display:"block",marginTop:3,fontSize:11,fontWeight:600,color:"#1769e0"}}>Visualizza dettagli</small>
                     </button>
                     {reservedByMe.includes(item.id) ? (
-                      <div style={{display:"flex",alignItems:"center",gap:5,flex:"0 0 auto",flexWrap:"wrap",justifyContent:"flex-end"}}>
+                      <div className="compactReservationControls">
                         <button type="button" onClick={() => cancelReservation(item.id)} disabled={reservingId !== null} title="Tocca per annullare la prenotazione" className="compactReservedLabel" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,fontSize:11,fontWeight:700,color:"#287a58",textAlign:"center",padding:0,border:0,background:"transparent",cursor:"pointer",opacity:reservingId === item.id ? 0.65 : 1}}>{reservingId === item.id ? "Annullamento..." : <><CheckCircle2 size={14}/> Prenotato da te</>}</button>
                         <button type="button" onClick={() => togglePurchased(item.id)} disabled={reservingId !== null} aria-pressed={purchasedByMe.includes(item.id)} style={{minHeight:30,minWidth:88,padding:"5px 8px",borderRadius:6,border:"1px solid",borderColor:purchasedByMe.includes(item.id)?"#dc3545":"#d7dce3",background:purchasedByMe.includes(item.id)?"#dc3545":"#f1f3f5",color:purchasedByMe.includes(item.id)?"#fff":"#687386",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",opacity:reservingId === item.id ? 0.65 : 1}}>
                           {reservingId === item.id ? "Attendi..." : "Acquistato"}
