@@ -12,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [email, setEmail] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [password, setPassword] = useState("");
@@ -72,6 +73,12 @@ export default function LoginPage() {
         if (resetError) throw resetError;
         setMessage("Se l'indirizzo è associato a un account, riceverai un'email con il link per reimpostare la password. Controlla anche la cartella spam.");
       } else if (mode === "signup") {
+        if (!birthDate) throw new Error("Inserisci la tua data di nascita per verificare il requisito dei 18 anni.");
+        const birth = new Date(`${birthDate}T00:00:00`);
+        const today = new Date();
+        const adultDate = new Date(birth);
+        adultDate.setFullYear(adultDate.getFullYear() + 18);
+        if (Number.isNaN(birth.getTime()) || adultDate > today) throw new Error("Per creare un account MyPersonalWish devi aver compiuto 18 anni.");
         const username = name.trim();
         if (!/^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$/.test(username) || username.length < 3 || username.length > 30) {
           throw new Error("Inserisci un nome da 3 a 30 caratteri, usando lettere e spazi.");
@@ -83,7 +90,7 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            data: { display_name: name.trim() },
+            data: { display_name: name.trim(), birth_date_for_age_check: birthDate },
             emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}${getInviteId() ? `&invite=${encodeURIComponent(getInviteId()!)}` : ""}`,
           },
         });
