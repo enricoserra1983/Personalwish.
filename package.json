@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "preview": "opennextjs-cloudflare build && wrangler dev",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
     "next": "15.5.29",
@@ -26,6 +30,8 @@
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.2.0",
     "typescript": "^5.7.0",
-    "@types/pdf-parse": "^1.1.5"
+    "@types/pdf-parse": "^1.1.5",
+    "@opennextjs/cloudflare": "^1.20.19",
+    "wrangler": "^4.53.0"
   }
 }
