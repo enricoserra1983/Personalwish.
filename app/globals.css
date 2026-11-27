@@ -2001,3 +2001,11 @@ button,input,select,textarea{font-family:inherit}
   color:#172033!important;
 }
 .wishlistCarousel>.wishlistCard:focus-visible{outline:none!important}
+
+
+/* Elimina il flash nativo al tocco su Android, senza alterare gli stati selezionati. */
+html,body,body *{ -webkit-tap-highlight-color:transparent!important; }
+button,a,[role="button"],summary,select{ -webkit-tap-highlight-color:transparent!important; }
+button:focus:not(:focus-visible),a:focus:not(:focus-visible),[role="button"]:focus:not(:focus-visible){
+ outline:none!important;box-shadow:none!important;
+}
