@@ -1317,7 +1317,7 @@ export default function Home() {
           </section>
         </div>}
 
-        <footer>MyPersonalWish <span>·</span> I tuoi desideri, condivisi a modo tuo.</footer>
+        <footer>MyPersonalWish <span>·</span> I tuoi desideri, condivisi a modo tuo. <span>·</span> <a href="/privacy">Informativa sulla privacy</a></footer>
       </section>
     </main>
   );
