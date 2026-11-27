@@ -22,7 +22,7 @@ const sections = [
         <p>In base alle funzioni utilizzate, MyPersonalWish può trattare:</p>
         <ul>
           <li>dati dell’account: indirizzo email, credenziali gestite dal servizio di autenticazione, nome visualizzato e nome utente;</li>
-          <li>dati del profilo inseriti volontariamente: nome, cognome, città, data di nascita, immagine del profilo e preferenze di visibilità;</li>
+          <li>dati del profilo inseriti volontariamente: nome, cognome, città, data di nascita (se inserita nel profilo), immagine del profilo e preferenze di visibilità;</li>
           <li>contenuti delle liste: titoli, descrizioni, prodotti, link, immagini e file eventualmente importati;</li>
           <li>dati relativi ad amicizie, gruppi, inviti, richieste, partecipazione alle liste, prenotazioni e acquisti segnalati;</li>
           <li>dati tecnici necessari al funzionamento, alla sicurezza e alla gestione delle sessioni.</li>
@@ -55,6 +55,7 @@ const sections = [
     body: (
       <>
         <p>L’applicazione utilizza <strong>Supabase</strong> per autenticazione, database e archiviazione delle immagini e <strong>Vercel</strong> per la distribuzione e l’hosting dell’applicazione. Questi fornitori possono trattare dati per erogare i rispettivi servizi secondo i relativi accordi e documenti privacy.</p>
+        <p>Quando l’utente richiede il recupero automatico dei dati di un prodotto, il link inserito viene aperto dal server dell’applicazione per leggere le informazioni pubblicamente disponibili sulla pagina del negozio. Il sito del negozio contattato può quindi ricevere la richiesta proveniente dall’infrastruttura che ospita l’applicazione.</p>
         <p>Prima della pubblicazione definitiva devono essere verificati i ruoli contrattuali dei fornitori, la localizzazione effettiva dei dati, gli eventuali sub-responsabili e le garanzie applicabili ai trasferimenti fuori dallo Spazio economico europeo.</p>
       </>
     ),
@@ -93,10 +94,19 @@ const sections = [
     ),
   },
   {
-    title: "10. Minori",
+    title: "10. Cookie e archiviazione sul dispositivo",
     body: (
       <>
-        <p>La creazione di un account MyPersonalWish è riservata alle persone che hanno compiuto 18 anni. In fase di registrazione viene richiesta la data di nascita esclusivamente per verificare il requisito di età; la procedura tecnica di controllo è progettata per rimuovere tale dato dai metadati dell’account dopo la verifica e non salvarlo nel profilo. Le liste accessibili tramite link potrebbero comunque essere visualizzate da persone non registrate: chi condivide un link deve prestare attenzione ai contenuti e alle informazioni personali eventualmente inserite.</p>
+        <p>Per mantenere la sessione di accesso, l’applicazione utilizza cookie tecnici gestiti dal servizio di autenticazione. La funzione “Ricordami su questo dispositivo”, se selezionata, memorizza inoltre l’indirizzo email nel dispositivo dell’utente tramite l’archiviazione locale del browser; è possibile disattivarla togliendo la selezione al successivo accesso.</p>
+        <p>La configurazione effettiva dei cookie e l’eventuale presenza di strumenti di misurazione o contenuti di terze parti devono essere verificate prima della pubblicazione definitiva.</p>
+      </>
+    ),
+  },
+  {
+    title: "11. Minori",
+    body: (
+      <>
+        <p>La creazione di un account MyPersonalWish è riservata alle persone che hanno compiuto 18 anni. In fase di registrazione viene richiesta la data di nascita per verificare il requisito di età; il controllo viene effettuato anche lato server e il dato usato per la verifica viene rimosso dai metadati Auth prima che l’account sia creato. Separatamente, l’utente può scegliere di inserire la propria data di nascita nella sezione profilo: in tal caso viene conservata nel profilo e la sua visibilità è regolata dalle impostazioni dedicate. Le liste accessibili tramite link potrebbero comunque essere visualizzate da persone non registrate: chi condivide un link deve prestare attenzione ai contenuti e alle informazioni personali eventualmente inserite.</p>
       </>
     ),
   },
@@ -115,7 +125,7 @@ export default function PrivacyPage() {
         <p className="privacyLead">Questa pagina descrive in modo semplice quali dati possono essere trattati quando utilizzi MyPersonalWish e per quali finalità.</p>
         <div className="privacyDraftNotice">
           <strong>Bozza da completare prima della pubblicazione definitiva</strong>
-          <span>Questa prima versione è stata predisposta sulla base delle funzioni attualmente presenti nell’app. Devono ancora essere verificati i tempi di conservazione, i dettagli contrattuali e la localizzazione dei fornitori e gli eventuali trasferimenti internazionali. Il controllo dell’età richiede inoltre l’attivazione della relativa procedura SQL nel progetto Supabase.</span>
+          <span>Questa versione è ancora in fase di completamento. Devono essere verificati i tempi di conservazione, i dettagli contrattuali dei fornitori, la localizzazione dei dati e gli eventuali trasferimenti internazionali. Occorre inoltre completare la verifica delle impostazioni effettive di cookie, backup e cancellazione dei dati.</span>
         </div>
         {sections.map((section) => (
           <section className="privacyDocumentSection" key={section.title}>
