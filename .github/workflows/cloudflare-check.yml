@@ -26,3 +26,24 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+      - name: Smoke test Cloudflare Worker routes
+        shell: bash
+        run: |
+          npx wrangler dev --local --ip 127.0.0.1 --port 8787 > /tmp/wrangler.log 2>&1 &
+          echo $! > /tmp/wrangler.pid
+          for attempt in {1..40}; do
+            if curl --silent --output /dev/null http://127.0.0.1:8787/; then
+              break
+            fi
+            sleep 2
+          done
+          import_status=$(curl --silent --output /tmp/import-response.txt --write-out "%{http_code}" -X POST http://127.0.0.1:8787/api/import-document)
+          preview_status=$(curl --silent --output /tmp/preview-response.txt --write-out "%{http_code}" -X POST http://127.0.0.1:8787/api/product-preview -H "Content-Type: application/json" --data '{"url":"https://example.com"}')
+          echo "Import route HTTP: $import_status"
+          echo "Preview route HTTP: $preview_status"
+          cat /tmp/wrangler.log
+          kill "$(cat /tmp/wrangler.pid)" || true
+          if [ "$import_status" = "500" ] || [ "$preview_status" = "500" ] || [ "$import_status" = "000" ] || [ "$preview_status" = "000" ]; then
+            echo "A Cloudflare API route failed to initialize."
+            exit 1
+          fi
