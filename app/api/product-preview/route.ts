@@ -1,8 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
-import { request as httpRequest } from "node:http";
-import { request as httpsRequest } from "node:https";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 // PersonalWish product preview endpoint - stable build marker.
@@ -119,121 +115,33 @@ function amazonMainImage(html: string) {
 }
 
 
-function isPublicIp(address: string) {
-  const version = isIP(address);
-  if (version === 4) {
-    const [a, b, c, d] = address.split(".").map(Number);
-    return !(
-      a === 0 || a === 10 || a === 127 || a >= 224 ||
-      (a === 100 && b >= 64 && b <= 127) ||
-      (a === 169 && b === 254) ||
-      (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 0) ||
-      (a === 192 && b === 88 && c === 99) ||
-      (a === 192 && b === 168) ||
-      (a === 198 && (b === 18 || b === 19 || b === 51 && c === 100)) ||
-      (a === 203 && b === 0 && c === 113) ||
-      (a === 255 && b === 255 && c === 255 && d === 255)
-    );
-  }
-  if (version === 6) {
-    const normalized = address.toLowerCase();
-    if (normalized.startsWith("::ffff:")) return false;
-    const groups = normalized.split(":");
-    const first = parseInt(groups[0] || "0", 16);
-    const second = parseInt(groups[1] || "0", 16);
-    const inGlobalUnicast = first >= 0x2000 && first <= 0x3fff;
-    const documentation = first === 0x2001 && second === 0x0db8;
-    const protocolAssignments = first === 0x2001 && second <= 0x01ff;
-    const sixToFour = first === 0x2002;
-    const documentationRange = first === 0x3fff;
-    return inGlobalUnicast && !documentation && !protocolAssignments && !sixToFour && !documentationRange;
-  }
-  return false;
-}
-
-async function resolvePublicAddresses(hostname: string) {
-  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase().replace(/\.$/, "");
-  if (!host || host === "localhost" || host.endsWith(".localhost") ||
-      host.endsWith(".local") || host.endsWith(".internal")) {
-    throw new Error("Host non consentito");
-  }
-  if (isIP(host)) {
-    if (!isPublicIp(host)) throw new Error("Indirizzo IP non pubblico");
-    return [{ address: host, family: isIP(host) }];
-  }
-  const records = await lookup(host, { all: true, verbatim: true });
-  if (!records.length || records.some(record => !isPublicIp(record.address))) {
-    throw new Error("Host non pubblico");
-  }
-  return records;
-}
-
-async function fetchPinnedResponse(url: URL, retry: boolean) {
-  const hostname = url.hostname.replace(/^\[|\]$/g, "");
-  const addresses = await resolvePublicAddresses(hostname);
-  const pinned = addresses[0];
-  const transport = url.protocol === "https:" ? httpsRequest : httpRequest;
-  const port = url.port ? Number(url.port) : url.protocol === "https:" ? 443 : 80;
-  const path = (url.pathname || "/") + url.search;
-  const headers = {
-    "User-Agent": retry
-      ? "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-      : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml",
-    "Accept-Language": retry ? "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7" : "en-US,en;q=0.9"
-  };
-
-  return await new Promise<Response>((resolve, reject) => {
-    const request = transport({
-      protocol: url.protocol,
-      hostname,
-      port,
-      path,
-      method: "GET",
-      headers,
-      servername: url.protocol === "https:" && isIP(hostname) === 0 ? hostname : undefined,
-      lookup: ((_host: string, options: { all?: boolean }, callback: (error: NodeJS.ErrnoException | null, address: string | { address: string; family: number }[], family?: number) => void) => {
-        if (options?.all) callback(null, addresses);
-        else callback(null, pinned.address, pinned.family);
-      }) as never
-    }, response => {
-      const chunks: Buffer[] = [];
-      let total = 0;
-      response.on("data", (chunk: Buffer | string) => {
-        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-        total += buffer.length;
-        if (total > 2500000) {
-          request.destroy(new Error("Pagina troppo grande"));
-          return;
-        }
-        chunks.push(buffer);
-      });
-      response.on("end", () => {
-        const responseHeaders = new Headers();
-        for (let i = 0; i < response.rawHeaders.length; i += 2) {
-          responseHeaders.append(response.rawHeaders[i], response.rawHeaders[i + 1]);
-        }
-        resolve(new Response(Buffer.concat(chunks), {
-          status: response.statusCode || 502,
-          statusText: response.statusMessage,
-          headers: responseHeaders
-        }));
-      });
-      response.on("error", reject);
-    });
-    request.setTimeout(12000, () => request.destroy(new Error("Timeout richiesta esterna")));
-    request.on("error", reject);
-    request.end();
-  });
-}
-
 async function fetchExternalPage(startUrl: URL, retry = false) {
   let current = startUrl;
   for (let redirects = 0; redirects <= 3; redirects++) {
     if (!["http:", "https:"].includes(current.protocol)) throw new Error("Protocollo non consentito");
     if (current.username || current.password) throw new Error("Credenziali URL non consentite");
-    const response = await fetchPinnedResponse(current, retry);
+    const hostname = current.hostname.toLowerCase().replace(/\\.$/, "");
+    if (!hostname || hostname === "localhost" || hostname.endsWith(".localhost") ||
+        hostname.endsWith(".local") || hostname.endsWith(".internal")) {
+      throw new Error("Host non consentito");
+    }
+
+    // Workers global fetch is explicitly configured as public-Internet-only.
+    // This prevents requests to private/local IP ranges without relying on
+    // DNS lookup + connection pinning APIs that Workers do not implement.
+    const response = await fetch(current.toString(), {
+      method: "GET",
+      headers: {
+        "User-Agent": retry
+          ? "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": retry ? "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7" : "en-US,en;q=0.9"
+      },
+      redirect: "manual",
+      signal: AbortSignal.timeout(12000)
+    });
+
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const location = response.headers.get("location");
       if (!location || redirects === 3) throw new Error("Troppi reindirizzamenti");
